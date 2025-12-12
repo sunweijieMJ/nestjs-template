@@ -22,6 +22,7 @@ export class SessionRelationalRepository implements SessionRepository {
       where: {
         id: Number(id),
       },
+      relations: ['user'],
     });
 
     return entity ? SessionMapper.toDomain(entity) : null;

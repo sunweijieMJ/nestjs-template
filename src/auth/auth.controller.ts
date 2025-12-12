@@ -11,6 +11,7 @@ import {
   Delete,
   SerializeOptions,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
@@ -47,6 +48,7 @@ export class AuthController {
     groups: ['me'],
   })
   @Post('email/login')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOkResponse({
     type: LoginResponseDto,
   })
@@ -74,12 +76,14 @@ export class AuthController {
   }
 
   @Post('forgot/password')
+  @Throttle({ default: { limit: 3, ttl: 300000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
   async forgotPassword(@Body() forgotPasswordDto: AuthForgotPasswordDto): Promise<void> {
     return this.service.forgotPassword(forgotPasswordDto.email);
   }
 
   @Post('reset/password')
+  @Throttle({ default: { limit: 5, ttl: 300000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
   resetPassword(@Body() resetPasswordDto: AuthResetPasswordDto): Promise<void> {
     return this.service.resetPassword(resetPasswordDto.hash, resetPasswordDto.password);

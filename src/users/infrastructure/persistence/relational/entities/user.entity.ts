@@ -43,20 +43,14 @@ export class UserEntity extends EntityRelationalHelper {
   @Column({ type: String, nullable: true })
   lastName: string | null;
 
-  @OneToOne(() => FileEntity, {
-    eager: true,
-  })
+  @OneToOne(() => FileEntity)
   @JoinColumn()
   photo?: FileEntity | null;
 
-  @ManyToOne(() => RoleEntity, {
-    eager: true,
-  })
+  @ManyToOne(() => RoleEntity)
   role?: RoleEntity | null;
 
-  @ManyToOne(() => StatusEntity, {
-    eager: true,
-  })
+  @ManyToOne(() => StatusEntity)
   status?: StatusEntity;
 
   @CreateDateColumn()

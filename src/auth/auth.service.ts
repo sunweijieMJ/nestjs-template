@@ -209,7 +209,8 @@ export class AuthService {
 
       userId = jwtData.confirmEmailUserId;
       newEmail = jwtData.newEmail;
-    } catch {
+    } catch (error) {
+      this.logger.warn('New email confirmation failed - invalid hash', { error });
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
