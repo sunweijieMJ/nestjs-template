@@ -14,6 +14,7 @@ interface ErrorResponse {
   statusCode: number;
   message: string | string[];
   error: string;
+  errors?: Record<string, unknown>;
   timestamp: string;
   path: string;
   requestId?: string;
@@ -37,6 +38,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let statusCode: number;
     let message: string | string[];
     let error: string;
+    let errors: Record<string, unknown> | undefined;
 
     if (exception instanceof ThrottlerException) {
       statusCode = HttpStatus.TOO_MANY_REQUESTS;
@@ -53,6 +55,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         const responseObj = response as Record<string, unknown>;
         message = (responseObj.message as string | string[]) || exception.message;
         error = (responseObj.error as string) || exception.name;
+        errors = responseObj.errors as Record<string, unknown> | undefined;
       } else {
         message = exception.message;
         error = exception.name;
@@ -82,6 +85,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       path,
     };
+
+    if (errors) {
+      responseBody.errors = errors;
+    }
 
     if (requestId) {
       responseBody.requestId = requestId;
