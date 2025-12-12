@@ -82,9 +82,6 @@ case $ENV_MODE in
       exit 1
     fi
 
-    echo "Running linter..."
-    npm run lint
-
     echo "Running E2E tests..."
     npm run test:e2e -- --runInBand
 

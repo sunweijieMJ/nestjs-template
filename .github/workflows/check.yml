@@ -1,0 +1,87 @@
+name: Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-build:
+    name: Lint & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run linter
+        run: pnpm run lint
+
+      - name: Run type check
+        run: pnpm run type-check
+
+      - name: Run unit tests
+        run: pnpm run test
+
+      - name: Build application
+        run: pnpm run build
+
+  e2e-relational:
+    name: E2E (PostgreSQL)
+    runs-on: ubuntu-latest
+    needs: lint-and-build
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Run e2e tests with TypeORM
+        id: e2e
+        run: docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.postgres.yaml -f docker/docker-compose.redis.yaml -f docker/docker-compose.ci.yaml --env-file env-example-relational -p ci-relational up --build --exit-code-from api
+
+      - name: Copy logs on failure
+        if: failure()
+        run: docker cp ci-relational-api-1:/tmp/app.log ./e2e-relational.log 2>/dev/null || true
+
+      - name: Upload logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-relational-logs
+          path: e2e-relational.log
+
+  e2e-document:
+    name: E2E (MongoDB)
+    runs-on: ubuntu-latest
+    needs: lint-and-build
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Run e2e tests with Mongoose
+        id: e2e
+        run: docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.mongo.yaml -f docker/docker-compose.redis.yaml -f docker/docker-compose.ci.yaml --env-file env-example-document -p ci-document up --build --exit-code-from api
+
+      - name: Copy logs on failure
+        if: failure()
+        run: docker cp ci-document-api-1:/tmp/app.log ./e2e-document.log 2>/dev/null || true
+
+      - name: Upload logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-document-logs
+          path: e2e-document.log
