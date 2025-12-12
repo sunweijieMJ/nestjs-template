@@ -3,7 +3,7 @@ import { Logger, Inject, forwardRef } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { MailerService } from '../../mailer/mailer.service';
 import { MailJobData } from './mail-queue.service';
-import { MAIL_QUEUE } from './mail-queue.module';
+import { MAIL_QUEUE } from './mail-queue.constants';
 
 @Processor(MAIL_QUEUE)
 export class MailQueueProcessor extends WorkerHost {

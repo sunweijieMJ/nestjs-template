@@ -4,8 +4,7 @@ import { MailQueueProcessor } from './mail-queue.processor';
 import { MailQueueService } from './mail-queue.service';
 import { MailerModule } from '../../mailer/mailer.module';
 import { ConfigModule } from '@nestjs/config';
-
-export const MAIL_QUEUE = 'mail';
+import { MAIL_QUEUE } from './mail-queue.constants';
 
 @Module({
   imports: [

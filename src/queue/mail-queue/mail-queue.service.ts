@@ -3,7 +3,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '../../config/config.type';
-import { MAIL_QUEUE } from './mail-queue.module';
+import { MAIL_QUEUE } from './mail-queue.constants';
 
 export interface MailJobData {
   to: string;
