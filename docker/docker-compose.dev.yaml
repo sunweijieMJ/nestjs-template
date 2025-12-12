@@ -1,0 +1,24 @@
+# Development environment overlay
+# Enables hot-reload and source code mounting
+#
+# Usage:
+#   docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.postgres.yaml -f docker/docker-compose.dev.yaml up
+
+services:
+  api:
+    build:
+      target: development
+      args:
+        ENV_MODE: dev
+    environment:
+      ENV_MODE: dev
+      NODE_ENV: development
+    volumes:
+      - ../src:/app/src
+      - ../test:/app/test
+    depends_on:
+      maildev:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    command: ["/opt/startup.sh"]

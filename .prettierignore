@@ -1,0 +1,7 @@
+node_modules
+dist
+coverage
+*.min.js
+.nyc_output
+package-lock.json
+CHANGELOG.md

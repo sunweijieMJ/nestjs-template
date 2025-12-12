@@ -1,0 +1,1 @@
+npx tsx scripts/husky/pre-push.ts

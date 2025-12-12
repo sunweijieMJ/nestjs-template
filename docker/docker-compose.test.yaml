@@ -1,0 +1,25 @@
+# Test environment overlay
+# For running tests in Docker with source code mounting
+#
+# Usage:
+#   docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.postgres.yaml -f docker/docker-compose.test.yaml up
+
+services:
+  api:
+    build:
+      target: development
+      args:
+        ENV_MODE: test
+    environment:
+      ENV_MODE: test
+      NODE_ENV: test
+    volumes:
+      - ../src:/app/src
+      - ../test:/app/test
+    depends_on:
+      maildev:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT:-3000}:3000"

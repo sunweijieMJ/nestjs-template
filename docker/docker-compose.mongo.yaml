@@ -1,0 +1,49 @@
+# MongoDB database configuration overlay
+#
+# Usage:
+#   docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.mongo.yaml up
+
+services:
+  mongo:
+    image: mongo:8.0.15
+    restart: always
+    ports:
+      - "${DATABASE_PORT:-27017}:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DATABASE_USERNAME:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${DATABASE_PASSWORD:-secret}
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_BASICAUTH_USERNAME: ${DATABASE_USERNAME:-root}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${DATABASE_PASSWORD:-secret}
+      ME_CONFIG_MONGODB_URL: mongodb://${DATABASE_USERNAME:-root}:${DATABASE_PASSWORD:-secret}@mongo:27017/
+    depends_on:
+      - mongo
+
+  api:
+    build:
+      args:
+        DB_TYPE: document
+    env_file:
+      - ../env-example-document
+    environment:
+      DB_TYPE: document
+      DATABASE_URL: mongodb://${DATABASE_USERNAME:-root}:${DATABASE_PASSWORD:-secret}@mongo:27017/${DATABASE_NAME:-api}?authSource=admin
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+volumes:
+  mongo-data:

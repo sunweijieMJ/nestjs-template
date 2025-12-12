@@ -1,0 +1,29 @@
+# Production environment overlay
+# For deploying to production
+#
+# Usage:
+#   docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.postgres.yaml -f docker/docker-compose.prod.yaml up -d
+#
+# Note: In production, configure real SMTP settings via environment variables
+#       and remove or replace the maildev service
+
+services:
+  api:
+    build:
+      target: production
+      args:
+        ENV_MODE: prod
+    environment:
+      ENV_MODE: prod
+      NODE_ENV: production
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    # No maildev dependency in production - use real SMTP
+    # No volume mounts in production - use built-in code
+
+  # Disable maildev in production (use real SMTP)
+  maildev:
+    deploy:
+      replicas: 0

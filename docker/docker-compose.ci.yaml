@@ -1,0 +1,21 @@
+# CI environment overlay
+# For running tests in CI/CD pipelines
+#
+# Usage:
+#   docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.postgres.yaml -f docker/docker-compose.ci.yaml up --abort-on-container-exit
+
+services:
+  api:
+    build:
+      target: development
+      args:
+        ENV_MODE: ci
+    environment:
+      ENV_MODE: ci
+      NODE_ENV: production
+    depends_on:
+      maildev:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    # No volume mounts in CI - use built-in code
