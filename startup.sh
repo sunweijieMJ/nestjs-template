@@ -74,7 +74,13 @@ case $ENV_MODE in
     APP_PID=$!
 
     echo "Waiting for application to be ready..."
-    /opt/wait-for-it.sh localhost:3000 -t 120
+    if ! /opt/wait-for-it.sh localhost:3000 -t 120; then
+      echo "========================================"
+      echo "Application failed to start. Logs:"
+      echo "========================================"
+      cat /tmp/app.log || true
+      exit 1
+    fi
 
     echo "Running linter..."
     npm run lint
