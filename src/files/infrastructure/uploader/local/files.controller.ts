@@ -15,6 +15,7 @@ import {
   ApiConsumes,
   ApiCreatedResponse,
   ApiExcludeEndpoint,
+  ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -32,6 +33,7 @@ export class FilesLocalController {
   @ApiCreatedResponse({
     type: FileResponseDto,
   })
+  @ApiOperation({ operationId: 'uploadFile', summary: '上传文件' })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Post('upload')

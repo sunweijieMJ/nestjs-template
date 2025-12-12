@@ -18,6 +18,7 @@ import {
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
@@ -50,6 +51,7 @@ export class UsersController {
   @ApiCreatedResponse({
     type: User,
   })
+  @ApiOperation({ operationId: 'createUser', summary: '创建用户（管理员）' })
   @SerializeOptions({
     groups: ['admin'],
   })
@@ -62,6 +64,7 @@ export class UsersController {
   @ApiOkResponse({
     type: InfinityPaginationResponse(User),
   })
+  @ApiOperation({ operationId: 'getUsers', summary: '获取用户列表（管理员）' })
   @SerializeOptions({
     groups: ['admin'],
   })
@@ -90,6 +93,7 @@ export class UsersController {
   @ApiOkResponse({
     type: User,
   })
+  @ApiOperation({ operationId: 'getUser', summary: '获取用户详情（管理员）' })
   @SerializeOptions({
     groups: ['admin'],
   })
@@ -107,6 +111,7 @@ export class UsersController {
   @ApiOkResponse({
     type: User,
   })
+  @ApiOperation({ operationId: 'updateUser', summary: '更新用户（管理员）' })
   @SerializeOptions({
     groups: ['admin'],
   })
@@ -124,6 +129,7 @@ export class UsersController {
     return this.usersService.update(id, updateProfileDto);
   }
 
+  @ApiOperation({ operationId: 'deleteUser', summary: '删除用户（管理员）' })
   @Delete(':id')
   @ApiParam({
     name: 'id',

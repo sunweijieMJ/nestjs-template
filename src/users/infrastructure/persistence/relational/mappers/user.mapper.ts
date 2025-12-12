@@ -14,6 +14,10 @@ export class UserMapper {
     domainEntity.provider = raw.provider;
     domainEntity.firstName = raw.firstName;
     domainEntity.lastName = raw.lastName;
+    domainEntity.phone = raw.phone;
+    domainEntity.nickname = raw.nickname;
+    domainEntity.gender = raw.gender;
+    domainEntity.birthday = raw.birthday;
     if (raw.photo) {
       domainEntity.photo = FileMapper.toDomain(raw.photo);
     }
@@ -22,6 +26,8 @@ export class UserMapper {
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
     domainEntity.deletedAt = raw.deletedAt;
+    domainEntity.wechatOpenId = raw.wechatOpenId;
+    domainEntity.wechatUnionId = raw.wechatUnionId;
     return domainEntity;
   }
 
@@ -59,12 +65,18 @@ export class UserMapper {
     persistenceEntity.provider = domainEntity.provider;
     persistenceEntity.firstName = domainEntity.firstName;
     persistenceEntity.lastName = domainEntity.lastName;
+    persistenceEntity.phone = domainEntity.phone;
+    persistenceEntity.nickname = domainEntity.nickname;
+    persistenceEntity.gender = domainEntity.gender;
+    persistenceEntity.birthday = domainEntity.birthday;
     persistenceEntity.photo = photo;
     persistenceEntity.role = role;
     persistenceEntity.status = status;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
     persistenceEntity.deletedAt = domainEntity.deletedAt;
+    persistenceEntity.wechatOpenId = domainEntity.wechatOpenId;
+    persistenceEntity.wechatUnionId = domainEntity.wechatUnionId;
     return persistenceEntity;
   }
 }

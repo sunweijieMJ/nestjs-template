@@ -75,6 +75,20 @@ export class UsersDocumentRepository implements UserRepository {
     return userObject ? UserMapper.toDomain(userObject) : null;
   }
 
+  async findByPhone(phone: User['phone']): Promise<NullableType<User>> {
+    if (!phone) return null;
+
+    const userObject = await this.usersModel.findOne({ phone });
+    return userObject ? UserMapper.toDomain(userObject) : null;
+  }
+
+  async findByWechatOpenId(openId: string): Promise<NullableType<User>> {
+    if (!openId) return null;
+
+    const userObject = await this.usersModel.findOne({ wechatOpenId: openId });
+    return userObject ? UserMapper.toDomain(userObject) : null;
+  }
+
   async update(id: User['id'], payload: Partial<User>): Promise<User | null> {
     const clonedPayload = { ...payload };
     delete clonedPayload.id;

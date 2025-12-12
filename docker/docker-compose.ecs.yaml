@@ -1,0 +1,91 @@
+# ECS 服务器部署配置 (本地构建模式)
+# 直接在服务器上构建镜像，不需要镜像仓库
+#
+# 首次部署:
+#   1. git clone 仓库到部署目录
+#   2. cp docker/.env.ecs.example .env 并修改配置
+#   3. docker compose -f docker/docker-compose.ecs.yaml up -d --build
+#
+# CI/CD 会自动 git pull 并重新构建
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: production
+      args:
+        DB_TYPE: relational
+    container_name: nestjs-api
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    env_file:
+      - ../.env
+    environment:
+      NODE_ENV: production
+      # 数据库配置
+      DATABASE_TYPE: postgres
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      # Redis 配置
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: nestjs-postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME} -d ${DATABASE_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: nestjs-redis
+    volumes:
+      - redis-data:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - app-network
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  app-network:
+    driver: bridge

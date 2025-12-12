@@ -115,6 +115,21 @@ export class UsersService {
       email = createUserDto.email;
     }
 
+    let phone: string | null = null;
+
+    if (createUserDto.phone) {
+      const userObject = await this.usersRepository.findByPhone(createUserDto.phone);
+      if (userObject) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            phone: 'phoneAlreadyExists',
+          },
+        });
+      }
+      phone = createUserDto.phone;
+    }
+
     const photo = await this.validatePhoto(createUserDto.photo);
     const role = this.validateRole(createUserDto.role);
     const status = this.validateStatus(createUserDto.status);
@@ -122,14 +137,20 @@ export class UsersService {
     const user = await this.usersRepository.create({
       // Do not remove comment below.
       // <creating-property-payload />
-      firstName: createUserDto.firstName,
-      lastName: createUserDto.lastName,
+      firstName: createUserDto.firstName ?? null,
+      lastName: createUserDto.lastName ?? null,
       email: email,
+      phone: phone,
+      nickname: createUserDto.nickname ?? null,
+      gender: createUserDto.gender ?? 0,
+      birthday: createUserDto.birthday ?? null,
       password: password,
       photo: photo,
       role: role,
       status: status,
       provider: createUserDto.provider ?? AuthProvidersEnum.email,
+      wechatOpenId: createUserDto.wechatOpenId ?? null,
+      wechatUnionId: createUserDto.wechatUnionId ?? null,
     });
 
     this.logger.log(`User created successfully: ${user.id}`);
@@ -162,6 +183,14 @@ export class UsersService {
 
   findByEmail(email: User['email']): Promise<NullableType<User>> {
     return this.usersRepository.findByEmail(email);
+  }
+
+  findByPhone(phone: User['phone']): Promise<NullableType<User>> {
+    return this.usersRepository.findByPhone(phone);
+  }
+
+  findByWechatOpenId(openId: string): Promise<NullableType<User>> {
+    return this.usersRepository.findByWechatOpenId(openId);
   }
 
   async update(id: User['id'], updateUserDto: UpdateUserDto): Promise<User | null> {
@@ -199,6 +228,25 @@ export class UsersService {
       email = null;
     }
 
+    let phone: string | null | undefined = undefined;
+
+    if (updateUserDto.phone) {
+      const userObject = await this.usersRepository.findByPhone(updateUserDto.phone);
+
+      if (userObject && userObject.id !== id) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            phone: 'phoneAlreadyExists',
+          },
+        });
+      }
+
+      phone = updateUserDto.phone;
+    } else if (updateUserDto.phone === null) {
+      phone = null;
+    }
+
     const photo = await this.validatePhoto(updateUserDto.photo);
     const role = this.validateRole(updateUserDto.role);
     const status = this.validateStatus(updateUserDto.status);
@@ -209,6 +257,10 @@ export class UsersService {
       firstName: updateUserDto.firstName,
       lastName: updateUserDto.lastName,
       email,
+      phone,
+      nickname: updateUserDto.nickname,
+      gender: updateUserDto.gender,
+      birthday: updateUserDto.birthday,
       password,
       photo,
       role,

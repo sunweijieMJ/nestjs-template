@@ -7,6 +7,8 @@ import { LoggerConfig } from '../logger/config/logger-config.type';
 import { RedisConfig } from '../redis/config/redis-config.type';
 import { ThrottlerConfig } from '../throttler/config/throttler-config.type';
 import { MetricsConfig } from '../metrics/config/metrics-config.type';
+import { SmsConfig } from '../sms/config/sms-config.type';
+import { WechatConfig } from '../wechat/config/wechat-config.type';
 
 export type AllConfigType = {
   app: AppConfig;
@@ -18,4 +20,6 @@ export type AllConfigType = {
   redis: RedisConfig;
   throttler: ThrottlerConfig;
   metrics: MetricsConfig;
+  sms: SmsConfig;
+  wechat: WechatConfig;
 };

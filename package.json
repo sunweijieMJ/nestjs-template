@@ -76,6 +76,8 @@
     }
   },
   "dependencies": {
+    "@alicloud/dysmsapi20170525": "^4.3.0",
+    "@alicloud/openapi-client": "^0.4.15",
     "@aws-sdk/client-s3": "3.864.0",
     "@aws-sdk/s3-request-presigner": "3.864.0",
     "@nestjs/bullmq": "^11.0.4",

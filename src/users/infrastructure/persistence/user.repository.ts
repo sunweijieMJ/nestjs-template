@@ -21,6 +21,8 @@ export abstract class UserRepository {
   abstract findById(id: User['id']): Promise<NullableType<User>>;
   abstract findByIds(ids: User['id'][]): Promise<User[]>;
   abstract findByEmail(email: User['email']): Promise<NullableType<User>>;
+  abstract findByPhone(phone: User['phone']): Promise<NullableType<User>>;
+  abstract findByWechatOpenId(openId: string): Promise<NullableType<User>>;
 
   abstract update(id: User['id'], payload: DeepPartial<User>): Promise<User | null>;
 

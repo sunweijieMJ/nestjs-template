@@ -43,6 +43,19 @@ export class UserEntity extends EntityRelationalHelper {
   @Column({ type: String, nullable: true })
   lastName: string | null;
 
+  @Index()
+  @Column({ type: String, unique: true, nullable: true })
+  phone: string | null;
+
+  @Column({ type: String, nullable: true })
+  nickname: string | null;
+
+  @Column({ type: 'int', default: 0, nullable: true })
+  gender: number | null;
+
+  @Column({ type: 'date', nullable: true })
+  birthday: Date | null;
+
   @OneToOne(() => FileEntity)
   @JoinColumn()
   photo?: FileEntity | null;
@@ -61,4 +74,12 @@ export class UserEntity extends EntityRelationalHelper {
 
   @DeleteDateColumn()
   deletedAt: Date;
+
+  @Index()
+  @Column({ type: String, unique: true, nullable: true })
+  wechatOpenId: string | null;
+
+  @Index()
+  @Column({ type: String, nullable: true })
+  wechatUnionId: string | null;
 }

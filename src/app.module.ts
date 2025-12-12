@@ -11,6 +11,8 @@ import loggerConfig from './logger/config/logger.config';
 import redisConfig from './redis/config/redis.config';
 import throttlerConfig from './throttler/config/throttler.config';
 import metricsConfig from './metrics/config/metrics.config';
+import smsConfig from './sms/config/sms.config';
+import wechatConfig from './wechat/config/wechat.config';
 import path from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -32,6 +34,10 @@ import { HealthModule } from './health/health.module';
 import { QueueModule } from './queue/queue.module';
 import { ThrottlerModule } from './throttler/throttler.module';
 import { MetricsModule } from './metrics/metrics.module';
+import { SmsModule } from './sms/sms.module';
+import { AddressesModule } from './addresses/addresses.module';
+import { FavoritesModule } from './favorites/favorites.module';
+import { FeedbacksModule } from './feedbacks/feedbacks.module';
 
 // <database-block>
 const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig).isDocumentDatabase
@@ -63,6 +69,8 @@ const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig).isDocu
         redisConfig,
         throttlerConfig,
         metricsConfig,
+        smsConfig,
+        wechatConfig,
       ],
       envFilePath: ['.env'],
     }),
@@ -154,6 +162,10 @@ const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig).isDocu
     QueueModule,
     ThrottlerModule,
     MetricsModule.forRoot(),
+    SmsModule,
+    AddressesModule,
+    FavoritesModule,
+    FeedbacksModule,
   ],
 })
 export class AppModule {}

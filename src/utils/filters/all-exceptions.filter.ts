@@ -9,16 +9,7 @@ import {
 import { HttpAdapterHost } from '@nestjs/core';
 import { I18nContext } from 'nestjs-i18n';
 import { ThrottlerException } from '@nestjs/throttler';
-
-interface ErrorResponse {
-  statusCode: number;
-  message: string | string[];
-  error: string;
-  errors?: Record<string, unknown>;
-  timestamp: string;
-  path: string;
-  requestId?: string;
-}
+import { ApiErrorResponse } from '../dto/api-response.dto';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -78,11 +69,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
       this.logger.error(`Unknown exception type`, { exception, path, requestId });
     }
 
-    const responseBody: ErrorResponse = {
-      statusCode,
+    // Build unified error response
+    const responseBody: ApiErrorResponse = {
+      code: statusCode,
       message,
       error,
-      timestamp: new Date().toISOString(),
+      timestamp: Date.now(),
       path,
     };
 

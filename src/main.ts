@@ -12,6 +12,7 @@ import { AllConfigType } from './config/config.type';
 import { ResolvePromisesInterceptor } from './utils/serializer.interceptor';
 import { AllExceptionsFilter } from './utils/filters/all-exceptions.filter';
 import { MetricsInterceptor } from './metrics/metrics.interceptor';
+import { ResponseInterceptor } from './utils/interceptors/response.interceptor';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, {
@@ -55,9 +56,11 @@ async function bootstrap(): Promise<void> {
 
   // Metrics interceptor (if enabled)
   const metricsEnabled = configService.get('metrics.enabled', { infer: true });
+  const reflector = app.get(Reflector);
   const interceptors = [
     new ResolvePromisesInterceptor(),
-    new ClassSerializerInterceptor(app.get(Reflector)),
+    new ClassSerializerInterceptor(reflector),
+    new ResponseInterceptor(reflector), // Wrap responses in unified format
   ];
 
   if (metricsEnabled) {
@@ -73,7 +76,11 @@ async function bootstrap(): Promise<void> {
 
   const options = new DocumentBuilder()
     .setTitle('API')
-    .setDescription('API docs')
+    .setDescription(
+      'API docs\n\n' +
+        '📄 **OpenAPI JSON**: [/docs-json](/docs-json)\n\n' +
+        '📥 **Download**: [openapi.json](/docs-json)',
+    )
     .setVersion('1.0')
     .addBearerAuth()
     .addGlobalParameters({
@@ -87,7 +94,12 @@ async function bootstrap(): Promise<void> {
     .build();
 
   const document = SwaggerModule.createDocument(app, options);
-  SwaggerModule.setup('docs', app, document);
+  SwaggerModule.setup('docs', app, document, {
+    jsonDocumentUrl: 'docs-json',
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  });
 
   await app.listen(configService.getOrThrow('app.port', { infer: true }));
 }

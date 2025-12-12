@@ -42,6 +42,29 @@ export class UserSchemaClass extends EntityDocumentHelper {
   lastName: string | null;
 
   @Prop({
+    type: String,
+    unique: true,
+    sparse: true,
+  })
+  phone: string | null;
+
+  @Prop({
+    type: String,
+  })
+  nickname: string | null;
+
+  @Prop({
+    type: Number,
+    default: 0,
+  })
+  gender: number | null;
+
+  @Prop({
+    type: Date,
+  })
+  birthday: Date | null;
+
+  @Prop({
     type: FileSchemaClass,
   })
   photo?: FileSchemaClass | null;
@@ -64,6 +87,18 @@ export class UserSchemaClass extends EntityDocumentHelper {
 
   @Prop()
   deletedAt: Date;
+
+  @Prop({
+    type: String,
+    unique: true,
+    sparse: true,
+  })
+  wechatOpenId: string | null;
+
+  @Prop({
+    type: String,
+  })
+  wechatUnionId: string | null;
 }
 
 export const UserSchema = SchemaFactory.createForClass(UserSchemaClass);

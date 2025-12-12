@@ -46,6 +46,32 @@ export class User {
   lastName: string | null;
 
   @ApiProperty({
+    type: String,
+    example: '13800138000',
+  })
+  @Expose({ groups: ['me', 'admin'] })
+  phone: string | null;
+
+  @ApiProperty({
+    type: String,
+    example: 'Johnny',
+  })
+  nickname: string | null;
+
+  @ApiProperty({
+    type: Number,
+    example: 0,
+    description: '0: unknown, 1: male, 2: female',
+  })
+  gender: number | null;
+
+  @ApiProperty({
+    type: Date,
+    example: '1990-01-01',
+  })
+  birthday: Date | null;
+
+  @ApiProperty({
     type: () => FileType,
   })
   photo?: FileType | null;
@@ -68,4 +94,20 @@ export class User {
 
   @ApiProperty()
   deletedAt: Date;
+
+  @ApiProperty({
+    type: String,
+    example: 'oXXXX',
+    description: 'WeChat OpenID',
+  })
+  @Expose({ groups: ['me', 'admin'] })
+  wechatOpenId: string | null;
+
+  @ApiProperty({
+    type: String,
+    example: 'uXXXX',
+    description: 'WeChat UnionID',
+  })
+  @Expose({ groups: ['me', 'admin'] })
+  wechatUnionId: string | null;
 }

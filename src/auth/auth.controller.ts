@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthForgotPasswordDto } from './dto/auth-forgot-password.dto';
 import { AuthConfirmEmailDto } from './dto/auth-confirm-email.dto';
@@ -27,6 +27,13 @@ import { User } from '../users/domain/user';
 import { RefreshResponseDto } from './dto/refresh-response.dto';
 import { JwtPayloadType } from './strategies/types/jwt-payload.type';
 import { JwtRefreshPayloadType } from './strategies/types/jwt-refresh-payload.type';
+import { AuthPhoneLoginDto } from './dto/auth-phone-login.dto';
+import { AuthPhoneSmsLoginDto } from './dto/auth-phone-sms-login.dto';
+import { AuthPhoneRegisterDto } from './dto/auth-phone-register.dto';
+import { AuthSendCodeDto } from './dto/auth-send-code.dto';
+import { AuthChangePasswordDto } from './dto/auth-change-password.dto';
+import { SmsCodeType } from '../sms/sms.service';
+import { AuthWechatLoginDto } from './dto/auth-wechat-login.dto';
 
 interface RequestWithUser {
   user: JwtPayloadType;
@@ -49,6 +56,7 @@ export class AuthController {
   })
   @Post('email/login')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({ operationId: 'loginWithEmail', summary: '邮箱登录' })
   @ApiOkResponse({
     type: LoginResponseDto,
   })
@@ -58,18 +66,21 @@ export class AuthController {
   }
 
   @Post('email/register')
+  @ApiOperation({ operationId: 'registerWithEmail', summary: '邮箱注册' })
   @HttpCode(HttpStatus.NO_CONTENT)
   async register(@Body() createUserDto: AuthRegisterLoginDto): Promise<void> {
     return this.service.register(createUserDto);
   }
 
   @Post('email/confirm')
+  @ApiOperation({ operationId: 'confirmEmail', summary: '确认邮箱' })
   @HttpCode(HttpStatus.NO_CONTENT)
   async confirmEmail(@Body() confirmEmailDto: AuthConfirmEmailDto): Promise<void> {
     return this.service.confirmEmail(confirmEmailDto.hash);
   }
 
   @Post('email/confirm/new')
+  @ApiOperation({ operationId: 'confirmNewEmail', summary: '确认新邮箱' })
   @HttpCode(HttpStatus.NO_CONTENT)
   async confirmNewEmail(@Body() confirmEmailDto: AuthConfirmEmailDto): Promise<void> {
     return this.service.confirmNewEmail(confirmEmailDto.hash);
@@ -77,6 +88,7 @@ export class AuthController {
 
   @Post('forgot/password')
   @Throttle({ default: { limit: 3, ttl: 300000 } })
+  @ApiOperation({ operationId: 'forgotPassword', summary: '忘记密码' })
   @HttpCode(HttpStatus.NO_CONTENT)
   async forgotPassword(@Body() forgotPasswordDto: AuthForgotPasswordDto): Promise<void> {
     return this.service.forgotPassword(forgotPasswordDto.email);
@@ -84,6 +96,7 @@ export class AuthController {
 
   @Post('reset/password')
   @Throttle({ default: { limit: 5, ttl: 300000 } })
+  @ApiOperation({ operationId: 'resetPassword', summary: '重置密码' })
   @HttpCode(HttpStatus.NO_CONTENT)
   resetPassword(@Body() resetPasswordDto: AuthResetPasswordDto): Promise<void> {
     return this.service.resetPassword(resetPasswordDto.hash, resetPasswordDto.password);
@@ -95,6 +108,7 @@ export class AuthController {
   })
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ operationId: 'getCurrentUser', summary: '获取当前用户信息' })
   @ApiOkResponse({
     type: User,
   })
@@ -112,6 +126,7 @@ export class AuthController {
   })
   @Post('refresh')
   @UseGuards(AuthGuard('jwt-refresh'))
+  @ApiOperation({ operationId: 'refreshToken', summary: '刷新令牌' })
   @HttpCode(HttpStatus.OK)
   public refresh(@Request() request: RequestWithRefreshUser): Promise<RefreshResponseDto> {
     return this.service.refreshToken({
@@ -123,6 +138,7 @@ export class AuthController {
   @ApiBearerAuth()
   @Post('logout')
   @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ operationId: 'logout', summary: '退出登录' })
   @HttpCode(HttpStatus.NO_CONTENT)
   public async logout(@Request() request: RequestWithUser): Promise<void> {
     await this.service.logout({
@@ -136,6 +152,7 @@ export class AuthController {
   })
   @Patch('me')
   @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ operationId: 'updateCurrentUser', summary: '更新当前用户信息' })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
     type: User,
@@ -150,8 +167,90 @@ export class AuthController {
   @ApiBearerAuth()
   @Delete('me')
   @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ operationId: 'deleteCurrentUser', summary: '删除当前用户账号' })
   @HttpCode(HttpStatus.NO_CONTENT)
   public async delete(@Request() request: RequestWithUser): Promise<void> {
     return this.service.softDelete(request.user);
+  }
+
+  @Post('phone/send-code')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @ApiOperation({ operationId: 'sendSmsCode', summary: '发送短信验证码' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async sendCode(@Body() sendCodeDto: AuthSendCodeDto): Promise<void> {
+    return this.service.sendCode(sendCodeDto.phone, sendCodeDto.type ?? SmsCodeType.LOGIN);
+  }
+
+  @SerializeOptions({
+    groups: ['me'],
+  })
+  @Post('phone/login')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({ operationId: 'loginWithPhone', summary: '手机号密码登录' })
+  @ApiOkResponse({
+    type: LoginResponseDto,
+  })
+  @HttpCode(HttpStatus.OK)
+  public phoneLogin(@Body() loginDto: AuthPhoneLoginDto): Promise<LoginResponseDto> {
+    return this.service.validatePhoneLogin(loginDto);
+  }
+
+  @SerializeOptions({
+    groups: ['me'],
+  })
+  @Post('phone/sms-login')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({ operationId: 'loginWithSms', summary: '短信验证码登录' })
+  @ApiOkResponse({
+    type: LoginResponseDto,
+  })
+  @HttpCode(HttpStatus.OK)
+  public phoneSmsLogin(@Body() loginDto: AuthPhoneSmsLoginDto): Promise<LoginResponseDto> {
+    return this.service.validatePhoneSmsLogin(loginDto);
+  }
+
+  @SerializeOptions({
+    groups: ['me'],
+  })
+  @Post('phone/register')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @ApiOperation({ operationId: 'registerWithPhone', summary: '手机号注册' })
+  @ApiOkResponse({
+    type: LoginResponseDto,
+  })
+  @HttpCode(HttpStatus.CREATED)
+  public phoneRegister(@Body() registerDto: AuthPhoneRegisterDto): Promise<LoginResponseDto> {
+    return this.service.registerByPhone(registerDto);
+  }
+
+  @ApiBearerAuth()
+  @Patch('password')
+  @UseGuards(AuthGuard('jwt'))
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @ApiOperation({ operationId: 'changePassword', summary: '修改密码' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  public async changePassword(
+    @Request() request: RequestWithUser,
+    @Body() changePasswordDto: AuthChangePasswordDto,
+  ): Promise<void> {
+    return this.service.changePassword(
+      request.user,
+      changePasswordDto.oldPassword,
+      changePasswordDto.newPassword,
+    );
+  }
+
+  @SerializeOptions({
+    groups: ['me'],
+  })
+  @Post('wechat/login')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ operationId: 'loginWithWechat', summary: '微信登录' })
+  @ApiOkResponse({
+    type: LoginResponseDto,
+  })
+  @HttpCode(HttpStatus.OK)
+  public wechatLogin(@Body() loginDto: AuthWechatLoginDto): Promise<LoginResponseDto> {
+    return this.service.wechatLogin(loginDto);
   }
 }

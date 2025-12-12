@@ -28,6 +28,12 @@ import { Session } from '../session/domain/session';
 import { SessionService } from '../session/session.service';
 import { StatusEnum } from '../statuses/statuses.enum';
 import { User } from '../users/domain/user';
+import { SmsService, SmsCodeType } from '../sms/sms.service';
+import { AuthPhoneLoginDto } from './dto/auth-phone-login.dto';
+import { AuthPhoneSmsLoginDto } from './dto/auth-phone-sms-login.dto';
+import { AuthPhoneRegisterDto } from './dto/auth-phone-register.dto';
+import { AuthWechatLoginDto, WechatLoginType } from './dto/auth-wechat-login.dto';
+import { WechatService } from '../wechat/wechat.service';
 
 @Injectable()
 export class AuthService {
@@ -39,6 +45,8 @@ export class AuthService {
     private sessionService: SessionService,
     private mailService: MailService,
     private configService: ConfigService<AllConfigType>,
+    private smsService: SmsService,
+    private wechatService: WechatService,
   ) {}
 
   async validateLogin(loginDto: AuthEmailLoginDto): Promise<LoginResponseDto> {
@@ -479,6 +487,358 @@ export class AuthService {
   async logout(data: Pick<JwtRefreshPayloadType, 'sessionId'>): Promise<void> {
     this.logger.log(`Logout for session: ${data.sessionId}`);
     return this.sessionService.deleteById(data.sessionId);
+  }
+
+  async sendCode(phone: string, type: SmsCodeType = SmsCodeType.LOGIN): Promise<void> {
+    this.logger.log(`Send SMS code request for phone: ${phone}, type: ${type}`);
+
+    // For register type, check if phone already exists
+    if (type === SmsCodeType.REGISTER) {
+      const existingUser = await this.usersService.findByPhone(phone);
+      if (existingUser) {
+        this.logger.warn(`Phone already registered: ${phone}`);
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            phone: 'phoneAlreadyExists',
+          },
+        });
+      }
+    }
+
+    // For login/reset_password type, check if phone exists
+    if (type === SmsCodeType.LOGIN || type === SmsCodeType.RESET_PASSWORD) {
+      const user = await this.usersService.findByPhone(phone);
+      if (!user) {
+        this.logger.warn(`Phone not found: ${phone}`);
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            phone: 'phoneNotFound',
+          },
+        });
+      }
+    }
+
+    const sendResult = await this.smsService.sendCode(phone, type);
+    if (!sendResult.success) {
+      this.logger.warn(`Failed to send SMS code to ${phone}: ${sendResult.message}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          phone: sendResult.retryAfter ? 'rateLimited' : 'sendFailed',
+          retryAfter: sendResult.retryAfter,
+        },
+      });
+    }
+    this.logger.log(`SMS code sent to: ${phone}`);
+  }
+
+  async validatePhoneLogin(loginDto: AuthPhoneLoginDto): Promise<LoginResponseDto> {
+    this.logger.log(`Phone login attempt for: ${loginDto.phone}`);
+    const user = await this.usersService.findByPhone(loginDto.phone);
+
+    if (!user) {
+      this.logger.warn(`Phone login failed - user not found: ${loginDto.phone}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          phone: 'notFound',
+        },
+      });
+    }
+
+    if (user.provider !== AuthProvidersEnum.phone) {
+      this.logger.warn(`Phone login failed - wrong provider for user ${user.id}: ${user.provider}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          phone: `needLoginViaProvider:${user.provider}`,
+        },
+      });
+    }
+
+    if (!user.password) {
+      this.logger.warn(`Phone login failed - no password set for user: ${user.id}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          password: 'incorrectPassword',
+        },
+      });
+    }
+
+    const isValidPassword = await bcrypt.compare(loginDto.password, user.password);
+
+    if (!isValidPassword) {
+      this.logger.warn(`Phone login failed - incorrect password for user: ${user.id}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          password: 'incorrectPassword',
+        },
+      });
+    }
+
+    const hash = crypto.createHash('sha256').update(randomStringGenerator()).digest('hex');
+
+    const session = await this.sessionService.create({
+      user,
+      hash,
+    });
+
+    const { token, refreshToken, tokenExpires } = await this.getTokensData({
+      id: user.id,
+      role: user.role,
+      sessionId: session.id,
+      hash,
+    });
+
+    this.logger.log(`Phone login successful for user: ${user.id}`);
+
+    return {
+      refreshToken,
+      token,
+      tokenExpires,
+      user,
+    };
+  }
+
+  async validatePhoneSmsLogin(loginDto: AuthPhoneSmsLoginDto): Promise<LoginResponseDto> {
+    this.logger.log(`Phone SMS login attempt for: ${loginDto.phone}`);
+
+    // Verify SMS code
+    const verifyResult = await this.smsService.verifyCode(
+      loginDto.phone,
+      loginDto.code,
+      SmsCodeType.LOGIN,
+    );
+    if (!verifyResult.success) {
+      this.logger.warn(`Phone SMS login failed - invalid code for: ${loginDto.phone}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          code: 'invalidCode',
+        },
+      });
+    }
+
+    const user = await this.usersService.findByPhone(loginDto.phone);
+
+    if (!user) {
+      this.logger.warn(`Phone SMS login failed - user not found: ${loginDto.phone}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          phone: 'notFound',
+        },
+      });
+    }
+
+    const hash = crypto.createHash('sha256').update(randomStringGenerator()).digest('hex');
+
+    const session = await this.sessionService.create({
+      user,
+      hash,
+    });
+
+    const { token, refreshToken, tokenExpires } = await this.getTokensData({
+      id: user.id,
+      role: user.role,
+      sessionId: session.id,
+      hash,
+    });
+
+    this.logger.log(`Phone SMS login successful for user: ${user.id}`);
+
+    return {
+      refreshToken,
+      token,
+      tokenExpires,
+      user,
+    };
+  }
+
+  async registerByPhone(dto: AuthPhoneRegisterDto): Promise<LoginResponseDto> {
+    this.logger.log(`Phone registration attempt for: ${dto.phone}`);
+
+    // Verify SMS code
+    const verifyResult = await this.smsService.verifyCode(
+      dto.phone,
+      dto.code,
+      SmsCodeType.REGISTER,
+    );
+    if (!verifyResult.success) {
+      this.logger.warn(`Phone registration failed - invalid code for: ${dto.phone}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          code: 'invalidCode',
+        },
+      });
+    }
+
+    // Check if phone already exists
+    const existingUser = await this.usersService.findByPhone(dto.phone);
+    if (existingUser) {
+      this.logger.warn(`Phone registration failed - phone already exists: ${dto.phone}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          phone: 'phoneAlreadyExists',
+        },
+      });
+    }
+
+    const user = await this.usersService.create({
+      phone: dto.phone,
+      password: dto.password,
+      nickname: dto.nickname,
+      provider: AuthProvidersEnum.phone,
+      role: {
+        id: RoleEnum.user,
+      },
+      status: {
+        id: StatusEnum.active,
+      },
+    });
+
+    this.logger.log(`User registered successfully via phone: ${user.id}`);
+
+    const hash = crypto.createHash('sha256').update(randomStringGenerator()).digest('hex');
+
+    const session = await this.sessionService.create({
+      user,
+      hash,
+    });
+
+    const { token, refreshToken, tokenExpires } = await this.getTokensData({
+      id: user.id,
+      role: user.role,
+      sessionId: session.id,
+      hash,
+    });
+
+    return {
+      refreshToken,
+      token,
+      tokenExpires,
+      user,
+    };
+  }
+
+  async changePassword(
+    userJwtPayload: JwtPayloadType,
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    this.logger.log(`Password change attempt for user: ${userJwtPayload.id}`);
+
+    const user = await this.usersService.findById(userJwtPayload.id);
+
+    if (!user) {
+      this.logger.warn(`Password change failed - user not found: ${userJwtPayload.id}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          user: 'userNotFound',
+        },
+      });
+    }
+
+    if (!user.password) {
+      this.logger.warn(`Password change failed - no password set for user: ${userJwtPayload.id}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          oldPassword: 'incorrectOldPassword',
+        },
+      });
+    }
+
+    const isValidOldPassword = await bcrypt.compare(oldPassword, user.password);
+
+    if (!isValidOldPassword) {
+      this.logger.warn(
+        `Password change failed - incorrect old password for user: ${userJwtPayload.id}`,
+      );
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          oldPassword: 'incorrectOldPassword',
+        },
+      });
+    }
+
+    // Update password
+    await this.usersService.update(userJwtPayload.id, { password: newPassword });
+
+    // Invalidate all other sessions
+    await this.sessionService.deleteByUserIdWithExclude({
+      userId: userJwtPayload.id,
+      excludeSessionId: userJwtPayload.sessionId,
+    });
+
+    this.logger.log(`Password changed successfully for user: ${userJwtPayload.id}`);
+  }
+
+  async wechatLogin(dto: AuthWechatLoginDto): Promise<LoginResponseDto> {
+    this.logger.log(`WeChat login attempt with type: ${dto.type}`);
+
+    // Get user info from WeChat
+    const wechatUserInfo =
+      dto.type === WechatLoginType.MINI_APP
+        ? await this.wechatService.miniAppLogin(dto.code)
+        : await this.wechatService.appLogin(dto.code);
+
+    // Check if user already exists
+    let user = await this.usersService.findByWechatOpenId(wechatUserInfo.openId);
+
+    if (!user) {
+      // Create new user for first-time WeChat login
+      this.logger.log(`Creating new user for WeChat openId: ${wechatUserInfo.openId}`);
+
+      user = await this.usersService.create({
+        wechatOpenId: wechatUserInfo.openId,
+        wechatUnionId: wechatUserInfo.unionId,
+        nickname: dto.nickname ?? wechatUserInfo.nickname ?? '微信用户',
+        gender: wechatUserInfo.gender ?? 0,
+        provider: AuthProvidersEnum.wechat,
+        role: {
+          id: RoleEnum.user,
+        },
+        status: {
+          id: StatusEnum.active,
+        },
+      });
+
+      this.logger.log(`New WeChat user created: ${user.id}`);
+    } else {
+      this.logger.log(`Existing user found for WeChat openId: ${wechatUserInfo.openId}`);
+    }
+
+    const hash = crypto.createHash('sha256').update(randomStringGenerator()).digest('hex');
+
+    const session = await this.sessionService.create({
+      user,
+      hash,
+    });
+
+    const { token, refreshToken, tokenExpires } = await this.getTokensData({
+      id: user.id,
+      role: user.role,
+      sessionId: session.id,
+      hash,
+    });
+
+    this.logger.log(`WeChat login successful for user: ${user.id}`);
+
+    return {
+      refreshToken,
+      token,
+      tokenExpires,
+      user,
+    };
   }
 
   private async getTokensData(data: {
