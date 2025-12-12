@@ -139,7 +139,7 @@ export class AuthController {
   @Post('logout')
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ operationId: 'logout', summary: '退出登录' })
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   public async logout(@Request() request: RequestWithUser): Promise<void> {
     await this.service.logout({
       sessionId: request.user.sessionId,
@@ -228,7 +228,7 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @ApiOperation({ operationId: 'changePassword', summary: '修改密码' })
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   public async changePassword(
     @Request() request: RequestWithUser,
     @Body() changePasswordDto: AuthChangePasswordDto,

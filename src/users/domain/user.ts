@@ -1,4 +1,4 @@
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude, Expose, Transform } from 'class-transformer';
 import { FileType } from '../../files/domain/file';
 import { Role } from '../../roles/role';
 import { Status } from '../../statuses/status';
@@ -66,9 +66,17 @@ export class User {
   gender: number | null;
 
   @ApiProperty({
-    type: Date,
+    type: String,
     example: '1990-01-01',
   })
+  @Transform(
+    ({ value }) => {
+      if (!value) return null;
+      const date = value instanceof Date ? value : new Date(value);
+      return date.toISOString().split('T')[0];
+    },
+    { toPlainOnly: true },
+  )
   birthday: Date | null;
 
   @ApiProperty({
