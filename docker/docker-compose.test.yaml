@@ -2,7 +2,7 @@
 # For running tests in Docker with source code mounting
 #
 # Usage:
-#   docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.postgres.yaml -f docker/docker-compose.test.yaml up
+#   docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.redis.yaml -f docker/docker-compose.postgres.yaml -f docker/docker-compose.test.yaml up
 
 services:
   api:

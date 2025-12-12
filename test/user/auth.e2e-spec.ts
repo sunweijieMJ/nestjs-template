@@ -7,7 +7,7 @@ describe('Auth Module', () => {
   const newUserFirstName = `Tester${Date.now()}`;
   const newUserLastName = `E2E`;
   const newUserEmail = `User.${Date.now()}@example.com`;
-  const newUserPassword = `secret`;
+  const newUserPassword = `secret00`;
 
   describe('Registration', () => {
     it('should fail with exists email: /api/v1/auth/email/register (POST)', () => {
@@ -44,7 +44,7 @@ describe('Auth Module', () => {
           .send({ email: newUserEmail, password: newUserPassword })
           .expect(200)
           .expect(({ body }) => {
-            expect(body.token).toBeDefined();
+            expect(body.data.token).toBeDefined();
           });
       });
     });
@@ -101,12 +101,12 @@ describe('Auth Module', () => {
         .send({ email: newUserEmail, password: newUserPassword })
         .expect(200)
         .expect(({ body }) => {
-          expect(body.token).toBeDefined();
-          expect(body.refreshToken).toBeDefined();
-          expect(body.tokenExpires).toBeDefined();
-          expect(body.user.email).toBeDefined();
-          expect(body.user.hash).not.toBeDefined();
-          expect(body.user.password).not.toBeDefined();
+          expect(body.data.token).toBeDefined();
+          expect(body.data.refreshToken).toBeDefined();
+          expect(body.data.tokenExpires).toBeDefined();
+          expect(body.data.user.email).toBeDefined();
+          expect(body.data.user.hash).not.toBeDefined();
+          expect(body.data.user.password).not.toBeDefined();
         });
     });
   });
@@ -119,7 +119,7 @@ describe('Auth Module', () => {
         .post('/api/v1/auth/email/login')
         .send({ email: newUserEmail, password: newUserPassword })
         .then(({ body }) => {
-          newUserApiToken = body.token;
+          newUserApiToken = body.data.token;
         });
     });
 
@@ -131,10 +131,10 @@ describe('Auth Module', () => {
         })
         .send()
         .expect(({ body }) => {
-          expect(body.provider).toBeDefined();
-          expect(body.email).toBeDefined();
-          expect(body.hash).not.toBeDefined();
-          expect(body.password).not.toBeDefined();
+          expect(body.data.provider).toBeDefined();
+          expect(body.data.email).toBeDefined();
+          expect(body.data.hash).not.toBeDefined();
+          expect(body.data.password).not.toBeDefined();
         });
     });
 
@@ -142,7 +142,7 @@ describe('Auth Module', () => {
       let newUserRefreshToken = await request(app)
         .post('/api/v1/auth/email/login')
         .send({ email: newUserEmail, password: newUserPassword })
-        .then(({ body }) => body.refreshToken);
+        .then(({ body }) => body.data.refreshToken);
 
       newUserRefreshToken = await request(app)
         .post('/api/v1/auth/refresh')
@@ -150,7 +150,7 @@ describe('Auth Module', () => {
           type: 'bearer',
         })
         .send()
-        .then(({ body }) => body.refreshToken);
+        .then(({ body }) => body.data.refreshToken);
 
       await request(app)
         .post('/api/v1/auth/refresh')
@@ -159,9 +159,9 @@ describe('Auth Module', () => {
         })
         .send()
         .expect(({ body }) => {
-          expect(body.token).toBeDefined();
-          expect(body.refreshToken).toBeDefined();
-          expect(body.tokenExpires).toBeDefined();
+          expect(body.data.token).toBeDefined();
+          expect(body.data.refreshToken).toBeDefined();
+          expect(body.data.tokenExpires).toBeDefined();
         });
     });
 
@@ -169,7 +169,7 @@ describe('Auth Module', () => {
       const newUserRefreshToken = await request(app)
         .post('/api/v1/auth/email/login')
         .send({ email: newUserEmail, password: newUserPassword })
-        .then(({ body }) => body.refreshToken);
+        .then(({ body }) => body.data.refreshToken);
 
       await request(app)
         .post('/api/v1/auth/refresh')
@@ -193,7 +193,7 @@ describe('Auth Module', () => {
       const newUserApiToken = await request(app)
         .post('/api/v1/auth/email/login')
         .send({ email: newUserEmail, password: newUserPassword })
-        .then(({ body }) => body.token);
+        .then(({ body }) => body.data.token);
 
       await request(app)
         .patch('/api/v1/auth/me')
@@ -223,7 +223,7 @@ describe('Auth Module', () => {
         .send({ email: newUserEmail, password: newUserNewPassword })
         .expect(200)
         .expect(({ body }) => {
-          expect(body.token).toBeDefined();
+          expect(body.data.token).toBeDefined();
         });
 
       await request(app)
@@ -239,7 +239,7 @@ describe('Auth Module', () => {
       const newUserFirstName = `Tester${Date.now()}`;
       const newUserLastName = `E2E`;
       const newUserEmail = `user.${Date.now()}@example.com`;
-      const newUserPassword = `secret`;
+      const newUserPassword = `secret00`;
       const newUserNewEmail = `new.${newUserEmail}`;
 
       await request(app)
@@ -255,7 +255,7 @@ describe('Auth Module', () => {
       const newUserApiToken = await request(app)
         .post('/api/v1/auth/email/login')
         .send({ email: newUserEmail, password: newUserPassword })
-        .then(({ body }) => body.token);
+        .then(({ body }) => body.data.token);
 
       await request(app)
         .patch('/api/v1/auth/me')
@@ -287,7 +287,7 @@ describe('Auth Module', () => {
         })
         .expect(200)
         .expect(({ body }) => {
-          expect(body.email).not.toBe(newUserNewEmail);
+          expect(body.data.email).not.toBe(newUserNewEmail);
         });
 
       await request(app)
@@ -309,7 +309,7 @@ describe('Auth Module', () => {
         })
         .expect(200)
         .expect(({ body }) => {
-          expect(body.email).toBe(newUserNewEmail);
+          expect(body.data.email).toBe(newUserNewEmail);
         });
 
       await request(app)
@@ -322,7 +322,7 @@ describe('Auth Module', () => {
       const newUserApiToken = await request(app)
         .post('/api/v1/auth/email/login')
         .send({ email: newUserEmail, password: newUserPassword })
-        .then(({ body }) => body.token);
+        .then(({ body }) => body.data.token);
 
       await request(app).delete('/api/v1/auth/me').auth(newUserApiToken, {
         type: 'bearer',

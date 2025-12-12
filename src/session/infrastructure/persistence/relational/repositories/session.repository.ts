@@ -39,6 +39,7 @@ export class SessionRelationalRepository implements SessionRepository {
   ): Promise<Session | null> {
     const entity = await this.sessionRepository.findOne({
       where: { id: Number(id) },
+      relations: ['user'],
     });
 
     if (!entity) {

@@ -2,7 +2,7 @@
 # Enables hot-reload and source code mounting
 #
 # Usage:
-#   docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.postgres.yaml -f docker/docker-compose.dev.yaml up
+#   docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.redis.yaml -f docker/docker-compose.postgres.yaml -f docker/docker-compose.dev.yaml up
 
 services:
   api:

@@ -12,7 +12,7 @@ describe('Users Module', () => {
       .post('/api/v1/auth/email/login')
       .send({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD })
       .then(({ body }) => {
-        apiToken = body.token;
+        apiToken = body.data.token;
       });
   });
 
@@ -20,7 +20,7 @@ describe('Users Module', () => {
     let newUser: { id: string };
     const newUserEmail = `user-first.${Date.now()}@example.com`;
     const newUserChangedEmail = `user-first-changed.${Date.now()}@example.com`;
-    const newUserPassword = `secret`;
+    const newUserPassword = `secret00`;
     const newUserChangedPassword = `new-secret`;
 
     beforeAll(async () => {
@@ -37,7 +37,7 @@ describe('Users Module', () => {
         .post('/api/v1/auth/email/login')
         .send({ email: newUserEmail, password: newUserPassword })
         .then(({ body }) => {
-          newUser = body.user;
+          newUser = body.data.user;
         });
     });
 
@@ -65,7 +65,7 @@ describe('Users Module', () => {
             })
             .expect(200)
             .expect(({ body }) => {
-              expect(body.token).toBeDefined();
+              expect(body.data.token).toBeDefined();
             });
         });
       });
@@ -74,7 +74,7 @@ describe('Users Module', () => {
 
   describe('Create', () => {
     const newUserByAdminEmail = `user-created-by-admin.${Date.now()}@example.com`;
-    const newUserByAdminPassword = `secret`;
+    const newUserByAdminPassword = `secret00`;
 
     describe('User with "Admin" role', () => {
       it('should fail to create new user with invalid email: /api/v1/users (POST)', () => {
@@ -118,7 +118,7 @@ describe('Users Module', () => {
             })
             .expect(200)
             .expect(({ body }) => {
-              expect(body.token).toBeDefined();
+              expect(body.data.token).toBeDefined();
             });
         });
       });
@@ -136,10 +136,10 @@ describe('Users Module', () => {
           .expect(200)
           .send()
           .expect(({ body }) => {
-            expect(body.data[0].provider).toBeDefined();
-            expect(body.data[0].email).toBeDefined();
-            expect(body.data[0].hash).not.toBeDefined();
-            expect(body.data[0].password).not.toBeDefined();
+            expect(body.data.data[0].provider).toBeDefined();
+            expect(body.data.data[0].email).toBeDefined();
+            expect(body.data.data[0].hash).not.toBeDefined();
+            expect(body.data.data[0].password).not.toBeDefined();
           });
       });
     });

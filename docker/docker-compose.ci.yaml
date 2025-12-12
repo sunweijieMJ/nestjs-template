@@ -2,7 +2,7 @@
 # For running tests in CI/CD pipelines
 #
 # Usage:
-#   docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.postgres.yaml -f docker/docker-compose.ci.yaml up --abort-on-container-exit
+#   docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.redis.yaml -f docker/docker-compose.postgres.yaml -f docker/docker-compose.ci.yaml up --abort-on-container-exit
 
 services:
   api:
