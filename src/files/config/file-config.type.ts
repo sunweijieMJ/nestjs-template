@@ -10,5 +10,6 @@ export type FileConfig = {
   secretAccessKey?: string;
   awsDefaultS3Bucket?: string;
   awsS3Region?: string;
+  awsS3Endpoint?: string; // Custom endpoint for S3-compatible services (e.g., Aliyun OSS)
   maxFileSize: number;
 };
