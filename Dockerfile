@@ -57,8 +57,8 @@ FROM base AS prod-deps
 
 COPY package.json pnpm-lock.yaml ./
 
-# Install only production dependencies
-RUN pnpm install --frozen-lockfile --prod
+# Install only production dependencies (ignore scripts to skip husky)
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
 # ============================================================
 # Stage 5: Production - Final minimal image
