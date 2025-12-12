@@ -61,9 +61,10 @@ REDIS_PASSWORD=
 REDIS_DB=0
 
 # Rate Limiting (Throttler)
-THROTTLE_ENABLED=true
+# Set to false in CI/test environments
+THROTTLE_ENABLED=false
 THROTTLE_TTL=60
-THROTTLE_LIMIT=10
+THROTTLE_LIMIT=100
 
 # Prometheus Metrics
 METRICS_ENABLED=true
