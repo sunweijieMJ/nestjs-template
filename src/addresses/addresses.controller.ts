@@ -3,7 +3,7 @@ import {
   Get,
   Post,
   Body,
-  Patch,
+  Put,
   Param,
   Delete,
   UseGuards,
@@ -115,7 +115,7 @@ export class AddressesController {
 
   @ApiOkResponse({ type: Address })
   @ApiOperation({ operationId: 'updateAddress', summary: '更新地址' })
-  @Patch(':id')
+  @Put(':id')
   @HttpCode(HttpStatus.OK)
   @ApiParam({
     name: 'id',
@@ -132,7 +132,7 @@ export class AddressesController {
 
   @ApiOkResponse({ type: Address })
   @ApiOperation({ operationId: 'setDefaultAddress', summary: '设为默认地址' })
-  @Patch(':id/default')
+  @Put(':id/default')
   @HttpCode(HttpStatus.OK)
   @ApiParam({
     name: 'id',

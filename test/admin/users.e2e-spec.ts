@@ -42,9 +42,9 @@ describe('Users Module', () => {
     });
 
     describe('User with "Admin" role', () => {
-      it('should change password for existing user: /api/v1/users/:id (PATCH)', () => {
+      it('should change password for existing user: /api/v1/users/:id (PUT)', () => {
         return request(app)
-          .patch(`/api/v1/users/${newUser.id}`)
+          .put(`/api/v1/users/${newUser.id}`)
           .auth(apiToken, {
             type: 'bearer',
           })

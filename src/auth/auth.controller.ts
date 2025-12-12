@@ -7,7 +7,7 @@ import {
   Request,
   Post,
   UseGuards,
-  Patch,
+  Put,
   Delete,
   SerializeOptions,
 } from '@nestjs/common';
@@ -150,7 +150,7 @@ export class AuthController {
   @SerializeOptions({
     groups: ['me'],
   })
-  @Patch('me')
+  @Put('me')
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ operationId: 'updateCurrentUser', summary: '更新当前用户信息' })
   @HttpCode(HttpStatus.OK)
@@ -224,7 +224,7 @@ export class AuthController {
   }
 
   @ApiBearerAuth()
-  @Patch('password')
+  @Put('password')
   @UseGuards(AuthGuard('jwt'))
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @ApiOperation({ operationId: 'changePassword', summary: '修改密码' })

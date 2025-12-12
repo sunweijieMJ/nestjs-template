@@ -142,7 +142,7 @@ describe('Auth Module', () => {
         .expect(401);
     });
 
-    it('should update profile successfully: /api/v1/auth/me (PATCH)', async () => {
+    it('should update profile successfully: /api/v1/auth/me (PUT)', async () => {
       const newUserNewName = Date.now();
       const newUserNewPassword = 'new-secret';
       const newUserApiToken = await request(app)
@@ -151,7 +151,7 @@ describe('Auth Module', () => {
         .then(({ body }) => body.data.token);
 
       await request(app)
-        .patch('/api/v1/auth/me')
+        .put('/api/v1/auth/me')
         .auth(newUserApiToken, {
           type: 'bearer',
         })
@@ -162,7 +162,7 @@ describe('Auth Module', () => {
         .expect(422);
 
       await request(app)
-        .patch('/api/v1/auth/me')
+        .put('/api/v1/auth/me')
         .auth(newUserApiToken, {
           type: 'bearer',
         })
@@ -182,7 +182,7 @@ describe('Auth Module', () => {
         });
 
       await request(app)
-        .patch('/api/v1/auth/me')
+        .put('/api/v1/auth/me')
         .auth(newUserApiToken, {
           type: 'bearer',
         })

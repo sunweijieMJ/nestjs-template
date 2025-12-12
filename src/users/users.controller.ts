@@ -3,7 +3,7 @@ import {
   Get,
   Post,
   Body,
-  Patch,
+  Put,
   Param,
   Delete,
   UseGuards,
@@ -115,7 +115,7 @@ export class UsersController {
   @SerializeOptions({
     groups: ['admin'],
   })
-  @Patch(':id')
+  @Put(':id')
   @HttpCode(HttpStatus.OK)
   @ApiParam({
     name: 'id',
