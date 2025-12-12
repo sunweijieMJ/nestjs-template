@@ -22,7 +22,7 @@ export class UserMapper {
     domainEntity.birthday = raw.birthday;
     if (raw.photo) {
       domainEntity.photo = FileMapper.toDomain(raw.photo);
-    } else if (raw.photo === null) {
+    } else {
       domainEntity.photo = null;
     }
 

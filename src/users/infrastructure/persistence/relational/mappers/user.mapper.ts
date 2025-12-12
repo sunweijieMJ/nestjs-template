@@ -20,6 +20,8 @@ export class UserMapper {
     domainEntity.birthday = raw.birthday;
     if (raw.photo) {
       domainEntity.photo = FileMapper.toDomain(raw.photo);
+    } else {
+      domainEntity.photo = null;
     }
     domainEntity.role = raw.role;
     domainEntity.status = raw.status;
