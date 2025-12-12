@@ -77,7 +77,10 @@ export class UserMapper {
     persistenceSchema.provider = domainEntity.provider;
     persistenceSchema.firstName = domainEntity.firstName;
     persistenceSchema.lastName = domainEntity.lastName;
-    persistenceSchema.phone = domainEntity.phone;
+    // Only set phone if it has a value - sparse index requires field to not exist (not null) for uniqueness
+    if (domainEntity.phone) {
+      persistenceSchema.phone = domainEntity.phone;
+    }
     persistenceSchema.nickname = domainEntity.nickname;
     persistenceSchema.gender = domainEntity.gender;
     persistenceSchema.birthday = domainEntity.birthday;
@@ -87,7 +90,10 @@ export class UserMapper {
     persistenceSchema.createdAt = domainEntity.createdAt;
     persistenceSchema.updatedAt = domainEntity.updatedAt;
     persistenceSchema.deletedAt = domainEntity.deletedAt;
-    persistenceSchema.wechatOpenId = domainEntity.wechatOpenId;
+    // Only set wechatOpenId if it has a value - sparse index requires field to not exist (not null) for uniqueness
+    if (domainEntity.wechatOpenId) {
+      persistenceSchema.wechatOpenId = domainEntity.wechatOpenId;
+    }
     persistenceSchema.wechatUnionId = domainEntity.wechatUnionId;
     return persistenceSchema;
   }
