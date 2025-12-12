@@ -55,11 +55,10 @@ RUN pnpm run build
 # ============================================================
 FROM base AS prod-deps
 
-COPY --from=deps /app/node_modules ./node_modules
 COPY package.json pnpm-lock.yaml ./
 
-# Remove devDependencies, keep only production dependencies
-RUN pnpm prune --prod
+# Install only production dependencies
+RUN pnpm install --frozen-lockfile --prod
 
 # ============================================================
 # Stage 5: Production - Final minimal image
