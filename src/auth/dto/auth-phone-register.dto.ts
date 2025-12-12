@@ -18,11 +18,15 @@ export class AuthPhoneRegisterDto {
   @Matches(/^1[3-9]\d{9}$/, { message: 'phone must be a valid Chinese mobile number' })
   phone: string;
 
-  @ApiProperty({ example: '123456', type: String })
-  @IsNotEmpty()
+  @ApiPropertyOptional({
+    example: '123456',
+    type: String,
+    description: 'SMS code (optional, skip SMS verification if not provided)',
+  })
+  @IsOptional()
   @IsString()
   @Length(4, 8)
-  code: string;
+  code?: string;
 
   @ApiProperty()
   @IsNotEmpty()

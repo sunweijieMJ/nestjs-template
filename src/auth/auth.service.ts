@@ -662,20 +662,22 @@ export class AuthService {
   async registerByPhone(dto: AuthPhoneRegisterDto): Promise<LoginResponseDto> {
     this.logger.log(`Phone registration attempt for: ${dto.phone}`);
 
-    // Verify SMS code
-    const verifyResult = await this.smsService.verifyCode(
-      dto.phone,
-      dto.code,
-      SmsCodeType.REGISTER,
-    );
-    if (!verifyResult.success) {
-      this.logger.warn(`Phone registration failed - invalid code for: ${dto.phone}`);
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          code: 'invalidCode',
-        },
-      });
+    // Verify SMS code only if provided
+    if (dto.code) {
+      const verifyResult = await this.smsService.verifyCode(
+        dto.phone,
+        dto.code,
+        SmsCodeType.REGISTER,
+      );
+      if (!verifyResult.success) {
+        this.logger.warn(`Phone registration failed - invalid code for: ${dto.phone}`);
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            code: 'invalidCode',
+          },
+        });
+      }
     }
 
     // Check if phone already exists
