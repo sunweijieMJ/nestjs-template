@@ -20,14 +20,15 @@ jobs:
       - name: Deploy to server via SSH
         uses: appleboy/ssh-action@v1.2.0
         env:
-          DEPLOY_PATH: ${{ secrets.ECS_DEPLOY_PATH }}
+          DEPLOY_PATH: ${{ secrets.ALIYUN_DEPLOY_PATH }}
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}.git
           BRANCH: ${{ github.event.inputs.branch || 'main' }}
           TAG: ${{ github.ref_name }}
         with:
-          host: ${{ secrets.ECS_HOST }}
-          username: ${{ secrets.ECS_USERNAME }}
-          key: ${{ secrets.ECS_SSH_KEY }}
+          host: ${{ secrets.ALIYUN_HOST }}
+          port: ${{ secrets.ALIYUN_PORT || 22 }}
+          username: ${{ secrets.ALIYUN_USER }}
+          key: ${{ secrets.ALIYUN_SSH_KEY }}
           envs: DEPLOY_PATH,REPO_URL,BRANCH,TAG
           script: |
             set -e
