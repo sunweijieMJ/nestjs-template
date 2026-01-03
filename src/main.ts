@@ -7,12 +7,12 @@ import { useContainer } from 'class-validator';
 import { Logger } from 'nestjs-pino';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
-import validationOptions from './utils/validation-options';
+import validationOptions from './common/validation-options';
 import { AllConfigType } from './config/config.type';
-import { ResolvePromisesInterceptor } from './utils/serializer.interceptor';
-import { AllExceptionsFilter } from './utils/filters/all-exceptions.filter';
-import { MetricsInterceptor } from './metrics/metrics.interceptor';
-import { ResponseInterceptor } from './utils/interceptors/response.interceptor';
+import { ResolvePromisesInterceptor } from './common/serializer.interceptor';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { MetricsInterceptor } from './infrastructure/metrics/metrics.interceptor';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, {

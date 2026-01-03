@@ -1,0 +1,30 @@
+import { DeepPartial } from '../../../../common/types/deep-partial.type';
+import { NullableType } from '../../../../common/types/nullable.type';
+import { IPaginationOptions } from '../../../../common/types/pagination-options';
+import { User } from '../../domain/user';
+
+import { FilterUserDto, SortUserDto } from '../../dto/query-user.dto';
+
+export abstract class UserRepository {
+  abstract create(data: Omit<User, 'id' | 'createdAt' | 'deletedAt' | 'updatedAt'>): Promise<User>;
+
+  abstract findManyWithPagination({
+    filterOptions,
+    sortOptions,
+    paginationOptions,
+  }: {
+    filterOptions?: FilterUserDto | null;
+    sortOptions?: SortUserDto[] | null;
+    paginationOptions: IPaginationOptions;
+  }): Promise<User[]>;
+
+  abstract findById(id: User['id']): Promise<NullableType<User>>;
+  abstract findByIds(ids: User['id'][]): Promise<User[]>;
+  abstract findByEmail(email: User['email']): Promise<NullableType<User>>;
+  abstract findByPhone(phone: User['phone']): Promise<NullableType<User>>;
+  abstract findByWechatOpenId(openId: string): Promise<NullableType<User>>;
+
+  abstract update(id: User['id'], payload: DeepPartial<User>): Promise<User | null>;
+
+  abstract remove(id: User['id']): Promise<void>;
+}

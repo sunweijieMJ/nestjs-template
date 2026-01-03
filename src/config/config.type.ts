@@ -1,14 +1,14 @@
 import { AppConfig } from './app-config.type';
-import { AuthConfig } from '../auth/config/auth-config.type';
-import { DatabaseConfig } from '../database/config/database-config.type';
-import { FileConfig } from '../files/config/file-config.type';
-import { MailConfig } from '../mail/config/mail-config.type';
-import { LoggerConfig } from '../logger/config/logger-config.type';
-import { RedisConfig } from '../redis/config/redis-config.type';
-import { ThrottlerConfig } from '../throttler/config/throttler-config.type';
-import { MetricsConfig } from '../metrics/config/metrics-config.type';
-import { SmsConfig } from '../sms/config/sms-config.type';
-import { WechatConfig } from '../wechat/config/wechat-config.type';
+import { AuthConfig } from '../core/auth/config/auth-config.type';
+import { DatabaseConfig } from '../infrastructure/database/config/database-config.type';
+import { FileConfig } from '../modules/files/config/file-config.type';
+import { MailConfig } from '../integrations/mail/config/mail-config.type';
+import { LoggerConfig } from '../infrastructure/logger/config/logger-config.type';
+import { RedisConfig } from '../infrastructure/redis/config/redis-config.type';
+import { ThrottlerConfig } from '../infrastructure/throttler/config/throttler-config.type';
+import { MetricsConfig } from '../infrastructure/metrics/config/metrics-config.type';
+import { SmsConfig } from '../integrations/sms/config/sms-config.type';
+import { WechatConfig } from '../integrations/wechat/config/wechat-config.type';
 
 export type AllConfigType = {
   app: AppConfig;

@@ -1,6 +1,6 @@
 import { registerAs } from '@nestjs/config';
 import { AppConfig } from './app-config.type';
-import validateConfig from '.././utils/validate-config';
+import validateConfig from '../common/validate-config';
 import { IsEnum, IsInt, IsOptional, IsString, IsUrl, Max, Min } from 'class-validator';
 
 enum Environment {

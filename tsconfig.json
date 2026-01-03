@@ -29,11 +29,7 @@
     "noUnusedParameters": true,
     "paths": {
       "@/*": ["src/*"],
-      "@config/*": ["src/config/*"],
-      "@database/*": ["src/database/*"],
-      "@users/*": ["src/users/*"],
-      "@auth/*": ["src/auth/*"],
-      "@utils/*": ["src/utils/*"]
+      "@config/*": ["src/config/*"]
     }
   },
   "include": ["src/**/*"],
