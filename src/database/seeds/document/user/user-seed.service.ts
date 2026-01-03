@@ -20,7 +20,7 @@ export class UserSeedService {
 
     if (!admin) {
       const salt = await bcrypt.genSalt();
-      const password = await bcrypt.hash('secret00', salt);
+      const password = await bcrypt.hash('Secret00', salt);
 
       const data = new this.model({
         email: 'admin@example.com',
@@ -43,7 +43,7 @@ export class UserSeedService {
 
     if (!user) {
       const salt = await bcrypt.genSalt();
-      const password = await bcrypt.hash('secret00', salt);
+      const password = await bcrypt.hash('Secret00', salt);
 
       const data = new this.model({
         email: 'john.doe@example.com',

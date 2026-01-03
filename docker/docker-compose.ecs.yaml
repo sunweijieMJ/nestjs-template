@@ -1,21 +1,17 @@
-# ECS 服务器部署配置 (本地构建模式)
-# 直接在服务器上构建镜像，不需要镜像仓库
+# ECS 服务器部署配置 (ACR 镜像模式)
+# 使用阿里云容器镜像服务 (ACR) 部署
 #
 # 首次部署:
-#   1. git clone 仓库到部署目录
-#   2. cp docker/.env.ecs.example .env 并修改配置
-#   3. docker compose -f docker/docker-compose.ecs.yaml up -d --build
+#   1. 在服务器上创建部署目录
+#   2. 复制本文件和 .env 到服务器
+#   3. 登录 ACR: docker login registry.cn-{region}.aliyuncs.com
+#   4. docker compose -f docker/docker-compose.ecs.yaml up -d
 #
-# CI/CD 会自动 git pull 并重新构建
+# CI/CD 会自动拉取新镜像并重启服务
 
 services:
   api:
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: production
-      args:
-        DB_TYPE: relational
+    image: ${IMAGE_FULL_NAME:-registry.cn-hangzhou.aliyuncs.com/your-namespace/nestjs-api:latest}
     container_name: nestjs-api
     ports:
       - "${APP_PORT:-3000}:3000"

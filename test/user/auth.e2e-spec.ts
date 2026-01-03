@@ -6,7 +6,7 @@ describe('Auth Module', () => {
   const newUserFirstName = `Tester${Date.now()}`;
   const newUserLastName = `E2E`;
   const newUserEmail = `User.${Date.now()}@example.com`;
-  const newUserPassword = `secret00`;
+  const newUserPassword = `Secret00`;
 
   describe('Registration', () => {
     it('should fail with exists email: /api/v1/auth/email/register (POST)', () => {
@@ -144,7 +144,7 @@ describe('Auth Module', () => {
 
     it('should update profile successfully: /api/v1/auth/me (PUT)', async () => {
       const newUserNewName = Date.now();
-      const newUserNewPassword = 'new-secret';
+      const newUserNewPassword = 'NewSecret00';
       const newUserApiToken = await request(app)
         .post('/api/v1/auth/email/login')
         .send({ email: newUserEmail, password: newUserPassword })
