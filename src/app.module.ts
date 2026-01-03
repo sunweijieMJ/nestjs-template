@@ -38,6 +38,9 @@ import { SmsModule } from './sms/sms.module';
 import { AddressesModule } from './addresses/addresses.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { FeedbacksModule } from './feedbacks/feedbacks.module';
+import { PermissionsModule } from './permissions/permissions.module';
+import { TransactionModule } from './database/transaction/transaction.module';
+import { AuditModule } from './audit/audit.module';
 
 // <database-block>
 const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig).isDocumentDatabase
@@ -54,6 +57,10 @@ const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig).isDocu
       },
     });
 // </database-block>
+
+// Modules that only work with relational databases (TypeORM)
+const isDocumentDatabase = (databaseConfig() as DatabaseConfig).isDocumentDatabase;
+const relationalOnlyModules = isDocumentDatabase ? [] : [TransactionModule, AuditModule];
 
 @Module({
   imports: [
@@ -166,6 +173,8 @@ const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig).isDocu
     AddressesModule,
     FavoritesModule,
     FeedbacksModule,
+    PermissionsModule,
+    ...relationalOnlyModules,
   ],
 })
 export class AppModule {}

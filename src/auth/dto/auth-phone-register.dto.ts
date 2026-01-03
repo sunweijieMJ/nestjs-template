@@ -10,6 +10,7 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { sanitizeTransformer } from '../../utils/transformers/sanitize.transformer';
+import { IsStrongPassword } from '../../utils/validators/password-strength.validator';
 
 export class AuthPhoneRegisterDto {
   @ApiProperty({ example: '13800138000', type: String })
@@ -21,7 +22,7 @@ export class AuthPhoneRegisterDto {
   @ApiPropertyOptional({
     example: '123456',
     type: String,
-    description: 'SMS code (optional, skip SMS verification if not provided)',
+    description: 'SMS verification code (optional, required for code-based registration)',
   })
   @IsOptional()
   @IsString()
@@ -32,6 +33,7 @@ export class AuthPhoneRegisterDto {
   @IsNotEmpty()
   @MinLength(8)
   @MaxLength(128)
+  @IsStrongPassword()
   password: string;
 
   @ApiPropertyOptional({ example: 'Johnny', type: String })

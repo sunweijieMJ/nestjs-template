@@ -456,6 +456,14 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
+    // Check if user is still active
+    if (user.status?.id?.toString() !== StatusEnum.active.toString()) {
+      this.logger.warn(
+        `Token refresh failed - user is inactive/blocked: ${session.user.id}, status: ${user.status?.id}`,
+      );
+      throw new UnauthorizedException();
+    }
+
     await this.sessionService.update(session.id, {
       hash,
     });
@@ -662,7 +670,7 @@ export class AuthService {
   async registerByPhone(dto: AuthPhoneRegisterDto): Promise<LoginResponseDto> {
     this.logger.log(`Phone registration attempt for: ${dto.phone}`);
 
-    // Verify SMS code only if provided
+    // Verify SMS code only if provided (code-based registration)
     if (dto.code) {
       const verifyResult = await this.smsService.verifyCode(
         dto.phone,

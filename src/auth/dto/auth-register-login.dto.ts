@@ -3,6 +3,7 @@ import { IsEmail, IsNotEmpty, MaxLength, MinLength } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { lowerCaseTransformer } from '../../utils/transformers/lower-case.transformer';
 import { sanitizeTransformer } from '../../utils/transformers/sanitize.transformer';
+import { IsStrongPassword } from '../../utils/validators/password-strength.validator';
 
 export class AuthRegisterLoginDto {
   @ApiProperty({ example: 'test1@example.com', type: String })
@@ -13,6 +14,7 @@ export class AuthRegisterLoginDto {
   @ApiProperty()
   @MinLength(8)
   @MaxLength(128)
+  @IsStrongPassword()
   password: string;
 
   @ApiProperty({ example: 'John' })
