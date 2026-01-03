@@ -16,9 +16,7 @@ export class FavoriteMapper {
     return domainEntity;
   }
 
-  static toPersistence(
-    domainEntity: Omit<Favorite, 'id' | 'createdAt'>,
-  ): Partial<FavoriteSchemaClass> {
+  static toPersistence(domainEntity: Omit<Favorite, 'id' | 'createdAt'>): Partial<FavoriteSchemaClass> {
     return {
       userId: new Types.ObjectId(String(domainEntity.userId)),
       targetType: domainEntity.targetType,

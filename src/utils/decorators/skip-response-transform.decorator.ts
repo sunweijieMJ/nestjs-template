@@ -13,5 +13,4 @@ export const SKIP_RESPONSE_TRANSFORM_KEY = 'skipResponseTransform';
  *   return streamFile();
  * }
  */
-export const SkipResponseTransform = (): CustomDecorator<string> =>
-  SetMetadata(SKIP_RESPONSE_TRANSFORM_KEY, true);
+export const SkipResponseTransform = (): CustomDecorator<string> => SetMetadata(SKIP_RESPONSE_TRANSFORM_KEY, true);

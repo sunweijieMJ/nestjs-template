@@ -32,9 +32,6 @@ export default registerAs<LoggerConfig>('logger', () => {
 
   return {
     level: process.env.LOG_LEVEL ?? (isProduction ? 'info' : 'debug'),
-    prettyPrint:
-      process.env.LOG_PRETTY_PRINT !== undefined
-        ? process.env.LOG_PRETTY_PRINT === 'true'
-        : !isProduction,
+    prettyPrint: process.env.LOG_PRETTY_PRINT !== undefined ? process.env.LOG_PRETTY_PRINT === 'true' : !isProduction,
   };
 });

@@ -11,14 +11,7 @@ import {
   Request,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiCreatedResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiParam,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FeedbacksService } from './feedbacks.service';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
@@ -49,10 +42,7 @@ export class FeedbacksController {
   @ApiOperation({ operationId: 'createFeedback', summary: '提交反馈' })
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(
-    @Request() request: RequestWithUser,
-    @Body() createFeedbackDto: CreateFeedbackDto,
-  ): Promise<Feedback> {
+  create(@Request() request: RequestWithUser, @Body() createFeedbackDto: CreateFeedbackDto): Promise<Feedback> {
     return this.feedbacksService.create(request.user.id, createFeedbackDto);
   }
 
@@ -86,10 +76,7 @@ export class FeedbacksController {
   @Get(':id')
   @ApiParam({ name: 'id', type: String, required: true })
   @HttpCode(HttpStatus.OK)
-  async findOne(
-    @Request() request: RequestWithUser,
-    @Param('id') id: Feedback['id'],
-  ): Promise<Feedback> {
+  async findOne(@Request() request: RequestWithUser, @Param('id') id: Feedback['id']): Promise<Feedback> {
     const feedback = await this.feedbacksService.findById(id);
 
     // Check if feedback exists and belongs to current user

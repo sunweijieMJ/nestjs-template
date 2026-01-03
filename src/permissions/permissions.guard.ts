@@ -59,14 +59,10 @@ export class PermissionsGuard implements CanActivate {
 
     const userPermissions = RolePermissions[roleId] ?? [];
 
-    const hasAllPermissions = requiredPermissions.every((permission) =>
-      userPermissions.includes(permission),
-    );
+    const hasAllPermissions = requiredPermissions.every((permission) => userPermissions.includes(permission));
 
     if (!hasAllPermissions) {
-      const missingPermissions = requiredPermissions.filter(
-        (permission) => !userPermissions.includes(permission),
-      );
+      const missingPermissions = requiredPermissions.filter((permission) => !userPermissions.includes(permission));
       throw new ForbiddenException(`Missing permissions: ${missingPermissions.join(', ')}`);
     }
 

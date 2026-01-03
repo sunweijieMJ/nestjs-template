@@ -16,13 +16,9 @@ export class AddressRelationalRepository implements AddressRepository {
     private readonly addressRepository: Repository<AddressEntity>,
   ) {}
 
-  async create(
-    data: Omit<Address, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>,
-  ): Promise<Address> {
+  async create(data: Omit<Address, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>): Promise<Address> {
     const persistenceModel = AddressMapper.toPersistence(data);
-    const newEntity = await this.addressRepository.save(
-      this.addressRepository.create(persistenceModel),
-    );
+    const newEntity = await this.addressRepository.save(this.addressRepository.create(persistenceModel));
     return AddressMapper.toDomain(newEntity);
   }
 
@@ -71,10 +67,7 @@ export class AddressRelationalRepository implements AddressRepository {
     return entity ? AddressMapper.toDomain(entity) : null;
   }
 
-  async findByIdAndUserId(
-    id: Address['id'],
-    userId: Address['userId'],
-  ): Promise<NullableType<Address>> {
+  async findByIdAndUserId(id: Address['id'], userId: Address['userId']): Promise<NullableType<Address>> {
     const entity = await this.addressRepository.findOne({
       where: { id: Number(id), userId: Number(userId) },
     });
@@ -109,10 +102,7 @@ export class AddressRelationalRepository implements AddressRepository {
   }
 
   async clearDefaultByUserId(userId: Address['userId']): Promise<void> {
-    await this.addressRepository.update(
-      { userId: Number(userId), isDefault: true },
-      { isDefault: false },
-    );
+    await this.addressRepository.update({ userId: Number(userId), isDefault: true }, { isDefault: false });
   }
 
   async remove(id: Address['id']): Promise<void> {

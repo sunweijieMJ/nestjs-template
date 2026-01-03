@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Post,
-  Response,
-  UploadedFile,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Controller, Get, Param, Post, Response, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,

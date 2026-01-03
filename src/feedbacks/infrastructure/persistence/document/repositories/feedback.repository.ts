@@ -15,9 +15,7 @@ export class FeedbackDocumentRepository implements FeedbackRepository {
     private readonly feedbackModel: Model<FeedbackSchemaClass>,
   ) {}
 
-  async create(
-    data: Omit<Feedback, 'id' | 'status' | 'createdAt' | 'updatedAt'>,
-  ): Promise<Feedback> {
+  async create(data: Omit<Feedback, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Promise<Feedback> {
     const created = new this.feedbackModel({
       userId: new Types.ObjectId(data.userId.toString()),
       type: data.type,

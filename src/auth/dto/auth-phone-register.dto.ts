@@ -1,13 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  Matches,
-  Length,
-  MinLength,
-  MaxLength,
-} from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, Matches, Length, MinLength, MaxLength } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { sanitizeTransformer } from '../../utils/transformers/sanitize.transformer';
 import { IsStrongPassword } from '../../utils/validators/password-strength.validator';

@@ -159,9 +159,7 @@ export function IsStrongPassword(
             failures.push('one special character');
           }
 
-          return failures.length > 0
-            ? `Password must contain ${failures.join(', ')}`
-            : 'Password is too weak';
+          return failures.length > 0 ? `Password must contain ${failures.join(', ')}` : 'Password is too weak';
         },
       },
     });

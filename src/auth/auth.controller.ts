@@ -157,10 +157,7 @@ export class AuthController {
   @ApiOkResponse({
     type: User,
   })
-  public update(
-    @Request() request: RequestWithUser,
-    @Body() userDto: AuthUpdateDto,
-  ): Promise<NullableType<User>> {
+  public update(@Request() request: RequestWithUser, @Body() userDto: AuthUpdateDto): Promise<NullableType<User>> {
     return this.service.update(request.user, userDto);
   }
 
@@ -233,11 +230,7 @@ export class AuthController {
     @Request() request: RequestWithUser,
     @Body() changePasswordDto: AuthChangePasswordDto,
   ): Promise<void> {
-    return this.service.changePassword(
-      request.user,
-      changePasswordDto.oldPassword,
-      changePasswordDto.newPassword,
-    );
+    return this.service.changePassword(request.user, changePasswordDto.oldPassword, changePasswordDto.newPassword);
   }
 
   @SerializeOptions({

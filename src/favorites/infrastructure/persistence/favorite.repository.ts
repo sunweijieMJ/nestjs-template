@@ -31,8 +31,5 @@ export abstract class FavoriteRepository {
     targetId: string,
   ): Promise<void>;
 
-  abstract countByUserId(
-    userId: Favorite['userId'],
-    targetType?: FavoriteTargetType,
-  ): Promise<number>;
+  abstract countByUserId(userId: Favorite['userId'], targetType?: FavoriteTargetType): Promise<number>;
 }

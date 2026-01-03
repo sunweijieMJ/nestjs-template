@@ -16,9 +16,7 @@ export class AddressDocumentRepository implements AddressRepository {
     private readonly addressModel: Model<AddressSchemaClass>,
   ) {}
 
-  async create(
-    data: Omit<Address, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>,
-  ): Promise<Address> {
+  async create(data: Omit<Address, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>): Promise<Address> {
     const persistenceModel = AddressMapper.toPersistence(data);
     const createdAddress = new this.addressModel(persistenceModel);
     const addressObject = await createdAddress.save();
@@ -58,9 +56,7 @@ export class AddressDocumentRepository implements AddressRepository {
     }
 
     const finalSort =
-      Object.keys(sortObject).length > 0
-        ? sortObject
-        : { isDefault: -1 as SortValue, createdAt: -1 as SortValue };
+      Object.keys(sortObject).length > 0 ? sortObject : { isDefault: -1 as SortValue, createdAt: -1 as SortValue };
 
     const addressObjects = await this.addressModel
       .find(where)
@@ -79,10 +75,7 @@ export class AddressDocumentRepository implements AddressRepository {
     return addressObject ? AddressMapper.toDomain(addressObject) : null;
   }
 
-  async findByIdAndUserId(
-    id: Address['id'],
-    userId: Address['userId'],
-  ): Promise<NullableType<Address>> {
+  async findByIdAndUserId(id: Address['id'], userId: Address['userId']): Promise<NullableType<Address>> {
     const addressObject = await this.addressModel.findOne({
       _id: new Types.ObjectId(String(id)),
       userId: new Types.ObjectId(String(userId)),
@@ -125,10 +118,7 @@ export class AddressDocumentRepository implements AddressRepository {
   }
 
   async remove(id: Address['id']): Promise<void> {
-    await this.addressModel.updateOne(
-      { _id: new Types.ObjectId(String(id)) },
-      { $set: { deletedAt: new Date() } },
-    );
+    await this.addressModel.updateOne({ _id: new Types.ObjectId(String(id)) }, { $set: { deletedAt: new Date() } });
   }
 
   async countByUserId(userId: Address['userId']): Promise<number> {

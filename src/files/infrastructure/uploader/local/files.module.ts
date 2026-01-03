@@ -45,10 +45,7 @@ const infrastructurePersistenceModule = (databaseConfig() as DatabaseConfig).isD
           storage: diskStorage({
             destination: './files',
             filename: (_request, file, callback) => {
-              callback(
-                null,
-                `${randomStringGenerator()}.${file.originalname.split('.').pop()?.toLowerCase()}`,
-              );
+              callback(null, `${randomStringGenerator()}.${file.originalname.split('.').pop()?.toLowerCase()}`);
             },
           }),
           limits: {

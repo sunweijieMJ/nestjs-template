@@ -64,9 +64,7 @@ export class UsersService {
     return { id: statusDto.id };
   }
 
-  private async validatePhoto(
-    photoDto: { id: string } | null | undefined,
-  ): Promise<FileType | null | undefined> {
+  private async validatePhoto(photoDto: { id: string } | null | undefined): Promise<FileType | null | undefined> {
     if (photoDto === null) {
       return null;
     }

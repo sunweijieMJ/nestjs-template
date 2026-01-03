@@ -5,9 +5,7 @@ import { FeedbackRepository } from '../feedback.repository';
 import { FeedbackDocumentRepository } from './repositories/feedback.repository';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([{ name: FeedbackSchemaClass.name, schema: FeedbackSchema }]),
-  ],
+  imports: [MongooseModule.forFeature([{ name: FeedbackSchemaClass.name, schema: FeedbackSchema }])],
   providers: [
     {
       provide: FeedbackRepository,

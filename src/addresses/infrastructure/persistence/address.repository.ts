@@ -5,9 +5,7 @@ import { IPaginationOptions } from '../../../utils/types/pagination-options';
 import { FilterAddressDto, SortAddressDto } from '../../dto/query-address.dto';
 
 export abstract class AddressRepository {
-  abstract create(
-    data: Omit<Address, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>,
-  ): Promise<Address>;
+  abstract create(data: Omit<Address, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>): Promise<Address>;
 
   abstract findManyWithPagination({
     userId,
@@ -23,10 +21,7 @@ export abstract class AddressRepository {
 
   abstract findById(id: Address['id']): Promise<NullableType<Address>>;
 
-  abstract findByIdAndUserId(
-    id: Address['id'],
-    userId: Address['userId'],
-  ): Promise<NullableType<Address>>;
+  abstract findByIdAndUserId(id: Address['id'], userId: Address['userId']): Promise<NullableType<Address>>;
 
   abstract findDefaultByUserId(userId: Address['userId']): Promise<NullableType<Address>>;
 

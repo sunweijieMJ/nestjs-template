@@ -12,14 +12,7 @@ import {
   HttpCode,
   Request,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiCreatedResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiParam,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AddressesService } from './addresses.service';
 import { CreateAddressDto } from './dto/create-address.dto';
@@ -52,10 +45,7 @@ export class AddressesController {
   @ApiOperation({ operationId: 'createAddress', summary: '创建地址' })
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(
-    @Request() request: RequestWithUser,
-    @Body() createAddressDto: CreateAddressDto,
-  ): Promise<Address> {
+  create(@Request() request: RequestWithUser, @Body() createAddressDto: CreateAddressDto): Promise<Address> {
     return this.addressesService.create(request.user.id, createAddressDto);
   }
 
@@ -106,10 +96,7 @@ export class AddressesController {
     type: String,
     required: true,
   })
-  findOne(
-    @Request() request: RequestWithUser,
-    @Param('id') id: Address['id'],
-  ): Promise<NullableType<Address>> {
+  findOne(@Request() request: RequestWithUser, @Param('id') id: Address['id']): Promise<NullableType<Address>> {
     return this.addressesService.findById(id, request.user.id);
   }
 
@@ -139,10 +126,7 @@ export class AddressesController {
     type: String,
     required: true,
   })
-  setDefault(
-    @Request() request: RequestWithUser,
-    @Param('id') id: Address['id'],
-  ): Promise<Address> {
+  setDefault(@Request() request: RequestWithUser, @Param('id') id: Address['id']): Promise<Address> {
     return this.addressesService.setDefault(id, request.user.id);
   }
 

@@ -12,15 +12,7 @@ import { SmsModule } from '../sms/sms.module';
 import { WechatModule } from '../wechat/wechat.module';
 
 @Module({
-  imports: [
-    UsersModule,
-    SessionModule,
-    PassportModule,
-    MailModule,
-    SmsModule,
-    WechatModule,
-    JwtModule.register({}),
-  ],
+  imports: [UsersModule, SessionModule, PassportModule, MailModule, SmsModule, WechatModule, JwtModule.register({})],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, JwtRefreshStrategy],
   exports: [AuthService],

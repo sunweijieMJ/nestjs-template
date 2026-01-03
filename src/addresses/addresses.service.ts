@@ -82,11 +82,7 @@ export class AddressesService {
     return this.addressRepository.findDefaultByUserId(userId);
   }
 
-  async update(
-    id: Address['id'],
-    userId: Address['userId'],
-    updateAddressDto: UpdateAddressDto,
-  ): Promise<Address> {
+  async update(id: Address['id'], userId: Address['userId'], updateAddressDto: UpdateAddressDto): Promise<Address> {
     this.logger.log(`Updating address: ${id} for user: ${userId}`);
 
     // Check ownership

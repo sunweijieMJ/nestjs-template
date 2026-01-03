@@ -68,9 +68,7 @@ export class HealthController {
   @ApiOperation({ summary: 'Liveness probe for Kubernetes' })
   @HealthCheck()
   liveness(): Promise<import('@nestjs/terminus').HealthCheckResult> {
-    return this.health.check([
-      () => this.memoryHealthIndicator.checkHeap('memory_heap', 300 * 1024 * 1024),
-    ]);
+    return this.health.check([() => this.memoryHealthIndicator.checkHeap('memory_heap', 300 * 1024 * 1024)]);
   }
 
   @Get('ready')

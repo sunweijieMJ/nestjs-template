@@ -15,9 +15,7 @@ export class FeedbackRelationalRepository implements FeedbackRepository {
     private readonly feedbackRepository: Repository<FeedbackEntity>,
   ) {}
 
-  async create(
-    data: Omit<Feedback, 'id' | 'status' | 'createdAt' | 'updatedAt'>,
-  ): Promise<Feedback> {
+  async create(data: Omit<Feedback, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Promise<Feedback> {
     const entity = this.feedbackRepository.create({
       ...FeedbackMapper.toPersistence(data),
       status: FeedbackStatus.PENDING,

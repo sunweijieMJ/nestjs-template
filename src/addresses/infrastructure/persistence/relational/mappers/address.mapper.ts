@@ -19,9 +19,7 @@ export class AddressMapper {
     return domainEntity;
   }
 
-  static toPersistence(
-    domainEntity: Omit<Address, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>,
-  ): AddressEntity {
+  static toPersistence(domainEntity: Omit<Address, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>): AddressEntity {
     const persistenceEntity = new AddressEntity();
     persistenceEntity.userId = Number(domainEntity.userId);
     persistenceEntity.name = domainEntity.name;

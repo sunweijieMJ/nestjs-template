@@ -24,9 +24,7 @@ export class FavoritesService {
     );
 
     if (existing) {
-      this.logger.warn(
-        `Already favorited: ${createFavoriteDto.targetType}:${createFavoriteDto.targetId}`,
-      );
+      this.logger.warn(`Already favorited: ${createFavoriteDto.targetType}:${createFavoriteDto.targetId}`);
       throw new ConflictException({
         error: 'alreadyFavorited',
         message: 'This item is already in your favorites',
@@ -67,11 +65,7 @@ export class FavoritesService {
     targetType: FavoriteTargetType,
     targetId: string,
   ): Promise<CheckFavoriteResponseDto> {
-    const favorite = await this.favoriteRepository.findByUserAndTarget(
-      userId,
-      targetType,
-      targetId,
-    );
+    const favorite = await this.favoriteRepository.findByUserAndTarget(userId, targetType, targetId);
     return {
       isFavorited: !!favorite,
       favoriteId: favorite?.id,
@@ -105,9 +99,7 @@ export class FavoritesService {
 
     if (existing) {
       await this.favoriteRepository.remove(existing.id);
-      this.logger.log(
-        `Favorite toggled off: ${createFavoriteDto.targetType}:${createFavoriteDto.targetId}`,
-      );
+      this.logger.log(`Favorite toggled off: ${createFavoriteDto.targetType}:${createFavoriteDto.targetId}`);
       return { isFavorited: false };
     } else {
       const favorite = await this.favoriteRepository.create({
@@ -123,10 +115,7 @@ export class FavoritesService {
     }
   }
 
-  async countByUserId(
-    userId: Favorite['userId'],
-    targetType?: FavoriteTargetType,
-  ): Promise<number> {
+  async countByUserId(userId: Favorite['userId'], targetType?: FavoriteTargetType): Promise<number> {
     return this.favoriteRepository.countByUserId(userId, targetType);
   }
 }

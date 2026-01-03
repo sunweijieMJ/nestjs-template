@@ -11,14 +11,7 @@ import {
   HttpCode,
   Request,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiCreatedResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiParam,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FavoritesService } from './favorites.service';
 import { CreateFavoriteDto } from './dto/create-favorite.dto';
@@ -50,10 +43,7 @@ export class FavoritesController {
   @ApiOperation({ operationId: 'createFavorite', summary: '添加收藏' })
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(
-    @Request() request: RequestWithUser,
-    @Body() createFavoriteDto: CreateFavoriteDto,
-  ): Promise<Favorite> {
+  create(@Request() request: RequestWithUser, @Body() createFavoriteDto: CreateFavoriteDto): Promise<Favorite> {
     return this.favoritesService.create(request.user.id, createFavoriteDto);
   }
 
@@ -89,11 +79,7 @@ export class FavoritesController {
     @Request() request: RequestWithUser,
     @Body() checkFavoriteDto: CheckFavoriteDto,
   ): Promise<CheckFavoriteResponseDto> {
-    return this.favoritesService.check(
-      request.user.id,
-      checkFavoriteDto.targetType,
-      checkFavoriteDto.targetId,
-    );
+    return this.favoritesService.check(request.user.id, checkFavoriteDto.targetType, checkFavoriteDto.targetId);
   }
 
   @ApiOkResponse({

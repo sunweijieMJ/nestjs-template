@@ -64,10 +64,7 @@ const infrastructurePersistenceModule = (databaseConfig() as DatabaseConfig).isD
             }),
             contentType: multerS3.AUTO_CONTENT_TYPE,
             key: (_request, file, callback) => {
-              callback(
-                null,
-                `${randomStringGenerator()}.${file.originalname.split('.').pop()?.toLowerCase()}`,
-              );
+              callback(null, `${randomStringGenerator()}.${file.originalname.split('.').pop()?.toLowerCase()}`);
             },
           }),
           limits: {

@@ -337,10 +337,7 @@ export class AuthService {
     return this.usersService.findById(userJwtPayload.id);
   }
 
-  async update(
-    userJwtPayload: JwtPayloadType,
-    userDto: AuthUpdateDto,
-  ): Promise<NullableType<User>> {
+  async update(userJwtPayload: JwtPayloadType, userDto: AuthUpdateDto): Promise<NullableType<User>> {
     const currentUser = await this.usersService.findById(userJwtPayload.id);
 
     if (!currentUser) {
@@ -431,9 +428,7 @@ export class AuthService {
     return this.usersService.findById(userJwtPayload.id);
   }
 
-  async refreshToken(
-    data: Pick<JwtRefreshPayloadType, 'sessionId' | 'hash'>,
-  ): Promise<Omit<LoginResponseDto, 'user'>> {
+  async refreshToken(data: Pick<JwtRefreshPayloadType, 'sessionId' | 'hash'>): Promise<Omit<LoginResponseDto, 'user'>> {
     this.logger.debug(`Token refresh attempt for session: ${data.sessionId}`);
     const session = await this.sessionService.findById(data.sessionId);
 
@@ -616,11 +611,7 @@ export class AuthService {
     this.logger.log(`Phone SMS login attempt for: ${loginDto.phone}`);
 
     // Verify SMS code
-    const verifyResult = await this.smsService.verifyCode(
-      loginDto.phone,
-      loginDto.code,
-      SmsCodeType.LOGIN,
-    );
+    const verifyResult = await this.smsService.verifyCode(loginDto.phone, loginDto.code, SmsCodeType.LOGIN);
     if (!verifyResult.success) {
       this.logger.warn(`Phone SMS login failed - invalid code for: ${loginDto.phone}`);
       throw new UnprocessableEntityException({
@@ -672,11 +663,7 @@ export class AuthService {
 
     // Verify SMS code only if provided (code-based registration)
     if (dto.code) {
-      const verifyResult = await this.smsService.verifyCode(
-        dto.phone,
-        dto.code,
-        SmsCodeType.REGISTER,
-      );
+      const verifyResult = await this.smsService.verifyCode(dto.phone, dto.code, SmsCodeType.REGISTER);
       if (!verifyResult.success) {
         this.logger.warn(`Phone registration failed - invalid code for: ${dto.phone}`);
         throw new UnprocessableEntityException({
@@ -737,11 +724,7 @@ export class AuthService {
     };
   }
 
-  async changePassword(
-    userJwtPayload: JwtPayloadType,
-    oldPassword: string,
-    newPassword: string,
-  ): Promise<void> {
+  async changePassword(userJwtPayload: JwtPayloadType, oldPassword: string, newPassword: string): Promise<void> {
     this.logger.log(`Password change attempt for user: ${userJwtPayload.id}`);
 
     const user = await this.usersService.findById(userJwtPayload.id);
@@ -769,9 +752,7 @@ export class AuthService {
     const isValidOldPassword = await bcrypt.compare(oldPassword, user.password);
 
     if (!isValidOldPassword) {
-      this.logger.warn(
-        `Password change failed - incorrect old password for user: ${userJwtPayload.id}`,
-      );
+      this.logger.warn(`Password change failed - incorrect old password for user: ${userJwtPayload.id}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {

@@ -17,9 +17,7 @@ export class FavoriteRelationalRepository implements FavoriteRepository {
 
   async create(data: Omit<Favorite, 'id' | 'createdAt'>): Promise<Favorite> {
     const persistenceModel = FavoriteMapper.toPersistence(data);
-    const newEntity = await this.favoriteRepository.save(
-      this.favoriteRepository.create(persistenceModel),
-    );
+    const newEntity = await this.favoriteRepository.save(this.favoriteRepository.create(persistenceModel));
     return FavoriteMapper.toDomain(newEntity);
   }
 
@@ -88,10 +86,7 @@ export class FavoriteRelationalRepository implements FavoriteRepository {
     });
   }
 
-  async countByUserId(
-    userId: Favorite['userId'],
-    targetType?: FavoriteTargetType,
-  ): Promise<number> {
+  async countByUserId(userId: Favorite['userId'], targetType?: FavoriteTargetType): Promise<number> {
     const where: FindOptionsWhere<FavoriteEntity> = {
       userId: Number(userId),
     };

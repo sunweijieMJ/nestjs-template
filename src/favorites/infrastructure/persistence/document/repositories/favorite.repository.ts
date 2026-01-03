@@ -82,10 +82,7 @@ export class FavoriteDocumentRepository implements FavoriteRepository {
     });
   }
 
-  async countByUserId(
-    userId: Favorite['userId'],
-    targetType?: FavoriteTargetType,
-  ): Promise<number> {
+  async countByUserId(userId: Favorite['userId'], targetType?: FavoriteTargetType): Promise<number> {
     const where: FilterQuery<FavoriteSchemaClass> = {
       userId: new Types.ObjectId(String(userId)),
     };

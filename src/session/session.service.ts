@@ -15,9 +15,7 @@ export class SessionService {
     return this.sessionRepository.findById(id);
   }
 
-  async create(
-    data: Omit<Session, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>,
-  ): Promise<Session> {
+  async create(data: Omit<Session, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>): Promise<Session> {
     const session = await this.sessionRepository.create(data);
     this.logger.debug(`Session created: ${session.id} for user: ${data.user.id}`);
     return session;
@@ -41,13 +39,8 @@ export class SessionService {
     this.logger.debug(`All sessions deleted for user: ${conditions.userId}`);
   }
 
-  async deleteByUserIdWithExclude(conditions: {
-    userId: User['id'];
-    excludeSessionId: Session['id'];
-  }): Promise<void> {
+  async deleteByUserIdWithExclude(conditions: { userId: User['id']; excludeSessionId: Session['id'] }): Promise<void> {
     await this.sessionRepository.deleteByUserIdWithExclude(conditions);
-    this.logger.debug(
-      `Sessions deleted for user: ${conditions.userId}, excluding: ${conditions.excludeSessionId}`,
-    );
+    this.logger.debug(`Sessions deleted for user: ${conditions.userId}, excluding: ${conditions.excludeSessionId}`);
   }
 }

@@ -1,9 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Request } from 'express';
-import {
-  AuditLogRepository,
-  FindAuditLogsOptions,
-} from './infrastructure/persistence/audit-log.repository';
+import { AuditLogRepository, FindAuditLogsOptions } from './infrastructure/persistence/audit-log.repository';
 import { AuditLog, AuditAction } from './domain/audit-log';
 import { IPaginationOptions } from '../utils/types/pagination-options';
 
@@ -55,9 +52,7 @@ export class AuditService {
       requestId: (request?.headers?.['x-request-id'] as string) ?? null,
     });
 
-    this.logger.debug(
-      `Audit log created: ${action} on ${entityType}:${entityId} by user ${userId ?? 'anonymous'}`,
-    );
+    this.logger.debug(`Audit log created: ${action} on ${entityType}:${entityId} by user ${userId ?? 'anonymous'}`);
 
     return auditLog;
   }

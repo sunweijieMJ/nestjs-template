@@ -60,10 +60,6 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiResponse<T>
     }
 
     const response = data as Record<string, unknown>;
-    return (
-      typeof response.code === 'number' &&
-      typeof response.message === 'string' &&
-      'data' in response
-    );
+    return typeof response.code === 'number' && typeof response.message === 'string' && 'data' in response;
   }
 }

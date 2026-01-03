@@ -130,9 +130,7 @@ export class WechatService {
       const tokenData = (await tokenResponse.json()) as WechatAppTokenResult;
 
       if (tokenData.errcode) {
-        this.logger.error(
-          `WeChat App token exchange failed: ${tokenData.errcode} - ${tokenData.errmsg}`,
-        );
+        this.logger.error(`WeChat App token exchange failed: ${tokenData.errcode} - ${tokenData.errmsg}`);
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
@@ -148,9 +146,7 @@ export class WechatService {
       const userInfoData = (await userInfoResponse.json()) as WechatAppUserInfoResult;
 
       if (userInfoData.errcode) {
-        this.logger.error(
-          `WeChat App user info failed: ${userInfoData.errcode} - ${userInfoData.errmsg}`,
-        );
+        this.logger.error(`WeChat App user info failed: ${userInfoData.errcode} - ${userInfoData.errmsg}`);
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {

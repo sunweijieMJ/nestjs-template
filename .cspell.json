@@ -74,15 +74,8 @@
     "readiness",
     "healthcheck",
     "healthchecks",
-    "terminus"
+    "terminus",
+    "Procfile"
   ],
-  "ignorePaths": [
-    "node_modules",
-    "dist",
-    "coverage",
-    "*.lock",
-    "*.json",
-    ".git",
-    "CHANGELOG.md"
-  ]
+  "ignorePaths": ["node_modules", "dist", "coverage", "*.lock", "*.json", ".git", "CHANGELOG.md"]
 }

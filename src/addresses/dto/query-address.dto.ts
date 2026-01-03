@@ -41,18 +41,14 @@ export class QueryAddressDto {
 
   @ApiPropertyOptional({ type: String })
   @IsOptional()
-  @Transform(({ value }) =>
-    value ? plainToInstance(FilterAddressDto, JSON.parse(value)) : undefined,
-  )
+  @Transform(({ value }) => (value ? plainToInstance(FilterAddressDto, JSON.parse(value)) : undefined))
   @ValidateNested()
   @Type(() => FilterAddressDto)
   filters?: FilterAddressDto | null;
 
   @ApiPropertyOptional({ type: String })
   @IsOptional()
-  @Transform(({ value }) =>
-    value ? plainToInstance(SortAddressDto, JSON.parse(value)) : undefined,
-  )
+  @Transform(({ value }) => (value ? plainToInstance(SortAddressDto, JSON.parse(value)) : undefined))
   @ValidateNested({ each: true })
   @Type(() => SortAddressDto)
   sort?: SortAddressDto[] | null;

@@ -1,15 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsOptional,
-  MaxLength,
-  MinLength,
-  IsInt,
-  Min,
-  Max,
-  IsDateString,
-} from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, MaxLength, MinLength, IsInt, Min, Max, IsDateString } from 'class-validator';
 import { FileDto } from '../../files/dto/file.dto';
 import { Transform, Type } from 'class-transformer';
 import { lowerCaseTransformer } from '../../utils/transformers/lower-case.transformer';

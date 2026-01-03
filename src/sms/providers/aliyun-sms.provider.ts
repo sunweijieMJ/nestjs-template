@@ -126,9 +126,7 @@ export class AliyunSmsProvider {
         };
       }
     } catch (error) {
-      this.logger.error(
-        `SMS send error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
+      this.logger.error(`SMS send error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return {
         success: false,
         code: 'SEND_ERROR',

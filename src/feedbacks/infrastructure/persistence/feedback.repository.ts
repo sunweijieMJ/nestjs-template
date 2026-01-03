@@ -3,9 +3,7 @@ import { NullableType } from '../../../utils/types/nullable.type';
 import { IPaginationOptions } from '../../../utils/types/pagination-options';
 
 export abstract class FeedbackRepository {
-  abstract create(
-    data: Omit<Feedback, 'id' | 'status' | 'createdAt' | 'updatedAt'>,
-  ): Promise<Feedback>;
+  abstract create(data: Omit<Feedback, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Promise<Feedback>;
 
   abstract findById(id: Feedback['id']): Promise<NullableType<Feedback>>;
 

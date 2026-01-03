@@ -5,9 +5,7 @@ import { FavoriteRepository } from '../favorite.repository';
 import { FavoriteDocumentRepository } from './repositories/favorite.repository';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([{ name: FavoriteSchemaClass.name, schema: FavoriteSchema }]),
-  ],
+  imports: [MongooseModule.forFeature([{ name: FavoriteSchemaClass.name, schema: FavoriteSchema }])],
   providers: [
     {
       provide: FavoriteRepository,

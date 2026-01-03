@@ -1,13 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsArray,
-  MaxLength,
-  ArrayMaxSize,
-} from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, IsArray, MaxLength, ArrayMaxSize } from 'class-validator';
 import { FeedbackType } from '../domain/feedback';
 
 export class CreateFeedbackDto {
