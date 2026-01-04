@@ -119,12 +119,6 @@ jobs:
             fi
             echo "✅ Image pulled successfully"
 
-            echo "📥 Pre-pulling base images..."
-            docker pull postgres:17-alpine &
-            docker pull redis:7-alpine &
-            wait
-            echo "✅ Base images pulled"
-
             echo "📝 Updating docker-compose configuration..."
             export IMAGE_FULL_NAME="${IMAGE_FULL_NAME}"
 

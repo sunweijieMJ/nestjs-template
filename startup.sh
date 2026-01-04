@@ -51,12 +51,20 @@ fi
 # Run migrations (only for relational database)
 if [ "$DB_TYPE" = "relational" ]; then
   echo "Running database migrations..."
-  npm run migration:run
+  if [ "$ENV_MODE" = "prod" ]; then
+    npm run migration:run:prod
+  else
+    npm run migration:run
+  fi
 fi
 
-# Run seed data
-echo "Running seed data..."
-npm run seed:run:${DB_TYPE}
+# Run seed data (skip in production)
+if [ "$ENV_MODE" != "prod" ]; then
+  echo "Running seed data..."
+  npm run seed:run:${DB_TYPE}
+else
+  echo "Skipping seed data in production mode"
+fi
 
 # Start application based on environment
 case $ENV_MODE in
