@@ -19,6 +19,7 @@ services:
       - ../.env
     environment:
       NODE_ENV: production
+      ENV_MODE: prod
       # 数据库配置
       DATABASE_TYPE: postgres
       DATABASE_HOST: postgres
