@@ -61,6 +61,7 @@ async function bootstrap(): Promise<void> {
         },
       },
       crossOriginEmbedderPolicy: false,
+      crossOriginOpenerPolicy: false,
       crossOriginResourcePolicy: { policy: 'cross-origin' },
     }),
   );
