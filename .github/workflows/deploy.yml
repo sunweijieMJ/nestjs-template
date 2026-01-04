@@ -12,14 +12,16 @@ on:
         default: 'main'
 
 env:
-  ACR_REGISTRY: ${{ secrets.ACR_REGISTRY }}  # 例如: registry.cn-hangzhou.aliyuncs.com
-  ACR_NAMESPACE: ${{ secrets.ACR_NAMESPACE }}  # 例如: your-namespace
-  IMAGE_NAME: nestjs-api
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build-and-push:
-    name: Build and Push to ACR
+    name: Build and Push to GHCR
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     outputs:
       image_tag: ${{ steps.meta.outputs.tag }}
 
@@ -42,17 +44,16 @@ jobs:
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "📌 Image tag: ${TAG}"
 
-      - name: Login to ACR
-        run: |
-          echo "🔐 Logging in to ACR..."
-          docker login \
-            --username=${{ secrets.ACR_USERNAME }} \
-            --password=${{ secrets.ACR_PASSWORD }} \
-            ${{ env.ACR_REGISTRY }}
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
         run: |
-          IMAGE_FULL_NAME="${{ env.ACR_REGISTRY }}/${{ env.ACR_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}"
+          IMAGE_FULL_NAME="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}"
           echo "🔨 Building image: ${IMAGE_FULL_NAME}"
 
           docker buildx build \
@@ -60,7 +61,7 @@ jobs:
             --target production \
             --build-arg DB_TYPE=relational \
             --tag ${IMAGE_FULL_NAME} \
-            --tag ${{ env.ACR_REGISTRY }}/${{ env.ACR_NAMESPACE }}/${{ env.IMAGE_NAME }}:latest \
+            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
             --push \
             .
 
@@ -77,31 +78,26 @@ jobs:
         uses: appleboy/ssh-action@v1.2.0
         env:
           DEPLOY_PATH: ${{ secrets.ALIYUN_DEPLOY_PATH }}
-          ACR_REGISTRY: ${{ secrets.ACR_REGISTRY }}
-          ACR_NAMESPACE: ${{ secrets.ACR_NAMESPACE }}
-          ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
-          ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
-          IMAGE_NAME: nestjs-api
+          REGISTRY: ghcr.io
+          IMAGE_NAME: ${{ github.repository }}
           IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
         with:
           host: ${{ secrets.ALIYUN_HOST }}
           port: ${{ secrets.ALIYUN_PORT || 22 }}
           username: ${{ secrets.ALIYUN_USER }}
           key: ${{ secrets.ALIYUN_SSH_KEY }}
-          envs: DEPLOY_PATH,ACR_REGISTRY,ACR_NAMESPACE,ACR_USERNAME,ACR_PASSWORD,IMAGE_NAME,IMAGE_TAG
+          envs: DEPLOY_PATH,REGISTRY,IMAGE_NAME,IMAGE_TAG,GHCR_TOKEN
           script: |
             set -e
 
             cd "$DEPLOY_PATH"
 
-            echo "🔐 Logging in to ACR..."
-            docker login \
-              --username="${ACR_USERNAME}" \
-              --password="${ACR_PASSWORD}" \
-              "${ACR_REGISTRY}"
+            echo "🔐 Logging in to GHCR..."
+            echo "${GHCR_TOKEN}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
             echo "📥 Pulling latest image..."
-            IMAGE_FULL_NAME="${ACR_REGISTRY}/${ACR_NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG}"
+            IMAGE_FULL_NAME="${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
             docker pull "${IMAGE_FULL_NAME}"
 
             echo "📝 Updating docker-compose configuration..."
@@ -128,7 +124,7 @@ jobs:
 
             # 清理旧镜像（保留最新的 3 个版本）
             echo "🧹 Cleaning up old images..."
-            docker images "${ACR_REGISTRY}/${ACR_NAMESPACE}/${IMAGE_NAME}" --format "{{.ID}} {{.CreatedAt}}" | \
+            docker images "${REGISTRY}/${IMAGE_NAME}" --format "{{.ID}} {{.CreatedAt}}" | \
               sort -rk 2 | \
               tail -n +4 | \
               awk '{print $1}' | \

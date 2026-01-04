@@ -1,17 +1,17 @@
-# ECS 服务器部署配置 (ACR 镜像模式)
-# 使用阿里云容器镜像服务 (ACR) 部署
+# ECS 服务器部署配置 (GHCR 镜像模式)
+# 使用 GitHub Container Registry (GHCR) 部署
 #
 # 首次部署:
 #   1. 在服务器上创建部署目录
 #   2. 复制本文件和 .env 到服务器
-#   3. 登录 ACR: docker login registry.cn-{region}.aliyuncs.com
+#   3. 登录 GHCR: echo $GHCR_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
 #   4. docker compose -f docker/docker-compose.ecs.yaml up -d
 #
 # CI/CD 会自动拉取新镜像并重启服务
 
 services:
   api:
-    image: ${IMAGE_FULL_NAME:-registry.cn-hangzhou.aliyuncs.com/your-namespace/nestjs-api:latest}
+    image: ${IMAGE_FULL_NAME:-ghcr.io/your-username/nestjs-boilerplate:latest}
     container_name: nestjs-api
     ports:
       - "${APP_PORT:-3000}:3000"
