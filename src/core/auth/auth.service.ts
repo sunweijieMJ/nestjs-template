@@ -96,8 +96,10 @@ export class AuthService {
       });
     }
 
-    if (user.status?.id !== StatusEnum.active) {
-      this.logger.warn(`Login failed - user not active: ${user.id}`);
+    // Allow inactive users to login (they just haven't confirmed email yet)
+    // Only block if status is explicitly set to something other than active/inactive
+    if (user.status?.id !== StatusEnum.active && user.status?.id !== StatusEnum.inactive) {
+      this.logger.warn(`Login failed - user status not allowed: ${user.id}, status: ${user.status?.id}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
