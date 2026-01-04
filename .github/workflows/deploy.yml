@@ -100,11 +100,24 @@ jobs:
             echo "🔐 Logging in to GHCR..."
             echo "${GHCR_TOKEN}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            echo "📥 Pulling latest image..."
+            echo "📥 Pulling latest image with retry..."
             # Convert image name to lowercase for Docker compatibility
             IMAGE_NAME_LOWER=$(echo "${IMAGE_NAME}" | tr '[:upper:]' '[:lower:]')
             IMAGE_FULL_NAME="${REGISTRY}/${IMAGE_NAME_LOWER}:${IMAGE_TAG}"
-            docker pull "${IMAGE_FULL_NAME}"
+
+            retry=0
+            max_retries=3
+            until docker pull "${IMAGE_FULL_NAME}" || [ $retry -eq $max_retries ]; do
+              retry=$((retry + 1))
+              echo "  Retry $retry/$max_retries for ${IMAGE_FULL_NAME}..."
+              sleep 10
+            done
+
+            if [ $retry -eq $max_retries ]; then
+              echo "❌ Failed to pull image after $max_retries attempts"
+              exit 1
+            fi
+            echo "✅ Image pulled successfully"
 
             echo "📥 Pre-pulling base images..."
             docker pull postgres:17-alpine &
