@@ -11,7 +11,7 @@
 
 services:
   api:
-    image: ${IMAGE_FULL_NAME:-ghcr.io/your-username/nestjs-boilerplate:latest}
+    image: ${IMAGE_FULL_NAME:-ghcr.io/sunweijiemj/nestjs-template:latest}
     container_name: nestjs-api
     ports:
       - "${APP_PORT:-3000}:3000"
