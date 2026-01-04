@@ -72,8 +72,17 @@ describe('Auth Module', () => {
     beforeAll(async () => {
       const response = await request(app)
         .post('/api/v1/auth/email/login')
-        .send({ email: newUserEmail, password: newUserPassword })
-        .expect(200);
+        .send({ email: newUserEmail, password: newUserPassword });
+
+      // Debug: log response if login fails
+      if (response.status !== 200) {
+        console.error('Login failed in beforeAll');
+        console.error('Status:', response.status);
+        console.error('Body:', JSON.stringify(response.body, null, 2));
+      }
+
+      // This will throw if status is not 200
+      expect(response.status).toBe(200);
 
       if (!response.body.data?.token) {
         throw new Error(`Login failed in beforeAll. Response: ${JSON.stringify(response.body)}`);
