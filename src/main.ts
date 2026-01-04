@@ -16,7 +16,6 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, {
-    cors: true,
     bufferLogs: true,
   });
 
@@ -24,6 +23,31 @@ async function bootstrap(): Promise<void> {
   app.useLogger(app.get(Logger));
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
   const configService = app.get(ConfigService<AllConfigType>);
+
+  // CORS configuration
+  const frontendDomain = configService.get('app.frontendDomain', { infer: true });
+  const nodeEnv = configService.get('app.nodeEnv', { infer: true });
+
+  if (nodeEnv === 'production' && frontendDomain) {
+    // Production: only allow configured frontend domain(s)
+    const allowedOrigins = frontendDomain.split(',').map((origin) => origin.trim());
+    app.enableCors({
+      origin: allowedOrigins,
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        configService.getOrThrow('app.headerLanguage', { infer: true }),
+      ],
+    });
+  } else {
+    // Development: allow all origins for easier testing
+    app.enableCors({
+      origin: true,
+      credentials: true,
+    });
+  }
 
   // Security middleware
   app.use(

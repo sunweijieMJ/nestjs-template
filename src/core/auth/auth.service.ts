@@ -9,7 +9,7 @@ import {
 import ms from 'ms';
 import crypto from 'crypto';
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, TokenExpiredError, JsonWebTokenError } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthUpdateDto } from './dto/auth-update.dto';
@@ -34,6 +34,7 @@ import { AuthPhoneSmsLoginDto } from './dto/auth-phone-sms-login.dto';
 import { AuthPhoneRegisterDto } from './dto/auth-phone-register.dto';
 import { AuthWechatLoginDto, WechatLoginType } from './dto/auth-wechat-login.dto';
 import { WechatService } from '../../integrations/wechat/wechat.service';
+import { maskEmail, maskPhone } from '../../common/utils/sanitize.utils';
 
 @Injectable()
 export class AuthService {
@@ -50,11 +51,11 @@ export class AuthService {
   ) {}
 
   async validateLogin(loginDto: AuthEmailLoginDto): Promise<LoginResponseDto> {
-    this.logger.log(`Login attempt for email: ${loginDto.email}`);
+    this.logger.log(`Login attempt for email: ${maskEmail(loginDto.email)}`);
     const user = await this.usersService.findByEmail(loginDto.email);
 
     if (!user) {
-      this.logger.warn(`Login failed - user not found: ${loginDto.email}`);
+      this.logger.warn(`Login failed - user not found: ${maskEmail(loginDto.email)}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
@@ -95,32 +96,22 @@ export class AuthService {
       });
     }
 
-    const hash = crypto.createHash('sha256').update(randomStringGenerator()).digest('hex');
-
-    const session = await this.sessionService.create({
-      user,
-      hash,
-    });
-
-    const { token, refreshToken, tokenExpires } = await this.getTokensData({
-      id: user.id,
-      role: user.role,
-      sessionId: session.id,
-      hash,
-    });
+    if (user.status?.id !== StatusEnum.active) {
+      this.logger.warn(`Login failed - user not active: ${user.id}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          email: 'userNotActive',
+        },
+      });
+    }
 
     this.logger.log(`Login successful for user: ${user.id}`);
-
-    return {
-      refreshToken,
-      token,
-      tokenExpires,
-      user,
-    };
+    return this.createSessionAndTokens(user);
   }
 
   async register(dto: AuthRegisterLoginDto): Promise<void> {
-    this.logger.log(`Registration attempt for email: ${dto.email}`);
+    this.logger.log(`Registration attempt for email: ${maskEmail(dto.email)}`);
 
     const user = await this.usersService.create({
       ...dto,
@@ -156,7 +147,7 @@ export class AuthService {
       },
     });
 
-    this.logger.log(`Confirmation email sent to: ${dto.email}`);
+    this.logger.log(`Confirmation email sent to: ${maskEmail(dto.email)}`);
   }
 
   async confirmEmail(hash: string): Promise<void> {
@@ -173,23 +164,45 @@ export class AuthService {
       });
 
       userId = jwtData.confirmEmailUserId;
-    } catch {
-      this.logger.warn('Email confirmation failed - invalid hash');
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          hash: `invalidHash`,
-        },
-      });
+    } catch (error) {
+      if (error instanceof TokenExpiredError) {
+        this.logger.warn('Email confirmation failed - token expired');
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            hash: 'tokenExpired',
+          },
+        });
+      }
+      if (error instanceof JsonWebTokenError) {
+        this.logger.warn('Email confirmation failed - invalid hash');
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            hash: 'invalidHash',
+          },
+        });
+      }
+      throw error;
     }
 
     const user = await this.usersService.findById(userId);
 
-    if (!user || user?.status?.id?.toString() !== StatusEnum.inactive.toString()) {
-      this.logger.warn(`Email confirmation failed - user not found or already active: ${userId}`);
+    if (!user) {
+      this.logger.warn(`Email confirmation failed - user not found: ${userId}`);
       throw new NotFoundException({
         status: HttpStatus.NOT_FOUND,
-        error: `notFound`,
+        error: 'notFound',
+      });
+    }
+
+    if (user.status?.id !== StatusEnum.inactive) {
+      this.logger.warn(`Email confirmation failed - user already active: ${userId}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          hash: 'alreadyConfirmed',
+        },
       });
     }
 
@@ -245,11 +258,11 @@ export class AuthService {
   }
 
   async forgotPassword(email: string): Promise<void> {
-    this.logger.log(`Password reset requested for: ${email}`);
+    this.logger.log(`Password reset requested for: ${maskEmail(email)}`);
     const user = await this.usersService.findByEmail(email);
 
     if (!user) {
-      this.logger.warn(`Password reset failed - email not found: ${email}`);
+      this.logger.warn(`Password reset failed - email not found: ${maskEmail(email)}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
@@ -284,7 +297,7 @@ export class AuthService {
       },
     });
 
-    this.logger.log(`Password reset email sent to: ${email}`);
+    this.logger.log(`Password reset email sent to: ${maskEmail(email)}`);
   }
 
   async resetPassword(hash: string, password: string): Promise<void> {
@@ -301,14 +314,26 @@ export class AuthService {
       });
 
       userId = jwtData.forgotUserId;
-    } catch {
-      this.logger.warn('Password reset failed - invalid hash');
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          hash: `invalidHash`,
-        },
-      });
+    } catch (error) {
+      if (error instanceof TokenExpiredError) {
+        this.logger.warn('Password reset failed - token expired');
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            hash: 'tokenExpired',
+          },
+        });
+      }
+      if (error instanceof JsonWebTokenError) {
+        this.logger.warn('Password reset failed - invalid hash');
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            hash: 'invalidHash',
+          },
+        });
+      }
+      throw error;
     }
 
     const user = await this.usersService.findById(userId);
@@ -442,7 +467,7 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
-    const hash = crypto.createHash('sha256').update(randomStringGenerator()).digest('hex');
+    const hash = this.generateSessionHash();
 
     const user = await this.usersService.findById(session.user.id);
 
@@ -485,13 +510,13 @@ export class AuthService {
   }
 
   async sendCode(phone: string, type: SmsCodeType = SmsCodeType.LOGIN): Promise<void> {
-    this.logger.log(`Send SMS code request for phone: ${phone}, type: ${type}`);
+    this.logger.log(`Send SMS code request for phone: ${maskPhone(phone)}, type: ${type}`);
 
     // For register type, check if phone already exists
     if (type === SmsCodeType.REGISTER) {
       const existingUser = await this.usersService.findByPhone(phone);
       if (existingUser) {
-        this.logger.warn(`Phone already registered: ${phone}`);
+        this.logger.warn(`Phone already registered: ${maskPhone(phone)}`);
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
@@ -505,7 +530,7 @@ export class AuthService {
     if (type === SmsCodeType.LOGIN || type === SmsCodeType.RESET_PASSWORD) {
       const user = await this.usersService.findByPhone(phone);
       if (!user) {
-        this.logger.warn(`Phone not found: ${phone}`);
+        this.logger.warn(`Phone not found: ${maskPhone(phone)}`);
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
@@ -517,7 +542,7 @@ export class AuthService {
 
     const sendResult = await this.smsService.sendCode(phone, type);
     if (!sendResult.success) {
-      this.logger.warn(`Failed to send SMS code to ${phone}: ${sendResult.message}`);
+      this.logger.warn(`Failed to send SMS code to ${maskPhone(phone)}: ${sendResult.message}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
@@ -526,15 +551,15 @@ export class AuthService {
         },
       });
     }
-    this.logger.log(`SMS code sent to: ${phone}`);
+    this.logger.log(`SMS code sent to: ${maskPhone(phone)}`);
   }
 
   async validatePhoneLogin(loginDto: AuthPhoneLoginDto): Promise<LoginResponseDto> {
-    this.logger.log(`Phone login attempt for: ${loginDto.phone}`);
+    this.logger.log(`Phone login attempt for: ${maskPhone(loginDto.phone)}`);
     const user = await this.usersService.findByPhone(loginDto.phone);
 
     if (!user) {
-      this.logger.warn(`Phone login failed - user not found: ${loginDto.phone}`);
+      this.logger.warn(`Phone login failed - user not found: ${maskPhone(loginDto.phone)}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
@@ -575,37 +600,27 @@ export class AuthService {
       });
     }
 
-    const hash = crypto.createHash('sha256').update(randomStringGenerator()).digest('hex');
-
-    const session = await this.sessionService.create({
-      user,
-      hash,
-    });
-
-    const { token, refreshToken, tokenExpires } = await this.getTokensData({
-      id: user.id,
-      role: user.role,
-      sessionId: session.id,
-      hash,
-    });
+    if (user.status?.id !== StatusEnum.active) {
+      this.logger.warn(`Phone login failed - user not active: ${user.id}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          phone: 'userNotActive',
+        },
+      });
+    }
 
     this.logger.log(`Phone login successful for user: ${user.id}`);
-
-    return {
-      refreshToken,
-      token,
-      tokenExpires,
-      user,
-    };
+    return this.createSessionAndTokens(user);
   }
 
   async validatePhoneSmsLogin(loginDto: AuthPhoneSmsLoginDto): Promise<LoginResponseDto> {
-    this.logger.log(`Phone SMS login attempt for: ${loginDto.phone}`);
+    this.logger.log(`Phone SMS login attempt for: ${maskPhone(loginDto.phone)}`);
 
     // Verify SMS code
     const verifyResult = await this.smsService.verifyCode(loginDto.phone, loginDto.code, SmsCodeType.LOGIN);
     if (!verifyResult.success) {
-      this.logger.warn(`Phone SMS login failed - invalid code for: ${loginDto.phone}`);
+      this.logger.warn(`Phone SMS login failed - invalid code for: ${maskPhone(loginDto.phone)}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
@@ -617,7 +632,7 @@ export class AuthService {
     const user = await this.usersService.findByPhone(loginDto.phone);
 
     if (!user) {
-      this.logger.warn(`Phone SMS login failed - user not found: ${loginDto.phone}`);
+      this.logger.warn(`Phone SMS login failed - user not found: ${maskPhone(loginDto.phone)}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
@@ -626,38 +641,28 @@ export class AuthService {
       });
     }
 
-    const hash = crypto.createHash('sha256').update(randomStringGenerator()).digest('hex');
-
-    const session = await this.sessionService.create({
-      user,
-      hash,
-    });
-
-    const { token, refreshToken, tokenExpires } = await this.getTokensData({
-      id: user.id,
-      role: user.role,
-      sessionId: session.id,
-      hash,
-    });
+    if (user.status?.id !== StatusEnum.active) {
+      this.logger.warn(`Phone SMS login failed - user not active: ${user.id}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          phone: 'userNotActive',
+        },
+      });
+    }
 
     this.logger.log(`Phone SMS login successful for user: ${user.id}`);
-
-    return {
-      refreshToken,
-      token,
-      tokenExpires,
-      user,
-    };
+    return this.createSessionAndTokens(user);
   }
 
   async registerByPhone(dto: AuthPhoneRegisterDto): Promise<LoginResponseDto> {
-    this.logger.log(`Phone registration attempt for: ${dto.phone}`);
+    this.logger.log(`Phone registration attempt for: ${maskPhone(dto.phone)}`);
 
     // Verify SMS code only if provided (code-based registration)
     if (dto.code) {
       const verifyResult = await this.smsService.verifyCode(dto.phone, dto.code, SmsCodeType.REGISTER);
       if (!verifyResult.success) {
-        this.logger.warn(`Phone registration failed - invalid code for: ${dto.phone}`);
+        this.logger.warn(`Phone registration failed - invalid code for: ${maskPhone(dto.phone)}`);
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
@@ -670,7 +675,7 @@ export class AuthService {
     // Check if phone already exists
     const existingUser = await this.usersService.findByPhone(dto.phone);
     if (existingUser) {
-      this.logger.warn(`Phone registration failed - phone already exists: ${dto.phone}`);
+      this.logger.warn(`Phone registration failed - phone already exists: ${maskPhone(dto.phone)}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
@@ -693,27 +698,7 @@ export class AuthService {
     });
 
     this.logger.log(`User registered successfully via phone: ${user.id}`);
-
-    const hash = crypto.createHash('sha256').update(randomStringGenerator()).digest('hex');
-
-    const session = await this.sessionService.create({
-      user,
-      hash,
-    });
-
-    const { token, refreshToken, tokenExpires } = await this.getTokensData({
-      id: user.id,
-      role: user.role,
-      sessionId: session.id,
-      hash,
-    });
-
-    return {
-      refreshToken,
-      token,
-      tokenExpires,
-      user,
-    };
+    return this.createSessionAndTokens(user);
   }
 
   async changePassword(userJwtPayload: JwtPayloadType, oldPassword: string, newPassword: string): Promise<void> {
@@ -800,7 +785,22 @@ export class AuthService {
       this.logger.log(`Existing user found for WeChat openId: ${wechatUserInfo.openId}`);
     }
 
-    const hash = crypto.createHash('sha256').update(randomStringGenerator()).digest('hex');
+    this.logger.log(`WeChat login successful for user: ${user.id}`);
+    return this.createSessionAndTokens(user);
+  }
+
+  /**
+   * Generate a secure session hash
+   */
+  private generateSessionHash(): string {
+    return crypto.createHash('sha256').update(randomStringGenerator()).digest('hex');
+  }
+
+  /**
+   * Create session and generate tokens for a user
+   */
+  private async createSessionAndTokens(user: User): Promise<LoginResponseDto> {
+    const hash = this.generateSessionHash();
 
     const session = await this.sessionService.create({
       user,
@@ -813,8 +813,6 @@ export class AuthService {
       sessionId: session.id,
       hash,
     });
-
-    this.logger.log(`WeChat login successful for user: ${user.id}`);
 
     return {
       refreshToken,

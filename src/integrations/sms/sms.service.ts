@@ -2,6 +2,7 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { randomInt } from 'crypto';
 import { AllConfigType } from '../../config/config.type';
 import { AliyunSmsProvider } from './providers/aliyun-sms.provider';
 
@@ -43,13 +44,13 @@ export class SmsService {
   ) {}
 
   /**
-   * Generate a random verification code
+   * Generate a cryptographically secure random verification code
    */
   private generateCode(): string {
     const length = this.configService.get('sms.codeLength', { infer: true }) ?? 6;
     let code = '';
     for (let i = 0; i < length; i++) {
-      code += Math.floor(Math.random() * 10).toString();
+      code += randomInt(0, 10).toString();
     }
     return code;
   }
