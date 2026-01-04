@@ -77,7 +77,6 @@ WORKDIR /app
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./
-COPY --from=builder /app/.env ./
 
 # Copy mail templates if they exist
 COPY --from=builder /app/src/integrations/mail/mail-templates ./src/integrations/mail/mail-templates
