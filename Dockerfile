@@ -80,7 +80,7 @@ COPY --from=builder /app/package.json ./
 COPY --from=builder /app/.env ./
 
 # Copy mail templates if they exist
-COPY --from=builder /app/src/mail/mail-templates ./src/mail/mail-templates
+COPY --from=builder /app/src/integrations/mail/mail-templates ./src/integrations/mail/mail-templates
 
 # Copy i18n files if they exist
 COPY --from=builder /app/src/i18n ./src/i18n
