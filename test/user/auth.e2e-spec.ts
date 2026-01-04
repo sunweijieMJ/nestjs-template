@@ -73,6 +73,7 @@ describe('Auth Module', () => {
       await request(app)
         .post('/api/v1/auth/email/login')
         .send({ email: newUserEmail, password: newUserPassword })
+        .expect(200)
         .then(({ body }) => {
           newUserApiToken = body.data.token;
         });
@@ -145,14 +146,14 @@ describe('Auth Module', () => {
     it('should update profile successfully: /api/v1/auth/me (PUT)', async () => {
       const newUserNewName = Date.now();
       const newUserNewPassword = 'NewSecret00';
-      const newUserApiToken = await request(app)
+      const userToken = await request(app)
         .post('/api/v1/auth/email/login')
         .send({ email: newUserEmail, password: newUserPassword })
         .then(({ body }) => body.data.token);
 
       await request(app)
         .put('/api/v1/auth/me')
-        .auth(newUserApiToken, {
+        .auth(userToken, {
           type: 'bearer',
         })
         .send({
@@ -163,7 +164,7 @@ describe('Auth Module', () => {
 
       await request(app)
         .put('/api/v1/auth/me')
-        .auth(newUserApiToken, {
+        .auth(userToken, {
           type: 'bearer',
         })
         .send({
@@ -183,7 +184,7 @@ describe('Auth Module', () => {
 
       await request(app)
         .put('/api/v1/auth/me')
-        .auth(newUserApiToken, {
+        .auth(userToken, {
           type: 'bearer',
         })
         .send({ password: newUserPassword, oldPassword: newUserNewPassword })
