@@ -72,7 +72,7 @@ export class UsersDocumentRepository implements UserRepository {
 
     const userObject = await this.usersModel.findOne({
       email,
-      deletedAt: { $exists: false } // Exclude soft-deleted users
+      deletedAt: { $exists: false }, // Exclude soft-deleted users
     });
     return userObject ? UserMapper.toDomain(userObject) : null;
   }
@@ -82,7 +82,7 @@ export class UsersDocumentRepository implements UserRepository {
 
     const userObject = await this.usersModel.findOne({
       phone,
-      deletedAt: { $exists: false } // Exclude soft-deleted users
+      deletedAt: { $exists: false }, // Exclude soft-deleted users
     });
     return userObject ? UserMapper.toDomain(userObject) : null;
   }
@@ -92,7 +92,7 @@ export class UsersDocumentRepository implements UserRepository {
 
     const userObject = await this.usersModel.findOne({
       wechatOpenId: openId,
-      deletedAt: { $exists: false } // Exclude soft-deleted users
+      deletedAt: { $exists: false }, // Exclude soft-deleted users
     });
     return userObject ? UserMapper.toDomain(userObject) : null;
   }

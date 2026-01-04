@@ -75,7 +75,7 @@ describe('Auth Module', () => {
         .send({ email: newUserEmail, password: newUserPassword })
         .expect(200);
 
-      if (!response.body.data || !response.body.data.token) {
+      if (!response.body.data?.token) {
         throw new Error(`Login failed in beforeAll. Response: ${JSON.stringify(response.body)}`);
       }
 
