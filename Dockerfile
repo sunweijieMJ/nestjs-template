@@ -90,6 +90,9 @@ COPY startup.sh /opt/startup.sh
 RUN chmod +x /opt/wait-for-it.sh /opt/startup.sh
 RUN sed -i 's/\r//g' /opt/wait-for-it.sh /opt/startup.sh
 
+# Create files directory with proper permissions for node user
+RUN mkdir -p /app/files && chown -R node:node /app/files
+
 EXPOSE 3000
 
 USER node
