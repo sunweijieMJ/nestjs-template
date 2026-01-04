@@ -89,6 +89,7 @@ jobs:
           port: ${{ secrets.ALIYUN_PORT || 22 }}
           username: ${{ secrets.ALIYUN_USER }}
           key: ${{ secrets.ALIYUN_SSH_KEY }}
+          timeout: 60s
           command_timeout: 30m
           envs: DEPLOY_PATH,REGISTRY,IMAGE_NAME,IMAGE_TAG,GHCR_TOKEN
           script: |
