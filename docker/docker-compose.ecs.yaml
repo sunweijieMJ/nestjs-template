@@ -1,17 +1,18 @@
-# ECS 服务器部署配置 (GHCR 镜像模式)
-# 使用 GitHub Container Registry (GHCR) 部署
+# ECS 服务器部署配置 (Docker Hub 镜像模式)
+# 使用 Docker Hub 部署，通过阿里云镜像加速器提速
 #
 # 首次部署:
 #   1. 在服务器上创建部署目录
 #   2. 复制本文件和 .env 到服务器
-#   3. 登录 GHCR: echo $GHCR_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+#   3. 配置 Docker 镜像加速器（已配置）
 #   4. docker compose -f docker/docker-compose.ecs.yaml up -d
 #
-# CI/CD 会自动拉取新镜像并重启服务
+# CI/CD 会自动登录、拉取新镜像并重启服务
 
 services:
   api:
-    image: ${IMAGE_FULL_NAME:-ghcr.io/sunweijiemj/nestjs-template:latest}
+    # CI/CD 通过 IMAGE_FULL_NAME 环境变量传入实际镜像地址
+    image: ${IMAGE_FULL_NAME:-sunweijiemj/nestjs-template:latest}
     container_name: nestjs-api
     ports:
       - "${APP_PORT:-3000}:3000"
@@ -36,7 +37,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/v1/health/ready || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
