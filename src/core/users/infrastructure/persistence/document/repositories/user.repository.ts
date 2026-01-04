@@ -70,21 +70,30 @@ export class UsersDocumentRepository implements UserRepository {
   async findByEmail(email: User['email']): Promise<NullableType<User>> {
     if (!email) return null;
 
-    const userObject = await this.usersModel.findOne({ email });
+    const userObject = await this.usersModel.findOne({
+      email,
+      deletedAt: { $exists: false } // Exclude soft-deleted users
+    });
     return userObject ? UserMapper.toDomain(userObject) : null;
   }
 
   async findByPhone(phone: User['phone']): Promise<NullableType<User>> {
     if (!phone) return null;
 
-    const userObject = await this.usersModel.findOne({ phone });
+    const userObject = await this.usersModel.findOne({
+      phone,
+      deletedAt: { $exists: false } // Exclude soft-deleted users
+    });
     return userObject ? UserMapper.toDomain(userObject) : null;
   }
 
   async findByWechatOpenId(openId: string): Promise<NullableType<User>> {
     if (!openId) return null;
 
-    const userObject = await this.usersModel.findOne({ wechatOpenId: openId });
+    const userObject = await this.usersModel.findOne({
+      wechatOpenId: openId,
+      deletedAt: { $exists: false } // Exclude soft-deleted users
+    });
     return userObject ? UserMapper.toDomain(userObject) : null;
   }
 
