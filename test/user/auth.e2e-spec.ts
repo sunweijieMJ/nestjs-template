@@ -70,28 +70,37 @@ describe('Auth Module', () => {
     let newUserApiToken: string;
 
     beforeAll(async () => {
-      await request(app)
+      const response = await request(app)
         .post('/api/v1/auth/email/login')
         .send({ email: newUserEmail, password: newUserPassword })
-        .expect(200)
-        .then(({ body }) => {
-          newUserApiToken = body.data.token;
-        });
+        .expect(200);
+
+      if (!response.body.data || !response.body.data.token) {
+        throw new Error(`Login failed in beforeAll. Response: ${JSON.stringify(response.body)}`);
+      }
+
+      newUserApiToken = response.body.data.token;
     });
 
     it('should retrieve your own profile: /api/v1/auth/me (GET)', async () => {
-      await request(app)
+      const response = await request(app)
         .get('/api/v1/auth/me')
         .auth(newUserApiToken, {
           type: 'bearer',
         })
-        .send()
-        .expect(({ body }) => {
-          expect(body.data.provider).toBeDefined();
-          expect(body.data.email).toBeDefined();
-          expect(body.data.hash).not.toBeDefined();
-          expect(body.data.password).not.toBeDefined();
-        });
+        .send();
+
+      // Debug: log response if data is missing
+      if (!response.body.data) {
+        console.error('Response body:', JSON.stringify(response.body, null, 2));
+        console.error('Status:', response.status);
+      }
+
+      expect(response.body.data).toBeDefined();
+      expect(response.body.data.provider).toBeDefined();
+      expect(response.body.data.email).toBeDefined();
+      expect(response.body.data.hash).not.toBeDefined();
+      expect(response.body.data.password).not.toBeDefined();
     });
 
     it('should get new refresh token: /api/v1/auth/refresh (POST)', async () => {
