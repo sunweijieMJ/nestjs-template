@@ -98,8 +98,13 @@ export class AuthService {
 
     // Allow inactive users to login (they just haven't confirmed email yet)
     // Only block if status is explicitly set to something other than active/inactive
-    if (user.status?.id !== StatusEnum.active && user.status?.id !== StatusEnum.inactive) {
-      this.logger.warn(`Login failed - user status not allowed: ${user.id}, status: ${user.status?.id}`);
+    // Note: MongoDB uses string IDs, PostgreSQL uses number IDs
+    const statusId = user.status?.id;
+    const isActive = statusId === StatusEnum.active || statusId === String(StatusEnum.active);
+    const isInactive = statusId === StatusEnum.inactive || statusId === String(StatusEnum.inactive);
+
+    if (!isActive && !isInactive) {
+      this.logger.warn(`Login failed - user status not allowed: ${user.id}, status: ${statusId}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {

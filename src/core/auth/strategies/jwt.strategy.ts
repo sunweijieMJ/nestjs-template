@@ -34,7 +34,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
     // Allow both active and inactive users (inactive = newly registered, not yet confirmed email)
     // Only block if status is explicitly set to something other than active/inactive
-    if (user.status?.id !== StatusEnum.active && user.status?.id !== StatusEnum.inactive) {
+    // Note: MongoDB uses string IDs, PostgreSQL uses number IDs
+    const statusId = user.status?.id;
+    const isActive = statusId === StatusEnum.active || statusId === String(StatusEnum.active);
+    const isInactive = statusId === StatusEnum.inactive || statusId === String(StatusEnum.inactive);
+
+    if (!isActive && !isInactive) {
       throw new UnauthorizedException('User is not active');
     }
 
