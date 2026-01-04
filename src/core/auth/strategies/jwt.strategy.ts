@@ -32,7 +32,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('User not found');
     }
 
-    if (user.status?.id !== StatusEnum.active) {
+    // Allow both active and inactive users (inactive = newly registered, not yet confirmed email)
+    // Only block if status is explicitly set to something other than active/inactive
+    if (user.status?.id !== StatusEnum.active && user.status?.id !== StatusEnum.inactive) {
       throw new UnauthorizedException('User is not active');
     }
 
