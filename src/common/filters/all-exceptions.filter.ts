@@ -40,6 +40,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message = (responseObj.message as string | string[]) || exception.message;
         error = (responseObj.error as string) || exception.name;
         errors = responseObj.errors as Record<string, unknown> | undefined;
+
+        // Try to translate message if it's a string and looks like an i18n key
+        if (typeof message === 'string' && i18n) {
+          const translatedMessage = i18n.t(`common.${message}`, { defaultValue: message });
+          // Only use translated message if it's different from the key
+          if (translatedMessage && translatedMessage !== `common.${message}`) {
+            message = translatedMessage;
+          }
+        }
       } else {
         message = exception.message;
         error = exception.name;

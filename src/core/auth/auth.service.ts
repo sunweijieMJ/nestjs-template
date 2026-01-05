@@ -569,6 +569,7 @@ export class AuthService {
       this.logger.warn(`Phone login failed - user not found: ${maskPhone(loginDto.phone)}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
+        message: 'incorrectPhoneOrPassword',
         errors: {
           credentials: 'incorrectPhoneOrPassword',
         },
@@ -579,6 +580,7 @@ export class AuthService {
       this.logger.warn(`Phone login failed - wrong provider for user ${user.id}: ${user.provider}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
+        message: `needLoginViaProvider:${user.provider}`,
         errors: {
           phone: `needLoginViaProvider:${user.provider}`,
         },
@@ -589,6 +591,7 @@ export class AuthService {
       this.logger.warn(`Phone login failed - no password set for user: ${user.id}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
+        message: 'incorrectPhoneOrPassword',
         errors: {
           credentials: 'incorrectPhoneOrPassword',
         },
@@ -601,6 +604,7 @@ export class AuthService {
       this.logger.warn(`Phone login failed - incorrect password for user: ${user.id}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
+        message: 'incorrectPhoneOrPassword',
         errors: {
           credentials: 'incorrectPhoneOrPassword',
         },
@@ -611,6 +615,7 @@ export class AuthService {
       this.logger.warn(`Phone login failed - user not active: ${user.id}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
+        message: 'userNotActive',
         errors: {
           phone: 'userNotActive',
         },
