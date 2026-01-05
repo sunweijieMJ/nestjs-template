@@ -570,7 +570,7 @@ export class AuthService {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
-          phone: 'notFound',
+          credentials: 'incorrectPhoneOrPassword',
         },
       });
     }
@@ -590,7 +590,7 @@ export class AuthService {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
-          password: 'incorrectPassword',
+          credentials: 'incorrectPhoneOrPassword',
         },
       });
     }
@@ -602,7 +602,7 @@ export class AuthService {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
-          password: 'incorrectPassword',
+          credentials: 'incorrectPhoneOrPassword',
         },
       });
     }

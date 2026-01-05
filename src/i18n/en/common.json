@@ -2,5 +2,6 @@
   "confirmEmail": "Confirm email",
   "resetPassword": "Reset password",
   "tooManyRequests": "Too many requests, please try again later",
-  "internalServerError": "Internal server error"
+  "internalServerError": "Internal server error",
+  "incorrectPhoneOrPassword": "Incorrect phone number or password"
 }

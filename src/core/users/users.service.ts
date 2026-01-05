@@ -87,7 +87,9 @@ export class UsersService {
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    this.logger.log(`Creating user with email: ${createUserDto.email}`);
+    this.logger.log(
+      `Creating user with email: ${createUserDto.email ?? 'N/A'}, phone: ${createUserDto.phone ? createUserDto.phone.substring(0, 3) + '****' + createUserDto.phone.substring(7) : 'N/A'}`,
+    );
     // Do not remove comment below.
     // <creating-property />
 

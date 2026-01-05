@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
 /**
  * Unified API response wrapper
@@ -13,9 +13,6 @@ export class ApiResponse<T = unknown> {
 
   @ApiProperty({ description: 'Response data' })
   data: T;
-
-  @ApiPropertyOptional({ example: 1702300000000, description: 'Unix timestamp in milliseconds' })
-  timestamp?: number;
 }
 
 /**
@@ -29,20 +26,8 @@ export class ApiErrorResponse {
   @ApiProperty({ example: 'Bad Request', description: 'Error message' })
   message: string | string[];
 
-  @ApiPropertyOptional({ example: 'BadRequestException', description: 'Error type' })
-  error?: string;
-
-  @ApiPropertyOptional({ description: 'Detailed error information' })
-  errors?: Record<string, unknown>;
-
-  @ApiPropertyOptional({ example: 1702300000000, description: 'Unix timestamp in milliseconds' })
-  timestamp?: number;
-
-  @ApiPropertyOptional({ example: '/v1/auth/login', description: 'Request path' })
-  path?: string;
-
-  @ApiPropertyOptional({ description: 'Request ID for tracing' })
-  requestId?: string;
+  @ApiProperty({ description: 'Error data (can be null or an object with error details)' })
+  data: Record<string, unknown> | null;
 }
 
 /**
@@ -53,7 +38,6 @@ export function createApiResponse<T>(data: T, message = 'success'): ApiResponse<
     code: 200,
     message,
     data,
-    timestamp: Date.now(),
   };
 }
 
@@ -63,20 +47,11 @@ export function createApiResponse<T>(data: T, message = 'success'): ApiResponse<
 export function createErrorResponse(
   code: number,
   message: string | string[],
-  options?: {
-    error?: string;
-    errors?: Record<string, unknown>;
-    path?: string;
-    requestId?: string;
-  },
+  data: Record<string, unknown> | null = null,
 ): ApiErrorResponse {
   return {
     code,
     message,
-    error: options?.error,
-    errors: options?.errors,
-    timestamp: Date.now(),
-    path: options?.path,
-    requestId: options?.requestId,
+    data,
   };
 }

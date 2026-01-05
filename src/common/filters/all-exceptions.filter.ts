@@ -62,22 +62,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
       this.logger.error(`Unknown exception type`, { exception, path, requestId });
     }
 
-    // Build unified error response
+    // Build simplified error response with only code, message, data
     const responseBody: ApiErrorResponse = {
       code: statusCode,
       message,
-      error,
-      timestamp: Date.now(),
-      path,
+      data: errors ?? null,
     };
-
-    if (errors) {
-      responseBody.errors = errors;
-    }
-
-    if (requestId) {
-      responseBody.requestId = requestId;
-    }
 
     // Log non-500 errors at appropriate levels
     if (statusCode >= 500) {
