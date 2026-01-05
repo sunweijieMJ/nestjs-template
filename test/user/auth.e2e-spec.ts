@@ -20,7 +20,7 @@ describe('Auth Module', () => {
         })
         .expect(422)
         .expect(({ body }) => {
-          expect(body.errors.email).toBeDefined();
+          expect(body.data.email).toBeDefined();
         });
     });
 
