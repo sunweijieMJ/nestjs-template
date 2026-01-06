@@ -23,11 +23,7 @@ import {
   InfinityPaginationResponseDto,
 } from '../../common/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '../../common/infinity-pagination';
-import { JwtPayloadType } from '../../core/auth/strategies/types/jwt-payload.type';
-
-interface RequestWithUser {
-  user: JwtPayloadType;
-}
+import { RequestWithUser } from '../../common/types/request-with-user.type';
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))

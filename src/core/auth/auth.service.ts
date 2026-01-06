@@ -35,6 +35,7 @@ import { AuthPhoneRegisterDto } from './dto/auth-phone-register.dto';
 import { AuthWechatLoginDto, WechatLoginType } from './dto/auth-wechat-login.dto';
 import { WechatService } from '../../integrations/wechat/wechat.service';
 import { maskEmail, maskPhone } from '../../common/utils/sanitize.utils';
+import { isStatusActive, isUserStatusAllowedForAuth } from '../../common/utils/status.util';
 
 @Injectable()
 export class AuthService {
@@ -98,13 +99,8 @@ export class AuthService {
 
     // Allow inactive users to login (they just haven't confirmed email yet)
     // Only block if status is explicitly set to something other than active/inactive
-    // Note: MongoDB uses string IDs, PostgreSQL uses number IDs
-    const statusId = user.status?.id;
-    const isActive = statusId === StatusEnum.active || statusId === String(StatusEnum.active);
-    const isInactive = statusId === StatusEnum.inactive || statusId === String(StatusEnum.inactive);
-
-    if (!isActive && !isInactive) {
-      this.logger.warn(`Login failed - user status not allowed: ${user.id}, status: ${statusId}`);
+    if (!isUserStatusAllowedForAuth(user.status?.id)) {
+      this.logger.warn(`Login failed - user status not allowed: ${user.id}, status: ${user.status?.id}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
@@ -222,6 +218,7 @@ export class AuthService {
   }
 
   async confirmNewEmail(hash: string): Promise<void> {
+    this.logger.log('New email confirmation attempt');
     let userId: User['id'];
     let newEmail: User['email'];
 
@@ -238,13 +235,25 @@ export class AuthService {
       userId = jwtData.confirmEmailUserId;
       newEmail = jwtData.newEmail;
     } catch (error) {
-      this.logger.warn('New email confirmation failed - invalid hash', { error });
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          hash: `invalidHash`,
-        },
-      });
+      if (error instanceof TokenExpiredError) {
+        this.logger.warn('New email confirmation failed - token expired');
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            hash: 'tokenExpired',
+          },
+        });
+      }
+      if (error instanceof JsonWebTokenError) {
+        this.logger.warn('New email confirmation failed - invalid hash');
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            hash: 'invalidHash',
+          },
+        });
+      }
+      throw error;
     }
 
     const user = await this.usersService.findById(userId);
@@ -611,7 +620,7 @@ export class AuthService {
       });
     }
 
-    if (user.status?.id !== StatusEnum.active) {
+    if (!isStatusActive(user.status?.id)) {
       this.logger.warn(`Phone login failed - user not active: ${user.id}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
@@ -653,7 +662,7 @@ export class AuthService {
       });
     }
 
-    if (user.status?.id !== StatusEnum.active) {
+    if (!isStatusActive(user.status?.id)) {
       this.logger.warn(`Phone SMS login failed - user not active: ${user.id}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,

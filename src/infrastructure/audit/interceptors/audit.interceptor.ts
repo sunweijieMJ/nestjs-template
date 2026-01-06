@@ -1,13 +1,9 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable, tap } from 'rxjs';
-import { Request } from 'express';
 import { AuditService } from '../audit.service';
 import { AUDITABLE_KEY, AuditableOptions } from '../decorators/auditable.decorator';
-
-interface RequestWithUser extends Request {
-  user?: { id?: string | number };
-}
+import { RequestWithUser } from '../../../common/types/request-with-user.type';
 
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {

@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { NullableType } from '../../common/types/nullable.type';
 import { FilterUserDto, SortUserDto } from './dto/query-user.dto';
@@ -16,6 +16,7 @@ import { Status } from '../../common/enums/statuses/status';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { RoleDto } from '../../common/enums/roles/role.dto';
 import { StatusDto } from '../../common/enums/statuses/status.dto';
+import { throwValidationError } from '../../common/utils/exceptions.util';
 
 @Injectable()
 export class UsersService {
@@ -34,12 +35,7 @@ export class UsersService {
     const isValidRole = Object.values(RoleEnum).map(String).includes(String(roleDto.id));
 
     if (!isValidRole) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          role: 'roleNotExists',
-        },
-      });
+      throwValidationError('role', 'roleNotExists');
     }
 
     return { id: roleDto.id };
@@ -53,12 +49,7 @@ export class UsersService {
     const isValidStatus = Object.values(StatusEnum).map(String).includes(String(statusDto.id));
 
     if (!isValidStatus) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          status: 'statusNotExists',
-        },
-      });
+      throwValidationError('status', 'statusNotExists');
     }
 
     return { id: statusDto.id };
@@ -75,12 +66,7 @@ export class UsersService {
 
     const fileObject = await this.filesService.findById(photoDto.id);
     if (!fileObject) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          photo: 'imageNotExists',
-        },
-      });
+      throwValidationError('photo', 'imageNotExists');
     }
 
     return fileObject;
@@ -105,12 +91,7 @@ export class UsersService {
     if (createUserDto.email) {
       const userObject = await this.usersRepository.findByEmail(createUserDto.email);
       if (userObject) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            email: 'emailAlreadyExists',
-          },
-        });
+        throwValidationError('email', 'emailAlreadyExists');
       }
       email = createUserDto.email;
     }
@@ -120,12 +101,7 @@ export class UsersService {
     if (createUserDto.phone) {
       const userObject = await this.usersRepository.findByPhone(createUserDto.phone);
       if (userObject) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            phone: 'phoneAlreadyExists',
-          },
-        });
+        throwValidationError('phone', 'phoneAlreadyExists');
       }
       phone = createUserDto.phone;
     }
@@ -215,12 +191,7 @@ export class UsersService {
       const userObject = await this.usersRepository.findByEmail(updateUserDto.email);
 
       if (userObject && userObject.id !== id) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            email: 'emailAlreadyExists',
-          },
-        });
+        throwValidationError('email', 'emailAlreadyExists');
       }
 
       email = updateUserDto.email;
@@ -234,12 +205,7 @@ export class UsersService {
       const userObject = await this.usersRepository.findByPhone(updateUserDto.phone);
 
       if (userObject && userObject.id !== id) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            phone: 'phoneAlreadyExists',
-          },
-        });
+        throwValidationError('phone', 'phoneAlreadyExists');
       }
 
       phone = updateUserDto.phone;

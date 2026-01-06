@@ -6,7 +6,7 @@ import { OrNeverType } from '../../../common/types/or-never.type';
 import { JwtPayloadType } from './types/jwt-payload.type';
 import { AllConfigType } from '../../../config/config.type';
 import { UsersService } from '../../users/users.service';
-import { StatusEnum } from '../../../common/enums/statuses/statuses.enum';
+import { isUserStatusAllowedForAuth } from '../../../common/utils/status.util';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -34,12 +34,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
     // Allow both active and inactive users (inactive = newly registered, not yet confirmed email)
     // Only block if status is explicitly set to something other than active/inactive
-    // Note: MongoDB uses string IDs, PostgreSQL uses number IDs
-    const statusId = user.status?.id;
-    const isActive = statusId === StatusEnum.active || statusId === String(StatusEnum.active);
-    const isInactive = statusId === StatusEnum.inactive || statusId === String(StatusEnum.inactive);
-
-    if (!isActive && !isInactive) {
+    if (!isUserStatusAllowedForAuth(user.status?.id)) {
       throw new UnauthorizedException('User is not active');
     }
 

@@ -16,14 +16,13 @@ import wechatConfig from './integrations/wechat/config/wechat.config';
 import path from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { DataSource, DataSourceOptions } from 'typeorm';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import { TypeOrmConfigService } from './infrastructure/database/typeorm-config.service';
 import { MailModule } from './integrations/mail/mail.module';
 import { HomeModule } from './modules/home/home.module';
-import { DataSource, DataSourceOptions } from 'typeorm';
 import { AllConfigType } from './config/config.type';
 import { SessionModule } from './core/session/session.module';
-import { MailerModule } from './integrations/mail/mailer.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MongooseConfigService } from './infrastructure/database/mongoose-config.service';
 import { DatabaseConfig } from './infrastructure/database/config/database-config.type';
@@ -162,7 +161,6 @@ const relationalOnlyModules = isDocumentDatabase ? [] : [TransactionModule, Audi
     AuthModule,
     SessionModule,
     MailModule,
-    MailerModule,
     HomeModule,
     CacheModule,
     HealthModule,

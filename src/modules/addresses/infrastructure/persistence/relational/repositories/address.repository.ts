@@ -8,6 +8,7 @@ import { Address } from '../../../../domain/address';
 import { NullableType } from '../../../../../../common/types/nullable.type';
 import { FilterAddressDto, SortAddressDto } from '../../../../dto/query-address.dto';
 import { IPaginationOptions } from '../../../../../../common/types/pagination-options';
+import { buildFindOptions } from '../../../../../../infrastructure/database/utils/repository.utils';
 
 @Injectable()
 export class AddressRelationalRepository implements AddressRepository {
@@ -44,17 +45,17 @@ export class AddressRelationalRepository implements AddressRepository {
       where.city = filterOptions.city;
     }
 
+    const { skip, take, order } = buildFindOptions({
+      paginationOptions,
+      sortOptions,
+      defaultOrder: { isDefault: 'DESC', createdAt: 'DESC' },
+    });
+
     const entities = await this.addressRepository.find({
-      skip: (paginationOptions.page - 1) * paginationOptions.limit,
-      take: paginationOptions.limit,
-      where: where,
-      order: sortOptions?.reduce(
-        (accumulator, sort) => ({
-          ...accumulator,
-          [sort.orderBy]: sort.order,
-        }),
-        { isDefault: 'DESC', createdAt: 'DESC' } as Record<string, string>,
-      ) ?? { isDefault: 'DESC', createdAt: 'DESC' },
+      skip,
+      take,
+      where,
+      order,
     });
 
     return entities.map((entity) => AddressMapper.toDomain(entity));

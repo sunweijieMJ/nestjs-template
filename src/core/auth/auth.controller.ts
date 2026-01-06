@@ -25,8 +25,7 @@ import { LoginResponseDto } from './dto/login-response.dto';
 import { NullableType } from '../../common/types/nullable.type';
 import { User } from '../users/domain/user';
 import { RefreshResponseDto } from './dto/refresh-response.dto';
-import { JwtPayloadType } from './strategies/types/jwt-payload.type';
-import { JwtRefreshPayloadType } from './strategies/types/jwt-refresh-payload.type';
+import { RequestWithUser, RequestWithRefreshUser } from '../../common/types/request-with-user.type';
 import { AuthPhoneLoginDto } from './dto/auth-phone-login.dto';
 import { AuthPhoneSmsLoginDto } from './dto/auth-phone-sms-login.dto';
 import { AuthPhoneRegisterDto } from './dto/auth-phone-register.dto';
@@ -34,14 +33,6 @@ import { AuthSendCodeDto } from './dto/auth-send-code.dto';
 import { AuthChangePasswordDto } from './dto/auth-change-password.dto';
 import { SmsCodeType } from '../../integrations/sms/sms.service';
 import { AuthWechatLoginDto } from './dto/auth-wechat-login.dto';
-
-interface RequestWithUser {
-  user: JwtPayloadType;
-}
-
-interface RequestWithRefreshUser {
-  user: JwtRefreshPayloadType;
-}
 
 @ApiTags('Auth')
 @Controller({
