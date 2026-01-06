@@ -85,8 +85,8 @@ COPY --from=builder /app/src/integrations/mail/mail-templates ./src/integrations
 COPY --from=builder /app/src/i18n ./src/i18n
 
 # Copy utility scripts
-COPY wait-for-it.sh /opt/wait-for-it.sh
-COPY startup.sh /opt/startup.sh
+COPY scripts/wait-for-it.sh /opt/wait-for-it.sh
+COPY scripts/startup.sh /opt/startup.sh
 RUN chmod +x /opt/wait-for-it.sh /opt/startup.sh
 RUN sed -i 's/\r//g' /opt/wait-for-it.sh /opt/startup.sh
 
@@ -129,8 +129,8 @@ RUN if [ ! -f .env ]; then \
     fi
 
 # Copy utility scripts
-COPY wait-for-it.sh /opt/wait-for-it.sh
-COPY startup.sh /opt/startup.sh
+COPY scripts/wait-for-it.sh /opt/wait-for-it.sh
+COPY scripts/startup.sh /opt/startup.sh
 RUN chmod +x /opt/wait-for-it.sh /opt/startup.sh
 RUN sed -i 's/\r//g' /opt/wait-for-it.sh /opt/startup.sh
 

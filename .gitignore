@@ -36,6 +36,11 @@ lerna-debug.log*
 
 .data
 /files
+
+# Environment files (keep env-example-* templates)
 .env
+.env.*
+!env-example-*
+
 /ormconfig.json
 .codegpt
