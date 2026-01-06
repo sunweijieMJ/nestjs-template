@@ -60,6 +60,26 @@ export class FavoritesService {
     });
   }
 
+  async findManyWithPaginationAndCount({
+    userId,
+    targetType,
+    paginationOptions,
+  }: {
+    userId: Favorite['userId'];
+    targetType?: FavoriteTargetType;
+    paginationOptions: IPaginationOptions;
+  }): Promise<{ data: Favorite[]; total: number }> {
+    const [data, total] = await Promise.all([
+      this.favoriteRepository.findManyWithPagination({
+        userId,
+        targetType,
+        paginationOptions,
+      }),
+      this.favoriteRepository.countByUserId(userId, targetType),
+    ]);
+    return { data, total };
+  }
+
   async check(
     userId: number | string,
     targetType: FavoriteTargetType,

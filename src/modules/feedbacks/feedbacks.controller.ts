@@ -17,11 +17,8 @@ import { FeedbacksService } from './feedbacks.service';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
 import { QueryFeedbackDto } from './dto/query-feedback.dto';
 import { Feedback } from './domain/feedback';
-import {
-  InfinityPaginationResponse,
-  InfinityPaginationResponseDto,
-} from '../../common/dto/infinity-pagination-response.dto';
-import { infinityPagination } from '../../common/infinity-pagination';
+import { PaginationResponse, PaginationResponseDto } from '../../common/dto/pagination-response.dto';
+import { pagination } from '../../common/pagination';
 import { RequestWithUser } from '../../common/types/request-with-user.type';
 
 @ApiBearerAuth()
@@ -42,29 +39,28 @@ export class FeedbacksController {
     return this.feedbacksService.create(request.user.id, createFeedbackDto);
   }
 
-  @ApiOkResponse({ type: InfinityPaginationResponse(Feedback) })
+  @ApiOkResponse({ type: PaginationResponse(Feedback) })
   @ApiOperation({ operationId: 'getFeedbacks', summary: '获取反馈列表' })
   @Get()
   @HttpCode(HttpStatus.OK)
   async findAll(
     @Request() request: RequestWithUser,
     @Query() query: QueryFeedbackDto,
-  ): Promise<InfinityPaginationResponseDto<Feedback>> {
+  ): Promise<PaginationResponseDto<Feedback>> {
     const page = query?.page ?? 1;
     let limit = query?.limit ?? 10;
     if (limit > 50) {
       limit = 50;
     }
 
-    return infinityPagination(
-      await this.feedbacksService.findManyWithPagination({
-        userId: request.user.id,
-        type: query?.type,
-        status: query?.status,
-        paginationOptions: { page, limit },
-      }),
-      { page, limit },
-    );
+    const { data, total } = await this.feedbacksService.findManyWithPaginationAndCount({
+      userId: request.user.id,
+      type: query?.type,
+      status: query?.status,
+      paginationOptions: { page, limit },
+    });
+
+    return pagination(data, total, { page, limit });
   }
 
   @ApiOkResponse({ type: Feedback })

@@ -68,6 +68,29 @@ export class AddressesService {
     });
   }
 
+  async findManyWithPaginationAndCount({
+    userId,
+    filterOptions,
+    sortOptions,
+    paginationOptions,
+  }: {
+    userId: Address['userId'];
+    filterOptions?: FilterAddressDto | null;
+    sortOptions?: SortAddressDto[] | null;
+    paginationOptions: IPaginationOptions;
+  }): Promise<{ data: Address[]; total: number }> {
+    const [data, total] = await Promise.all([
+      this.addressRepository.findManyWithPagination({
+        userId,
+        filterOptions,
+        sortOptions,
+        paginationOptions,
+      }),
+      this.addressRepository.countByUserId(userId),
+    ]);
+    return { data, total };
+  }
+
   async findById(id: Address['id'], userId: Address['userId']): Promise<NullableType<Address>> {
     const address = await this.addressRepository.findByIdAndUserId(id, userId);
     if (!address) {

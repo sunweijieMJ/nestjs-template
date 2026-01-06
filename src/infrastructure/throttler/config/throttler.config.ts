@@ -10,7 +10,7 @@ class EnvironmentVariablesValidator {
 
   @IsInt()
   @Min(1)
-  THROTTLE_LIMIT: number = 10;
+  THROTTLE_LIMIT: number = 100;
 
   @IsBoolean()
   THROTTLE_ENABLED: boolean = true;
@@ -19,7 +19,7 @@ class EnvironmentVariablesValidator {
 export default registerAs<ThrottlerConfig>('throttler', () => {
   const env = {
     THROTTLE_TTL: process.env.THROTTLE_TTL ? parseInt(process.env.THROTTLE_TTL, 10) : 60,
-    THROTTLE_LIMIT: process.env.THROTTLE_LIMIT ? parseInt(process.env.THROTTLE_LIMIT, 10) : 10,
+    THROTTLE_LIMIT: process.env.THROTTLE_LIMIT ? parseInt(process.env.THROTTLE_LIMIT, 10) : 100,
     THROTTLE_ENABLED: process.env.THROTTLE_ENABLED === 'true',
   };
 

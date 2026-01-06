@@ -12,8 +12,7 @@ import { SKIP_RESPONSE_TRANSFORM_KEY } from '../decorators/skip-response-transfo
  * {
  *   code: 200,
  *   message: 'success',
- *   data: <original response>,
- *   timestamp: 1702300000000
+ *   data: <original response>
  * }
  *
  * Use @SkipResponseTransform() decorator to skip transformation for specific endpoints
@@ -45,7 +44,6 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiResponse<T>
           code: 200,
           message: 'success',
           data,
-          timestamp: Date.now(),
         };
       }),
     );

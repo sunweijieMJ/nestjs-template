@@ -44,6 +44,29 @@ export class FeedbacksService {
     });
   }
 
+  async findManyWithPaginationAndCount({
+    userId,
+    type,
+    status,
+    paginationOptions,
+  }: {
+    userId: Feedback['userId'];
+    type?: FeedbackType;
+    status?: FeedbackStatus;
+    paginationOptions: IPaginationOptions;
+  }): Promise<{ data: Feedback[]; total: number }> {
+    const [data, total] = await Promise.all([
+      this.feedbackRepository.findManyWithPagination({
+        userId,
+        type,
+        status,
+        paginationOptions,
+      }),
+      this.feedbackRepository.countByUserId(userId),
+    ]);
+    return { data, total };
+  }
+
   async findById(id: Feedback['id']): Promise<Feedback | null> {
     return this.feedbackRepository.findById(id);
   }

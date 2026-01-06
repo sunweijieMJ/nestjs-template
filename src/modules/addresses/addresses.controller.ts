@@ -20,11 +20,8 @@ import { UpdateAddressDto } from './dto/update-address.dto';
 import { QueryAddressDto } from './dto/query-address.dto';
 import { Address } from './domain/address';
 import { NullableType } from '../../common/types/nullable.type';
-import {
-  InfinityPaginationResponse,
-  InfinityPaginationResponseDto,
-} from '../../common/dto/infinity-pagination-response.dto';
-import { infinityPagination } from '../../common/infinity-pagination';
+import { PaginationResponse, PaginationResponseDto } from '../../common/dto/pagination-response.dto';
+import { pagination } from '../../common/pagination';
 import { RequestWithUser } from '../../common/types/request-with-user.type';
 
 @ApiBearerAuth()
@@ -46,7 +43,7 @@ export class AddressesController {
   }
 
   @ApiOkResponse({
-    type: InfinityPaginationResponse(Address),
+    type: PaginationResponse(Address),
   })
   @ApiOperation({ operationId: 'getAddresses', summary: '获取地址列表' })
   @Get()
@@ -54,25 +51,21 @@ export class AddressesController {
   async findAll(
     @Request() request: RequestWithUser,
     @Query() query: QueryAddressDto,
-  ): Promise<InfinityPaginationResponseDto<Address>> {
+  ): Promise<PaginationResponseDto<Address>> {
     const page = query?.page ?? 1;
     let limit = query?.limit ?? 10;
     if (limit > 50) {
       limit = 50;
     }
 
-    return infinityPagination(
-      await this.addressesService.findManyWithPagination({
-        userId: request.user.id,
-        filterOptions: query?.filters,
-        sortOptions: query?.sort,
-        paginationOptions: {
-          page,
-          limit,
-        },
-      }),
-      { page, limit },
-    );
+    const { data, total } = await this.addressesService.findManyWithPaginationAndCount({
+      userId: request.user.id,
+      filterOptions: query?.filters,
+      sortOptions: query?.sort,
+      paginationOptions: { page, limit },
+    });
+
+    return pagination(data, total, { page, limit });
   }
 
   @ApiOkResponse({ type: Address })

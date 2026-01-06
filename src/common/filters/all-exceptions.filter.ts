@@ -4,6 +4,19 @@ import { I18nContext } from 'nestjs-i18n';
 import { ThrottlerException } from '@nestjs/throttler';
 import { ApiErrorResponse } from '../dto/api-response.dto';
 
+/**
+ * Map HTTP status codes to i18n keys
+ */
+const STATUS_TO_I18N_KEY: Record<number, string> = {
+  [HttpStatus.BAD_REQUEST]: 'badRequest',
+  [HttpStatus.UNAUTHORIZED]: 'unauthorized',
+  [HttpStatus.FORBIDDEN]: 'forbidden',
+  [HttpStatus.NOT_FOUND]: 'notFound',
+  [HttpStatus.UNPROCESSABLE_ENTITY]: 'unprocessableEntity',
+  [HttpStatus.TOO_MANY_REQUESTS]: 'tooManyRequests',
+  [HttpStatus.INTERNAL_SERVER_ERROR]: 'internalServerError',
+};
+
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
@@ -26,59 +39,56 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     if (exception instanceof ThrottlerException) {
       statusCode = HttpStatus.TOO_MANY_REQUESTS;
-      message = i18n?.t('common.tooManyRequests') ?? 'Too many requests, please try again later';
+      message = this.translateMessage('tooManyRequests', i18n) ?? 'Too many requests, please try again later';
       error = 'Too Many Requests';
     } else if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
       const response = exception.getResponse();
 
       if (typeof response === 'string') {
-        message = response;
+        message = this.translateMessage(response, i18n) ?? response;
         error = exception.name;
       } else if (typeof response === 'object' && response !== null) {
         const responseObj = response as Record<string, unknown>;
-        message = (responseObj.message as string | string[]) || exception.message;
-        error = (responseObj.error as string) || exception.name;
         errors = responseObj.errors as Record<string, unknown> | undefined;
 
-        // Try to translate message if it's a string and looks like an i18n key
-        if (typeof message === 'string' && i18n) {
-          const translatedMessage = i18n.t(`common.${message}`, { defaultValue: message });
-          // Only use translated message if it's different from the key
-          if (translatedMessage && translatedMessage !== `common.${message}`) {
-            message = translatedMessage;
-          }
+        // Get message from response or use status-based default
+        const rawMessage = responseObj.message as string | string[] | undefined;
+        message = this.getTranslatedMessage(rawMessage, statusCode, i18n);
+
+        error = (responseObj.error as string) || exception.name;
+
+        // Translate error codes in errors object
+        if (errors && i18n) {
+          errors = this.translateErrors(errors, i18n);
         }
       } else {
-        message = exception.message;
+        message = this.getDefaultMessage(statusCode, i18n);
         error = exception.name;
       }
     } else if (exception instanceof Error) {
       statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-      message = 'Internal server error';
+      message = this.translateMessage('internalServerError', i18n) ?? 'Internal server error';
       error = 'Internal Server Error';
 
-      // Log the full error for debugging (but don't expose to client)
       this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack, {
         path,
         requestId,
       });
     } else {
       statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-      message = 'Internal server error';
+      message = this.translateMessage('internalServerError', i18n) ?? 'Internal server error';
       error = 'Internal Server Error';
 
       this.logger.error(`Unknown exception type`, { exception, path, requestId });
     }
 
-    // Build simplified error response with only code, message, data
     const responseBody: ApiErrorResponse = {
       code: statusCode,
       message,
       data: errors ?? null,
     };
 
-    // Log non-500 errors at appropriate levels
     if (statusCode >= 500) {
       this.logger.error(`${error}: ${JSON.stringify(message)}`, { path, requestId, statusCode });
     } else if (statusCode >= 400) {
@@ -86,5 +96,87 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     httpAdapter.reply(ctx.getResponse(), responseBody, statusCode);
+  }
+
+  /**
+   * Translate a single message key
+   */
+  private translateMessage(key: string, i18n: I18nContext | undefined): string | undefined {
+    if (!i18n) return undefined;
+    const translated = i18n.t(`common.${key}`, { defaultValue: '' });
+    return translated && translated !== `common.${key}` ? translated : undefined;
+  }
+
+  /**
+   * Get default message based on HTTP status code
+   */
+  private getDefaultMessage(statusCode: number, i18n: I18nContext | undefined): string {
+    const i18nKey = STATUS_TO_I18N_KEY[statusCode];
+    if (i18nKey) {
+      const translated = this.translateMessage(i18nKey, i18n);
+      if (translated) return translated;
+    }
+    return HttpStatus[statusCode] || 'Error';
+  }
+
+  /**
+   * Get translated message from raw message or use default
+   */
+  private getTranslatedMessage(
+    rawMessage: string | string[] | undefined,
+    statusCode: number,
+    i18n: I18nContext | undefined,
+  ): string | string[] {
+    // If no message or it's the default NestJS exception message, use status-based default
+    if (!rawMessage || this.isDefaultExceptionMessage(rawMessage)) {
+      return this.getDefaultMessage(statusCode, i18n);
+    }
+
+    // Try to translate if it's a string
+    if (typeof rawMessage === 'string') {
+      const translated = this.translateMessage(rawMessage, i18n);
+      return translated ?? rawMessage;
+    }
+
+    // For array of messages (validation errors), translate each
+    if (Array.isArray(rawMessage)) {
+      return rawMessage.map((msg) => {
+        const translated = this.translateMessage(msg, i18n);
+        return translated ?? msg;
+      });
+    }
+
+    return rawMessage;
+  }
+
+  /**
+   * Check if message is a default NestJS exception message
+   */
+  private isDefaultExceptionMessage(message: string | string[]): boolean {
+    if (typeof message !== 'string') return false;
+    const defaultMessages = [
+      'Bad Request Exception',
+      'Unauthorized Exception',
+      'Forbidden Exception',
+      'Not Found Exception',
+      'Unprocessable Entity Exception',
+      'Internal Server Error Exception',
+    ];
+    return defaultMessages.some((m) => message.includes(m));
+  }
+
+  /**
+   * Translate error codes in errors object
+   */
+  private translateErrors(errors: Record<string, unknown>, i18n: I18nContext): Record<string, unknown> {
+    const translated: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(errors)) {
+      if (typeof value === 'string') {
+        translated[key] = this.translateMessage(value, i18n) ?? value;
+      } else {
+        translated[key] = value;
+      }
+    }
+    return translated;
   }
 }

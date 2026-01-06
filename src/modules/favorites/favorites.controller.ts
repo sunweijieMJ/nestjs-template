@@ -18,11 +18,8 @@ import { CreateFavoriteDto } from './dto/create-favorite.dto';
 import { QueryFavoriteDto } from './dto/query-favorite.dto';
 import { CheckFavoriteDto, CheckFavoriteResponseDto } from './dto/check-favorite.dto';
 import { Favorite } from './domain/favorite';
-import {
-  InfinityPaginationResponse,
-  InfinityPaginationResponseDto,
-} from '../../common/dto/infinity-pagination-response.dto';
-import { infinityPagination } from '../../common/infinity-pagination';
+import { PaginationResponse, PaginationResponseDto } from '../../common/dto/pagination-response.dto';
+import { pagination } from '../../common/pagination';
 import { RequestWithUser } from '../../common/types/request-with-user.type';
 
 @ApiBearerAuth()
@@ -43,28 +40,27 @@ export class FavoritesController {
     return this.favoritesService.create(request.user.id, createFavoriteDto);
   }
 
-  @ApiOkResponse({ type: InfinityPaginationResponse(Favorite) })
+  @ApiOkResponse({ type: PaginationResponse(Favorite) })
   @ApiOperation({ operationId: 'getFavorites', summary: '获取收藏列表' })
   @Get()
   @HttpCode(HttpStatus.OK)
   async findAll(
     @Request() request: RequestWithUser,
     @Query() query: QueryFavoriteDto,
-  ): Promise<InfinityPaginationResponseDto<Favorite>> {
+  ): Promise<PaginationResponseDto<Favorite>> {
     const page = query?.page ?? 1;
     let limit = query?.limit ?? 10;
     if (limit > 50) {
       limit = 50;
     }
 
-    return infinityPagination(
-      await this.favoritesService.findManyWithPagination({
-        userId: request.user.id,
-        targetType: query?.targetType,
-        paginationOptions: { page, limit },
-      }),
-      { page, limit },
-    );
+    const { data, total } = await this.favoritesService.findManyWithPaginationAndCount({
+      userId: request.user.id,
+      targetType: query?.targetType,
+      paginationOptions: { page, limit },
+    });
+
+    return pagination(data, total, { page, limit });
   }
 
   @ApiOkResponse({ type: CheckFavoriteResponseDto })
