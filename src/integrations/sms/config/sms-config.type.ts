@@ -42,4 +42,16 @@ export type SmsConfig = {
    * When enabled, codes will be logged instead of sent
    */
   mockMode: boolean;
+
+  /**
+   * Maximum verification attempts before code is invalidated
+   * @default 5
+   */
+  maxAttempts: number;
+
+  /**
+   * Minimum interval between code resend requests in seconds
+   * @default 60
+   */
+  resendInterval: number;
 };

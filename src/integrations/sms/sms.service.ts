@@ -31,11 +31,12 @@ export interface VerifyCodeResult {
   message: string;
 }
 
+/**
+ * 短信服务 - 管理短信验证码的发送和验证
+ */
 @Injectable()
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
-  private readonly MAX_ATTEMPTS = 5;
-  private readonly RESEND_INTERVAL = 60; // seconds
 
   constructor(
     private readonly configService: ConfigService<AllConfigType>,
@@ -44,7 +45,8 @@ export class SmsService {
   ) {}
 
   /**
-   * Generate a cryptographically secure random verification code
+   * 生成加密安全的随机验证码
+   * @returns 验证码字符串
    */
   private generateCode(): string {
     const length = this.configService.get('sms.codeLength', { infer: true }) ?? 6;
@@ -56,24 +58,32 @@ export class SmsService {
   }
 
   /**
-   * Get cache key for verification code
+   * 获取验证码的缓存键
+   * @param phone - 手机号
+   * @param type - 验证码类型
+   * @returns 缓存键字符串
    */
   private getCacheKey(phone: string, type: SmsCodeType): string {
     return `sms:code:${type}:${phone}`;
   }
 
   /**
-   * Send verification code to phone number
+   * 发送短信验证码
+   * @param phone - 手机号
+   * @param type - 验证码类型
+   * @returns 发送结果，包含成功状态、消息和重试时间
    */
   async sendCode(phone: string, type: SmsCodeType): Promise<SendCodeResult> {
     const cacheKey = this.getCacheKey(phone, type);
     const existing = await this.cacheManager.get<StoredCode>(cacheKey);
 
+    const resendInterval = this.configService.get('sms.resendInterval', { infer: true }) ?? 60;
+
     // Check if code was sent recently
     if (existing) {
       const elapsed = (Date.now() - existing.createdAt) / 1000;
-      if (elapsed < this.RESEND_INTERVAL) {
-        const retryAfter = Math.ceil(this.RESEND_INTERVAL - elapsed);
+      if (elapsed < resendInterval) {
+        const retryAfter = Math.ceil(resendInterval - elapsed);
         return {
           success: false,
           message: 'Please wait before requesting a new code',
@@ -115,7 +125,11 @@ export class SmsService {
   }
 
   /**
-   * Verify the code entered by user
+   * 验证用户输入的验证码
+   * @param phone - 手机号
+   * @param code - 用户输入的验证码
+   * @param type - 验证码类型
+   * @returns 验证结果，包含成功状态和消息
    */
   async verifyCode(phone: string, code: string, type: SmsCodeType): Promise<VerifyCodeResult> {
     const cacheKey = this.getCacheKey(phone, type);
@@ -128,8 +142,10 @@ export class SmsService {
       };
     }
 
+    const maxAttempts = this.configService.get('sms.maxAttempts', { infer: true }) ?? 5;
+
     // Check attempts
-    if (stored.attempts >= this.MAX_ATTEMPTS) {
+    if (stored.attempts >= maxAttempts) {
       await this.cacheManager.del(cacheKey);
       return {
         success: false,
@@ -166,7 +182,10 @@ export class SmsService {
   }
 
   /**
-   * Check if a code exists for the given phone and type
+   * 检查指定手机号和类型是否有活跃的验证码
+   * @param phone - 手机号
+   * @param type - 验证码类型
+   * @returns 是否存在活跃验证码
    */
   async hasActiveCode(phone: string, type: SmsCodeType): Promise<boolean> {
     const cacheKey = this.getCacheKey(phone, type);
@@ -175,7 +194,9 @@ export class SmsService {
   }
 
   /**
-   * Delete verification code (e.g., after successful registration/login)
+   * 删除验证码（例如，在成功注册/登录后）
+   * @param phone - 手机号
+   * @param type - 验证码类型
    */
   async deleteCode(phone: string, type: SmsCodeType): Promise<void> {
     const cacheKey = this.getCacheKey(phone, type);

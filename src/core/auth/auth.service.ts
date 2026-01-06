@@ -35,7 +35,7 @@ import { AuthPhoneRegisterDto } from './dto/auth-phone-register.dto';
 import { AuthWechatLoginDto, WechatLoginType } from './dto/auth-wechat-login.dto';
 import { WechatService } from '../../integrations/wechat/wechat.service';
 import { maskEmail, maskPhone } from '../../common/utils/sanitize.utils';
-import { isStatusActive, isUserStatusAllowedForAuth } from '../../common/utils/status.util';
+import { isUserStatusAllowedForAuth } from '../../common/utils/status.util';
 
 @Injectable()
 export class AuthService {
@@ -51,6 +51,12 @@ export class AuthService {
     private wechatService: WechatService,
   ) {}
 
+  /**
+   * 验证邮箱登录
+   * @param loginDto - 邮箱登录数据传输对象
+   * @returns 登录响应，包含用户信息和令牌
+   * @throws UnprocessableEntityException 当邮箱不存在、密码错误或用户状态不允许登录时
+   */
   async validateLogin(loginDto: AuthEmailLoginDto): Promise<LoginResponseDto> {
     this.logger.log(`Login attempt for email: ${maskEmail(loginDto.email)}`);
     const user = await this.usersService.findByEmail(loginDto.email);
@@ -113,6 +119,11 @@ export class AuthService {
     return this.createSessionAndTokens(user);
   }
 
+  /**
+   * 用户注册
+   * @param dto - 注册数据传输对象
+   * @throws UnprocessableEntityException 当邮箱已存在时
+   */
   async register(dto: AuthRegisterLoginDto): Promise<void> {
     this.logger.log(`Registration attempt for email: ${maskEmail(dto.email)}`);
 
@@ -153,6 +164,12 @@ export class AuthService {
     this.logger.log(`Confirmation email sent to: ${maskEmail(dto.email)}`);
   }
 
+  /**
+   * 确认邮箱
+   * @param hash - JWT 令牌哈希值
+   * @throws UnprocessableEntityException 当令牌过期、无效或用户已激活时
+   * @throws NotFoundException 当用户不存在时
+   */
   async confirmEmail(hash: string): Promise<void> {
     this.logger.log('Email confirmation attempt');
     let userId: User['id'];
@@ -217,6 +234,12 @@ export class AuthService {
     this.logger.log(`Email confirmed for user: ${userId}`);
   }
 
+  /**
+   * 确认新邮箱
+   * @param hash - JWT 令牌哈希值，包含新邮箱信息
+   * @throws UnprocessableEntityException 当令牌过期或无效时
+   * @throws NotFoundException 当用户不存在时
+   */
   async confirmNewEmail(hash: string): Promise<void> {
     this.logger.log('New email confirmation attempt');
     let userId: User['id'];
@@ -273,6 +296,11 @@ export class AuthService {
     await this.usersService.update(user.id, user);
   }
 
+  /**
+   * 忘记密码 - 发送重置密码邮件
+   * @param email - 用户邮箱
+   * @throws UnprocessableEntityException 当邮箱不存在时
+   */
   async forgotPassword(email: string): Promise<void> {
     this.logger.log(`Password reset requested for: ${maskEmail(email)}`);
     const user = await this.usersService.findByEmail(email);
@@ -316,6 +344,12 @@ export class AuthService {
     this.logger.log(`Password reset email sent to: ${maskEmail(email)}`);
   }
 
+  /**
+   * 重置密码
+   * @param hash - JWT 令牌哈希值
+   * @param password - 新密码（明文）
+   * @throws UnprocessableEntityException 当令牌过期、无效或用户不存在时
+   */
   async resetPassword(hash: string, password: string): Promise<void> {
     this.logger.log('Password reset attempt');
     let userId: User['id'];
@@ -364,20 +398,35 @@ export class AuthService {
       });
     }
 
-    user.password = password;
+    // Encrypt password before updating
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Delete all user sessions and update password in a single operation
     await this.sessionService.deleteByUserId({
       userId: user.id,
     });
 
-    await this.usersService.update(user.id, user);
+    await this.usersService.update(user.id, { password: hashedPassword });
     this.logger.log(`Password reset successful for user: ${userId}`);
   }
 
+  /**
+   * 获取当前用户信息
+   * @param userJwtPayload - JWT 载荷信息
+   * @returns 用户信息或 null
+   */
   async me(userJwtPayload: JwtPayloadType): Promise<NullableType<User>> {
     return this.usersService.findById(userJwtPayload.id);
   }
 
+  /**
+   * 更新用户信息
+   * @param userJwtPayload - JWT 载荷信息
+   * @param userDto - 更新数据传输对象
+   * @returns 更新后的用户信息或 null
+   * @throws UnprocessableEntityException 当用户不存在、密码验证失败或邮箱已被占用时
+   */
   async update(userJwtPayload: JwtPayloadType, userDto: AuthUpdateDto): Promise<NullableType<User>> {
     const currentUser = await this.usersService.findById(userJwtPayload.id);
 
@@ -459,9 +508,11 @@ export class AuthService {
           hash,
         },
       });
+
+      // Remove email from update - it will be updated after confirmation
+      delete userDto.email;
     }
 
-    delete userDto.email;
     delete userDto.oldPassword;
 
     await this.usersService.update(userJwtPayload.id, userDto);
@@ -469,6 +520,12 @@ export class AuthService {
     return this.usersService.findById(userJwtPayload.id);
   }
 
+  /**
+   * 刷新访问令牌
+   * @param data - 包含会话ID和哈希值的数据
+   * @returns 新的访问令牌和刷新令牌
+   * @throws UnauthorizedException 当会话不存在或哈希值不匹配时
+   */
   async refreshToken(data: Pick<JwtRefreshPayloadType, 'sessionId' | 'hash'>): Promise<Omit<LoginResponseDto, 'user'>> {
     this.logger.debug(`Token refresh attempt for session: ${data.sessionId}`);
     const session = await this.sessionService.findById(data.sessionId);
@@ -514,17 +571,31 @@ export class AuthService {
     };
   }
 
+  /**
+   * 软删除用户账户
+   * @param user - 包含用户ID的对象
+   */
   async softDelete(user: Pick<User, 'id'>): Promise<void> {
     this.logger.log(`User account deletion requested: ${user.id}`);
     await this.usersService.remove(user.id);
     this.logger.log(`User account deleted: ${user.id}`);
   }
 
+  /**
+   * 用户登出
+   * @param data - 包含会话ID的数据
+   */
   async logout(data: Pick<JwtRefreshPayloadType, 'sessionId'>): Promise<void> {
     this.logger.log(`Logout for session: ${data.sessionId}`);
     return this.sessionService.deleteById(data.sessionId);
   }
 
+  /**
+   * 发送短信验证码
+   * @param phone - 手机号
+   * @param type - 验证码类型（登录、注册、重置密码等）
+   * @throws UnprocessableEntityException 当手机号已存在（注册）或不存在（登录/重置密码）或发送失败时
+   */
   async sendCode(phone: string, type: SmsCodeType = SmsCodeType.LOGIN): Promise<void> {
     this.logger.log(`Send SMS code request for phone: ${maskPhone(phone)}, type: ${type}`);
 
@@ -570,6 +641,12 @@ export class AuthService {
     this.logger.log(`SMS code sent to: ${maskPhone(phone)}`);
   }
 
+  /**
+   * 验证手机号密码登录
+   * @param loginDto - 手机号登录数据传输对象
+   * @returns 登录响应，包含用户信息和令牌
+   * @throws UnprocessableEntityException 当手机号不存在、密码错误或用户状态不允许登录时
+   */
   async validatePhoneLogin(loginDto: AuthPhoneLoginDto): Promise<LoginResponseDto> {
     this.logger.log(`Phone login attempt for: ${maskPhone(loginDto.phone)}`);
     const user = await this.usersService.findByPhone(loginDto.phone);
@@ -620,8 +697,9 @@ export class AuthService {
       });
     }
 
-    if (!isStatusActive(user.status?.id)) {
-      this.logger.warn(`Phone login failed - user not active: ${user.id}`);
+    // Allow both active and inactive users to login (consistent with email login)
+    if (!isUserStatusAllowedForAuth(user.status?.id)) {
+      this.logger.warn(`Phone login failed - user status not allowed: ${user.id}, status: ${user.status?.id}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         message: 'userNotActive',
@@ -635,6 +713,12 @@ export class AuthService {
     return this.createSessionAndTokens(user);
   }
 
+  /**
+   * 验证手机号短信验证码登录
+   * @param loginDto - 手机号短信登录数据传输对象
+   * @returns 登录响应，包含用户信息和令牌
+   * @throws UnprocessableEntityException 当验证码无效、手机号不存在或用户状态不允许登录时
+   */
   async validatePhoneSmsLogin(loginDto: AuthPhoneSmsLoginDto): Promise<LoginResponseDto> {
     this.logger.log(`Phone SMS login attempt for: ${maskPhone(loginDto.phone)}`);
 
@@ -662,8 +746,9 @@ export class AuthService {
       });
     }
 
-    if (!isStatusActive(user.status?.id)) {
-      this.logger.warn(`Phone SMS login failed - user not active: ${user.id}`);
+    // Allow both active and inactive users to login (consistent with email login)
+    if (!isUserStatusAllowedForAuth(user.status?.id)) {
+      this.logger.warn(`Phone SMS login failed - user status not allowed: ${user.id}, status: ${user.status?.id}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
@@ -676,6 +761,12 @@ export class AuthService {
     return this.createSessionAndTokens(user);
   }
 
+  /**
+   * 手机号注册
+   * @param dto - 手机号注册数据传输对象
+   * @returns 登录响应，包含用户信息和令牌
+   * @throws UnprocessableEntityException 当验证码无效或手机号已存在时
+   */
   async registerByPhone(dto: AuthPhoneRegisterDto): Promise<LoginResponseDto> {
     this.logger.log(`Phone registration attempt for: ${maskPhone(dto.phone)}`);
 
@@ -722,6 +813,13 @@ export class AuthService {
     return this.createSessionAndTokens(user);
   }
 
+  /**
+   * 修改密码
+   * @param userJwtPayload - JWT 载荷信息
+   * @param oldPassword - 旧密码
+   * @param newPassword - 新密码
+   * @throws UnprocessableEntityException 当用户不存在或旧密码错误时
+   */
   async changePassword(userJwtPayload: JwtPayloadType, oldPassword: string, newPassword: string): Promise<void> {
     this.logger.log(`Password change attempt for user: ${userJwtPayload.id}`);
 
@@ -771,6 +869,11 @@ export class AuthService {
     this.logger.log(`Password changed successfully for user: ${userJwtPayload.id}`);
   }
 
+  /**
+   * 微信登录
+   * @param dto - 微信登录数据传输对象
+   * @returns 登录响应，包含用户信息和令牌
+   */
   async wechatLogin(dto: AuthWechatLoginDto): Promise<LoginResponseDto> {
     this.logger.log(`WeChat login attempt with type: ${dto.type}`);
 

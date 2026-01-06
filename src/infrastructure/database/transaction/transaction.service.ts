@@ -2,8 +2,27 @@ import { Injectable, Logger, Scope } from '@nestjs/common';
 import { DataSource, EntityManager, QueryRunner } from 'typeorm';
 
 /**
- * TransactionService provides a way to execute operations within a database transaction.
- * It supports both TypeORM's QueryRunner approach and EntityManager approach.
+ * 事务服务 - 提供数据库事务操作支持
+ *
+ * **重要限制**：
+ * - 此服务仅支持关系型数据库（TypeORM）
+ * - MongoDB 用户请注意：此服务在 MongoDB 环境下不可用
+ * - 如果您使用 MongoDB，请使用 Mongoose 的原生事务 API
+ *
+ * @example MongoDB 事务示例（需自行实现）
+ * ```typescript
+ * const session = await this.connection.startSession();
+ * session.startTransaction();
+ * try {
+ *   await this.model.create([data], { session });
+ *   await session.commitTransaction();
+ * } catch (error) {
+ *   await session.abortTransaction();
+ *   throw error;
+ * } finally {
+ *   session.endSession();
+ * }
+ * ```
  */
 @Injectable({ scope: Scope.REQUEST })
 export class TransactionService {

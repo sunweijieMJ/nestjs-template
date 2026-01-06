@@ -39,6 +39,18 @@ class EnvironmentVariablesValidator {
   @IsBoolean()
   @IsOptional()
   SMS_MOCK_MODE: boolean;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(1)
+  @Max(10)
+  SMS_MAX_ATTEMPTS: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(30)
+  @Max(300)
+  SMS_RESEND_INTERVAL: number;
 }
 
 export default registerAs<SmsConfig>('sms', () => {
@@ -53,5 +65,7 @@ export default registerAs<SmsConfig>('sms', () => {
     codeLength: process.env.SMS_CODE_LENGTH ? parseInt(process.env.SMS_CODE_LENGTH, 10) : 6,
     endpoint: process.env.SMS_ENDPOINT ?? 'dysmsapi.aliyuncs.com',
     mockMode: process.env.SMS_MOCK_MODE === 'true',
+    maxAttempts: process.env.SMS_MAX_ATTEMPTS ? parseInt(process.env.SMS_MAX_ATTEMPTS, 10) : 5,
+    resendInterval: process.env.SMS_RESEND_INTERVAL ? parseInt(process.env.SMS_RESEND_INTERVAL, 10) : 60,
   };
 });
