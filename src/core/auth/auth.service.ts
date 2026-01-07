@@ -411,6 +411,64 @@ export class AuthService {
   }
 
   /**
+   * 通过手机验证码重置密码
+   * @param phone - 手机号
+   * @param code - 短信验证码
+   * @param password - 新密码（明文）
+   * @throws UnprocessableEntityException 当手机号不存在、验证码错误或用户状态不允许时
+   */
+  async resetPasswordByPhone(phone: string, code: string, password: string): Promise<void> {
+    this.logger.log(`Phone password reset attempt for: ${maskPhone(phone)}`);
+
+    // 验证短信验证码
+    const isValidCode = await this.smsService.verifyCode(phone, code, SmsCodeType.RESET_PASSWORD);
+    if (!isValidCode) {
+      this.logger.warn(`Phone password reset failed - invalid code for: ${maskPhone(phone)}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          code: 'invalidCode',
+        },
+      });
+    }
+
+    // 查找用户
+    const user = await this.usersService.findByPhone(phone);
+    if (!user) {
+      this.logger.warn(`Phone password reset failed - phone not found: ${maskPhone(phone)}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          phone: 'phoneNotExists',
+        },
+      });
+    }
+
+    // 检查用户状态
+    if (!isUserStatusAllowedForAuth(user.status?.id)) {
+      this.logger.warn(`Phone password reset failed - user status not allowed: ${user.id}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          phone: 'userStatusNotAllowed',
+        },
+      });
+    }
+
+    // 加密新密码
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // 删除所有用户会话并更新密码
+    await this.sessionService.deleteByUserId({
+      userId: user.id,
+    });
+
+    await this.usersService.update(user.id, { password: hashedPassword });
+    this.logger.log(`Phone password reset successful for user: ${user.id}`);
+  }
+
+  /**
    * 获取当前用户信息
    * @param userJwtPayload - JWT 载荷信息
    * @returns 用户信息或 null

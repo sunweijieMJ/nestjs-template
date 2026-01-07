@@ -33,6 +33,7 @@ import { AuthSendCodeDto } from './dto/auth-send-code.dto';
 import { AuthChangePasswordDto } from './dto/auth-change-password.dto';
 import { SmsCodeType } from '../../integrations/sms/sms.service';
 import { AuthWechatLoginDto } from './dto/auth-wechat-login.dto';
+import { AuthPhoneResetPasswordDto } from './dto/auth-phone-reset-password.dto';
 
 @ApiTags('Auth')
 @Controller({
@@ -209,6 +210,14 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   public phoneRegister(@Body() registerDto: AuthPhoneRegisterDto): Promise<LoginResponseDto> {
     return this.service.registerByPhone(registerDto);
+  }
+
+  @Post('phone/reset-password')
+  @Throttle({ default: { limit: 5, ttl: 300000 } })
+  @ApiOperation({ operationId: 'resetPasswordByPhone', summary: '通过手机验证码重置密码' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  public async resetPasswordByPhone(@Body() resetPasswordDto: AuthPhoneResetPasswordDto): Promise<void> {
+    return this.service.resetPasswordByPhone(resetPasswordDto.phone, resetPasswordDto.code, resetPasswordDto.password);
   }
 
   @ApiBearerAuth()
