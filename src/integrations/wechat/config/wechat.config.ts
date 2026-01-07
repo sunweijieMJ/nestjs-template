@@ -19,6 +19,26 @@ class EnvironmentVariablesValidator {
   @IsString()
   @IsOptional()
   WECHAT_APP_SECRET: string;
+
+  @IsString()
+  @IsOptional()
+  WECHAT_PAY_MCH_ID: string;
+
+  @IsString()
+  @IsOptional()
+  WECHAT_PAY_API_V3_KEY: string;
+
+  @IsString()
+  @IsOptional()
+  WECHAT_PAY_SERIAL_NO: string;
+
+  @IsString()
+  @IsOptional()
+  WECHAT_PAY_PRIVATE_KEY: string;
+
+  @IsString()
+  @IsOptional()
+  WECHAT_PAY_NOTIFY_URL: string;
 }
 
 export default registerAs<WechatConfig>('wechat', () => {
@@ -29,5 +49,12 @@ export default registerAs<WechatConfig>('wechat', () => {
     miniAppSecret: process.env.WECHAT_MINI_APP_SECRET ?? '',
     appId: process.env.WECHAT_APP_ID ?? '',
     appSecret: process.env.WECHAT_APP_SECRET ?? '',
+    pay: {
+      mchId: process.env.WECHAT_PAY_MCH_ID ?? '',
+      apiV3Key: process.env.WECHAT_PAY_API_V3_KEY ?? '',
+      serialNo: process.env.WECHAT_PAY_SERIAL_NO ?? '',
+      privateKey: process.env.WECHAT_PAY_PRIVATE_KEY ?? '',
+      notifyUrl: process.env.WECHAT_PAY_NOTIFY_URL ?? '',
+    },
   };
 });
