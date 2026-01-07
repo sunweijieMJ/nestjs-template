@@ -3,6 +3,7 @@ import { registerAs } from '@nestjs/config';
 import { IsOptional, IsInt, Min, Max, IsString, ValidateIf, IsBoolean } from 'class-validator';
 import validateConfig from '../../../common/validate-config';
 import { DatabaseConfig } from './database-config.type';
+import { DATABASE_CONSTANTS } from '../../../common/constants/app.constants';
 
 class EnvironmentVariablesValidator {
   @ValidateIf((envValues) => envValues.DATABASE_URL)
@@ -72,12 +73,14 @@ export default registerAs<DatabaseConfig>('database', () => {
     url: process.env.DATABASE_URL,
     type: process.env.DATABASE_TYPE,
     host: process.env.DATABASE_HOST,
-    port: process.env.DATABASE_PORT ? parseInt(process.env.DATABASE_PORT, 10) : 5432,
+    port: process.env.DATABASE_PORT ? parseInt(process.env.DATABASE_PORT, 10) : DATABASE_CONSTANTS.DEFAULT_PORT,
     password: process.env.DATABASE_PASSWORD,
     name: process.env.DATABASE_NAME,
     username: process.env.DATABASE_USERNAME,
     synchronize: process.env.DATABASE_SYNCHRONIZE === 'true',
-    maxConnections: process.env.DATABASE_MAX_CONNECTIONS ? parseInt(process.env.DATABASE_MAX_CONNECTIONS, 10) : 100,
+    maxConnections: process.env.DATABASE_MAX_CONNECTIONS
+      ? parseInt(process.env.DATABASE_MAX_CONNECTIONS, 10)
+      : DATABASE_CONSTANTS.MAX_CONNECTIONS,
     sslEnabled: process.env.DATABASE_SSL_ENABLED === 'true',
     rejectUnauthorized: process.env.DATABASE_REJECT_UNAUTHORIZED === 'true',
     ca: process.env.DATABASE_CA,

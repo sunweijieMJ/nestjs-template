@@ -30,6 +30,16 @@ export class UsersService {
   ) {}
 
   /**
+   * 加密密码
+   * @param password - 明文密码
+   * @returns 加密后的密码
+   */
+  private async hashPassword(password: string): Promise<string> {
+    const salt = await bcrypt.genSalt();
+    return bcrypt.hash(password, salt);
+  }
+
+  /**
    * 验证角色是否有效
    * @param roleDto - 角色数据传输对象
    * @returns 验证后的角色对象，如果无效则返回 undefined
@@ -108,8 +118,7 @@ export class UsersService {
     let password: string | undefined = undefined;
 
     if (createUserDto.password) {
-      const salt = await bcrypt.genSalt();
-      password = await bcrypt.hash(createUserDto.password, salt);
+      password = await this.hashPassword(createUserDto.password);
     }
 
     let email: string | null = null;
@@ -241,8 +250,7 @@ export class UsersService {
       const userObject = await this.usersRepository.findById(id);
 
       if (userObject && userObject?.password !== updateUserDto.password) {
-        const salt = await bcrypt.genSalt();
-        password = await bcrypt.hash(updateUserDto.password, salt);
+        password = await this.hashPassword(updateUserDto.password);
       }
     }
 

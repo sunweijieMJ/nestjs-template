@@ -10,11 +10,12 @@ import { SessionModule } from '../session/session.module';
 import { UsersModule } from '../users/users.module';
 import { SmsModule } from '../../integrations/sms/sms.module';
 import { WechatModule } from '../../integrations/wechat/wechat.module';
+import { TokenService } from './services/token.service';
 
 @Module({
   imports: [UsersModule, SessionModule, PassportModule, MailModule, SmsModule, WechatModule, JwtModule.register({})],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, JwtRefreshStrategy],
+  providers: [AuthService, JwtStrategy, JwtRefreshStrategy, TokenService],
   exports: [AuthService],
 })
 export class AuthModule {}

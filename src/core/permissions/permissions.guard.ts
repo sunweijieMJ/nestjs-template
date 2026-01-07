@@ -57,6 +57,9 @@ export class PermissionsGuard implements CanActivate {
       throw new ForbiddenException('User role not found');
     }
 
+    // Get user permissions from in-memory role-permission mapping
+    // This is already highly performant as it's a simple object lookup
+    // No additional caching needed for this operation
     const userPermissions = RolePermissions[roleId] ?? [];
 
     const hasAllPermissions = requiredPermissions.every((permission) => userPermissions.includes(permission));

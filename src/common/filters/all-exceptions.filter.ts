@@ -3,6 +3,7 @@ import { HttpAdapterHost } from '@nestjs/core';
 import { I18nContext } from 'nestjs-i18n';
 import { ThrottlerException } from '@nestjs/throttler';
 import { ApiErrorResponse } from '../dto/api-response.dto';
+import { DEFAULT_EXCEPTION_MESSAGES } from './exception-messages.constant';
 
 /**
  * Map HTTP status codes to i18n keys
@@ -39,7 +40,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     if (exception instanceof ThrottlerException) {
       statusCode = HttpStatus.TOO_MANY_REQUESTS;
-      message = this.translateMessage('tooManyRequests', i18n) ?? 'Too many requests, please try again later';
+      message = this.translateMessage('tooManyRequests', i18n) ?? DEFAULT_EXCEPTION_MESSAGES.TOO_MANY_REQUESTS;
       error = 'Too Many Requests';
     } else if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
@@ -68,7 +69,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
     } else if (exception instanceof Error) {
       statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-      message = this.translateMessage('internalServerError', i18n) ?? 'Internal server error';
+      message = this.translateMessage('internalServerError', i18n) ?? DEFAULT_EXCEPTION_MESSAGES.INTERNAL_SERVER_ERROR;
       error = 'Internal Server Error';
 
       this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack, {
@@ -77,7 +78,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       });
     } else {
       statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-      message = this.translateMessage('internalServerError', i18n) ?? 'Internal server error';
+      message = this.translateMessage('internalServerError', i18n) ?? DEFAULT_EXCEPTION_MESSAGES.INTERNAL_SERVER_ERROR;
       error = 'Internal Server Error';
 
       this.logger.error(`Unknown exception type`, { exception, path, requestId });

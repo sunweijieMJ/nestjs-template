@@ -42,7 +42,10 @@ import { TransactionModule } from './infrastructure/database/transaction/transac
 import { AuditModule } from './infrastructure/audit/audit.module';
 
 // <database-block>
-const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig).isDocumentDatabase
+const dbConfig = databaseConfig() as DatabaseConfig;
+const isDocumentDatabase = dbConfig.isDocumentDatabase;
+
+const infrastructureDatabaseModule = isDocumentDatabase
   ? MongooseModule.forRootAsync({
       useClass: MongooseConfigService,
     })
@@ -58,7 +61,6 @@ const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig).isDocu
 // </database-block>
 
 // Modules that only work with relational databases (TypeORM)
-const isDocumentDatabase = (databaseConfig() as DatabaseConfig).isDocumentDatabase;
 const relationalOnlyModules = isDocumentDatabase ? [] : [TransactionModule, AuditModule];
 
 @Module({
@@ -111,6 +113,11 @@ const relationalOnlyModules = isDocumentDatabase ? [] : [TransactionModule, Audi
                 'req.body.password',
                 'req.body.oldPassword',
                 'req.body.newPassword',
+                'req.body.code',
+                'req.body.phone',
+                'req.body.email',
+                'req.query.hash',
+                'req.query.token',
               ],
               censor: '[REDACTED]',
             },
