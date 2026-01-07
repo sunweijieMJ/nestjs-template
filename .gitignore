@@ -44,3 +44,7 @@ lerna-debug.log*
 
 /ormconfig.json
 .codegpt
+
+# Development scripts
+.dev.pid
+dev.sh.backup
