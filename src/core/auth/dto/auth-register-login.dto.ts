@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { lowerCaseTransformer } from '../../../common/transformers/lower-case.transformer';
 import { sanitizeTransformer } from '../../../common/transformers/sanitize.transformer';
-import { IsStrongPassword } from '../../../common/validators/password-strength.validator';
+import { IsMd5Password } from '../../../common/validators/md5-password.validator';
 
 export class AuthRegisterLoginDto {
   @ApiProperty({ example: 'test1@example.com', type: String })
@@ -11,10 +11,8 @@ export class AuthRegisterLoginDto {
   @IsEmail()
   email: string;
 
-  @ApiProperty()
-  @MinLength(8)
-  @MaxLength(128)
-  @IsStrongPassword()
+  @ApiProperty({ example: '5f4dcc3b5aa765d61d8327deb882cf99', description: 'MD5 encrypted password' })
+  @IsMd5Password()
   password: string;
 
   @ApiProperty({ example: 'John' })

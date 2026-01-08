@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, Matches, Length, MinLength, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, Matches, Length, MaxLength } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { sanitizeTransformer } from '../../../common/transformers/sanitize.transformer';
-import { IsStrongPassword } from '../../../common/validators/password-strength.validator';
+import { IsMd5Password } from '../../../common/validators/md5-password.validator';
 
 export class AuthPhoneRegisterDto {
   @ApiProperty({ example: '13800138000', type: String })
@@ -21,11 +21,9 @@ export class AuthPhoneRegisterDto {
   @Length(4, 8)
   code?: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: '5f4dcc3b5aa765d61d8327deb882cf99', description: 'MD5 encrypted password' })
   @IsNotEmpty()
-  @MinLength(8)
-  @MaxLength(128)
-  @IsStrongPassword()
+  @IsMd5Password()
   password: string;
 
   @ApiPropertyOptional({ example: 'Johnny', type: String })

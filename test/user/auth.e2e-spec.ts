@@ -1,12 +1,12 @@
 import request from 'supertest';
-import { APP_URL, TESTER_EMAIL, TESTER_PASSWORD } from '../utils/constants';
+import { APP_URL, TESTER_EMAIL, TESTER_PASSWORD, md5 } from '../utils/constants';
 
 describe('Auth Module', () => {
   const app = APP_URL;
   const newUserFirstName = `Tester${Date.now()}`;
   const newUserLastName = `E2E`;
   const newUserEmail = `User.${Date.now()}@example.com`;
-  const newUserPassword = `Secret00`;
+  const newUserPassword = md5('Secret00');
 
   describe('Registration', () => {
     it('should fail with exists email: /api/v1/auth/email/register (POST)', () => {
@@ -163,7 +163,7 @@ describe('Auth Module', () => {
 
     it('should update profile successfully: /api/v1/auth/me (PUT)', async () => {
       const newUserNewName = Date.now();
-      const newUserNewPassword = 'NewSecret00';
+      const newUserNewPassword = md5('NewSecret00');
       const userToken = await request(app)
         .post('/api/v1/auth/email/login')
         .send({ email: newUserEmail, password: newUserPassword })

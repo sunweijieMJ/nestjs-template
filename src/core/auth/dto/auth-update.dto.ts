@@ -1,8 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsOptional, MaxLength, MinLength, IsInt, Min, Max, IsDateString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, MaxLength, IsInt, Min, Max, IsDateString } from 'class-validator';
 import { FileDto } from '../../../modules/files/dto/file.dto';
 import { Transform, Type } from 'class-transformer';
 import { lowerCaseTransformer } from '../../../common/transformers/lower-case.transformer';
+import { IsMd5Password } from '../../../common/validators/md5-password.validator';
 import { sanitizeTransformer } from '../../../common/transformers/sanitize.transformer';
 
 export class AuthUpdateDto {
@@ -52,15 +53,15 @@ export class AuthUpdateDto {
   @Transform(lowerCaseTransformer)
   email?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ example: '5f4dcc3b5aa765d61d8327deb882cf99', description: 'MD5 encrypted new password' })
   @IsOptional()
   @IsNotEmpty()
-  @MinLength(8)
-  @MaxLength(128)
+  @IsMd5Password()
   password?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ example: '5f4dcc3b5aa765d61d8327deb882cf99', description: 'MD5 encrypted old password' })
   @IsOptional()
   @IsNotEmpty({ message: 'mustBeNotEmpty' })
+  @IsMd5Password()
   oldPassword?: string;
 }

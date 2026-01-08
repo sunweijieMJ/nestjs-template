@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, Matches } from 'class-validator';
-import { IsStrongPassword } from '../../../common/validators/password-strength.validator';
+import { IsMd5Password } from '../../../common/validators/md5-password.validator';
 
 /**
  * 手机验证码重置密码 DTO
@@ -18,8 +18,8 @@ export class AuthPhoneResetPasswordDto {
   @Matches(/^\d{4,8}$/, { message: 'code must be 4-8 digits' })
   code: string;
 
-  @ApiProperty({ example: 'NewPassword123', description: '新密码' })
+  @ApiProperty({ example: '5f4dcc3b5aa765d61d8327deb882cf99', description: 'MD5 encrypted password' })
   @IsNotEmpty()
-  @IsStrongPassword()
+  @IsMd5Password()
   password: string;
 }
