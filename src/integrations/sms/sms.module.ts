@@ -4,6 +4,6 @@ import { AliyunSmsProvider } from './providers/aliyun-sms.provider';
 
 @Module({
   providers: [SmsService, AliyunSmsProvider],
-  exports: [SmsService],
+  exports: [SmsService, AliyunSmsProvider],
 })
 export class SmsModule {}

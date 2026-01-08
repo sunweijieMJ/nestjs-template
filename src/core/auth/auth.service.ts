@@ -5,6 +5,8 @@ import {
   NotFoundException,
   UnauthorizedException,
   UnprocessableEntityException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import ms from 'ms';
 import { JwtService, TokenExpiredError, JsonWebTokenError } from '@nestjs/jwt';
@@ -34,6 +36,7 @@ import { WechatService } from '../../integrations/wechat/wechat.service';
 import { maskEmail, maskPhone } from '../../common/utils/sanitize.utils';
 import { isUserStatusAllowedForAuth } from '../../common/utils/status.util';
 import { TokenService } from './services/token.service';
+import { NotificationsService } from '../../modules/notifications/notifications.service';
 
 @Injectable()
 export class AuthService {
@@ -48,6 +51,8 @@ export class AuthService {
     private smsService: SmsService,
     private wechatService: WechatService,
     private tokenService: TokenService,
+    @Inject(forwardRef(() => NotificationsService))
+    private notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -138,6 +143,9 @@ export class AuthService {
     });
 
     this.logger.log(`User registered successfully: ${user.id}`);
+
+    // Initialize default notification settings for new user
+    await this.notificationsService.initializeDefaultSettings(user.id);
 
     const hash = await this.jwtService.signAsync(
       {
@@ -867,6 +875,10 @@ export class AuthService {
     });
 
     this.logger.log(`User registered successfully via phone: ${user.id}`);
+
+    // Initialize default notification settings for new user
+    await this.notificationsService.initializeDefaultSettings(user.id);
+
     return this.createSessionAndTokens(user);
   }
 
@@ -962,6 +974,9 @@ export class AuthService {
       });
 
       this.logger.log(`New WeChat user created: ${user.id}`);
+
+      // Initialize default notification settings for new user
+      await this.notificationsService.initializeDefaultSettings(user.id);
     } else {
       this.logger.log(`Existing user found for WeChat openId: ${wechatUserInfo.openId}`);
     }

@@ -13,6 +13,7 @@ import throttlerConfig from './infrastructure/throttler/config/throttler.config'
 import metricsConfig from './infrastructure/metrics/config/metrics.config';
 import smsConfig from './integrations/sms/config/sms.config';
 import wechatConfig from './integrations/wechat/config/wechat.config';
+import alipayConfig from './integrations/alipay/config/alipay.config';
 import path from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -40,6 +41,10 @@ import { FeedbacksModule } from './modules/feedbacks/feedbacks.module';
 import { PermissionsModule } from './core/permissions/permissions.module';
 import { TransactionModule } from './infrastructure/database/transaction/transaction.module';
 import { AuditModule } from './infrastructure/audit/audit.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { NotificationQueueModule } from './infrastructure/queue/notification-queue/notification-queue.module';
+import { WechatModule } from './integrations/wechat/wechat.module';
+import { AlipayModule } from './integrations/alipay/alipay.module';
 
 // <database-block>
 const dbConfig = databaseConfig() as DatabaseConfig;
@@ -79,6 +84,7 @@ const relationalOnlyModules = isDocumentDatabase ? [] : [TransactionModule, Audi
         metricsConfig,
         smsConfig,
         wechatConfig,
+        alipayConfig,
       ],
       envFilePath: ['.env'],
     }),
@@ -179,6 +185,10 @@ const relationalOnlyModules = isDocumentDatabase ? [] : [TransactionModule, Audi
     FavoritesModule,
     FeedbacksModule,
     PermissionsModule,
+    NotificationsModule,
+    NotificationQueueModule,
+    WechatModule,
+    AlipayModule,
     ...relationalOnlyModules,
   ],
 })
