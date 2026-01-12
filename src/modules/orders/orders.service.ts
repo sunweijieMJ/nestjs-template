@@ -1,4 +1,5 @@
 import { Injectable, Logger, NotFoundException, UnprocessableEntityException, HttpStatus } from '@nestjs/common';
+import { randomBytes } from 'crypto';
 import { OrderRepository } from './infrastructure/persistence/order.repository';
 import { OrderItemRepository } from './infrastructure/persistence/order-item.repository';
 import { Order, OrderStatus, PaymentChannel } from './domain/order';
@@ -143,9 +144,13 @@ export class OrdersService {
     return this.orderRepository.countByUserId(userId, queryOrderDto);
   }
 
+  /**
+   * 生成加密安全的订单号
+   * 格式: ORD + 时间戳(精确到秒) + 6位随机字符
+   */
   private generateOrderNo(): string {
-    const timestamp = Date.now().toString();
-    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    const random = randomBytes(4).toString('hex').slice(0, 6).toUpperCase();
     return `ORD${timestamp}${random}`;
   }
 }

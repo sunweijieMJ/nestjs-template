@@ -3,7 +3,6 @@
 #
 # Usage:
 #   docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.postgres.yaml up
-#   docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.mongo.yaml up
 
 services:
   maildev:

@@ -2,7 +2,7 @@ import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@
 import { Reflector } from '@nestjs/core';
 import { Permission } from './permission.enum';
 import { PERMISSIONS_KEY } from './permissions.decorator';
-import { RolePermissions } from './role-permissions';
+import { PermissionsService } from './permissions.service';
 import { RoleEnum } from '../../common/enums/roles/roles.enum';
 
 interface RequestUser {
@@ -32,9 +32,12 @@ interface RequestUser {
  */
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly permissionsService: PermissionsService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredPermissions = this.reflector.getAllAndOverride<Permission[]>(PERMISSIONS_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -57,10 +60,8 @@ export class PermissionsGuard implements CanActivate {
       throw new ForbiddenException('User role not found');
     }
 
-    // Get user permissions from in-memory role-permission mapping
-    // This is already highly performant as it's a simple object lookup
-    // No additional caching needed for this operation
-    const userPermissions = RolePermissions[roleId] ?? [];
+    // Get user permissions from database (with caching)
+    const userPermissions = await this.permissionsService.getPermissionsForRole(roleId);
 
     const hasAllPermissions = requiredPermissions.every((permission) => userPermissions.includes(permission));
 

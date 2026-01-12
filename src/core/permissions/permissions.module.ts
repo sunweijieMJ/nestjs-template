@@ -1,12 +1,18 @@
 import { Global, Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { PermissionsGuard } from './permissions.guard';
+import { PermissionsService } from './permissions.service';
+import { PermissionEntity } from './infrastructure/persistence/permission.entity';
+import { RolePermissionEntity } from './infrastructure/persistence/role-permission.entity';
+import { PermissionRepository } from './infrastructure/persistence/permission.repository';
 
 /**
  * PermissionsModule provides fine-grained permission control for the application.
  *
  * Features:
  * - Permission-based access control via @RequirePermissions() decorator
- * - Role-to-permission mapping (admin gets all, users get subset)
+ * - Database-backed role-to-permission mapping with caching
+ * - Backward compatible with hardcoded permissions if database is empty
  * - Works alongside existing @Roles() decorator for role-based access
  *
  * Usage:
@@ -50,7 +56,8 @@ import { PermissionsGuard } from './permissions.guard';
  */
 @Global()
 @Module({
-  providers: [PermissionsGuard],
-  exports: [PermissionsGuard],
+  imports: [TypeOrmModule.forFeature([PermissionEntity, RolePermissionEntity])],
+  providers: [PermissionsGuard, PermissionsService, PermissionRepository],
+  exports: [PermissionsGuard, PermissionsService],
 })
 export class PermissionsModule {}

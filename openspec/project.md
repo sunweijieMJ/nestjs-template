@@ -2,7 +2,7 @@
 
 ## Purpose
 
-NestJS Boilerplate - 一个生产级别的 NestJS 后端项目模板，提供用户认证、文件上传、邮件服务等常用功能，支持 PostgreSQL 和 MongoDB 双数据库。
+NestJS Boilerplate - 一个生产级别的 NestJS 后端项目模板，提供用户认证、文件上传、邮件服务等常用功能，使用 PostgreSQL 数据库。
 
 ## Tech Stack
 
@@ -10,9 +10,7 @@ NestJS Boilerplate - 一个生产级别的 NestJS 后端项目模板，提供用
 - **Framework**: NestJS 11.x
 - **Language**: TypeScript 5.x
 - **Package Manager**: pnpm >= 9
-- **Databases**:
-  - PostgreSQL (TypeORM)
-  - MongoDB (Mongoose)
+- **Database**: PostgreSQL (TypeORM)
 - **Cache/Queue**: Redis, BullMQ
 - **Authentication**: JWT + Passport
 - **API Documentation**: Swagger/OpenAPI
@@ -41,11 +39,7 @@ module/
 ├── infrastructure/      # 基础设施层
 │   └── persistence/
 │       ├── [port].repository.ts      # 仓储接口 (Port)
-│       ├── relational/               # PostgreSQL 实现 (Adapter)
-│       │   ├── entities/
-│       │   ├── mappers/
-│       │   └── repositories/
-│       └── document/                 # MongoDB 实现 (Adapter)
+│       └── relational/               # PostgreSQL 实现 (Adapter)
 │           ├── entities/
 │           ├── mappers/
 │           └── repositories/
@@ -111,7 +105,7 @@ module/
 
 ## External Dependencies
 
-- **数据库**: PostgreSQL / MongoDB (自托管或云服务)
+- **数据库**: PostgreSQL (自托管或云服务)
 - **缓存/队列**: Redis
 - **文件存储**: AWS S3 (可选，支持本地存储)
 - **邮件**: SMTP 服务 (如 Maildev 用于开发)
@@ -129,7 +123,6 @@ pnpm docker:pg:dev      # Docker PostgreSQL 开发环境
 
 ```bash
 pnpm generate:resource:relational   # 生成 PostgreSQL 资源
-pnpm generate:resource:all-db       # 生成双数据库资源
 ```
 
 ### 数据库
