@@ -33,6 +33,18 @@ export class AddressEntity extends EntityRelationalHelper {
   @Column({ type: 'varchar', length: 20 })
   phone: string;
 
+  @Index()
+  @Column({ type: 'varchar', length: 12, nullable: true })
+  provinceCode: string | null;
+
+  @Index()
+  @Column({ type: 'varchar', length: 12, nullable: true })
+  cityCode: string | null;
+
+  @Index()
+  @Column({ type: 'varchar', length: 12, nullable: true })
+  districtCode: string | null;
+
   @Column({ type: 'varchar', length: 50 })
   province: string;
 

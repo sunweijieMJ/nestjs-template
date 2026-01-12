@@ -2,6 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { sanitizeTransformer } from '../../../common/transformers/sanitize.transformer';
+import { IsRegionCode } from '../../../common/decorators/is-region-code.decorator';
 
 export class UpdateAddressDto {
   @ApiPropertyOptional({ example: 'John Doe', type: String })
@@ -16,6 +17,21 @@ export class UpdateAddressDto {
   @IsString()
   @Matches(/^1[3-9]\d{9}$/, { message: 'phone must be a valid Chinese mobile number' })
   phone?: string;
+
+  @ApiPropertyOptional({ example: '110000000000', type: String, description: 'Province region code (12 digits)' })
+  @IsOptional()
+  @IsRegionCode()
+  provinceCode?: string;
+
+  @ApiPropertyOptional({ example: '110100000000', type: String, description: 'City region code (12 digits)' })
+  @IsOptional()
+  @IsRegionCode()
+  cityCode?: string;
+
+  @ApiPropertyOptional({ example: '110101000000', type: String, description: 'District region code (12 digits)' })
+  @IsOptional()
+  @IsRegionCode()
+  districtCode?: string;
 
   @ApiPropertyOptional({ example: '北京市', type: String })
   @IsOptional()

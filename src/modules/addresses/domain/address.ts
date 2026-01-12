@@ -18,6 +18,15 @@ export class Address {
   @ApiProperty({ example: '13800138000', type: String })
   phone: string;
 
+  @ApiProperty({ example: '110000000000', type: String, required: false })
+  provinceCode?: string | null;
+
+  @ApiProperty({ example: '110100000000', type: String, required: false })
+  cityCode?: string | null;
+
+  @ApiProperty({ example: '110101000000', type: String, required: false })
+  districtCode?: string | null;
+
   @ApiProperty({ example: '北京市', type: String })
   province: string;
 

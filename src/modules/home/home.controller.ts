@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { HomeService } from './home.service';
 
@@ -9,13 +9,15 @@ export class HomeController {
   constructor(private service: HomeService) {}
 
   @Get()
+  @ApiOperation({ operationId: 'getAppInfo', summary: '获取应用信息' })
   appInfo(): { name: string | undefined } {
     return this.service.appInfo();
   }
 
   @Get('health')
+  @ApiOperation({ operationId: 'simpleHealthCheck', summary: '简单健康检查' })
   @ApiOkResponse({
-    description: 'Health check endpoint',
+    description: '健康检查响应',
     schema: {
       type: 'object',
       properties: {

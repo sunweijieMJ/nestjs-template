@@ -8,6 +8,9 @@ export class AddressMapper {
     domainEntity.userId = raw.userId;
     domainEntity.name = raw.name;
     domainEntity.phone = raw.phone;
+    domainEntity.provinceCode = raw.provinceCode;
+    domainEntity.cityCode = raw.cityCode;
+    domainEntity.districtCode = raw.districtCode;
     domainEntity.province = raw.province;
     domainEntity.city = raw.city;
     domainEntity.district = raw.district;
@@ -24,6 +27,9 @@ export class AddressMapper {
     persistenceEntity.userId = Number(domainEntity.userId);
     persistenceEntity.name = domainEntity.name;
     persistenceEntity.phone = domainEntity.phone;
+    persistenceEntity.provinceCode = domainEntity.provinceCode ?? null;
+    persistenceEntity.cityCode = domainEntity.cityCode ?? null;
+    persistenceEntity.districtCode = domainEntity.districtCode ?? null;
     persistenceEntity.province = domainEntity.province;
     persistenceEntity.city = domainEntity.city;
     persistenceEntity.district = domainEntity.district;

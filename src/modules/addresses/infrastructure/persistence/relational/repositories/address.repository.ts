@@ -44,6 +44,15 @@ export class AddressRelationalRepository implements AddressRepository {
     if (filterOptions?.city) {
       where.city = filterOptions.city;
     }
+    if (filterOptions?.provinceCode) {
+      where.provinceCode = filterOptions.provinceCode;
+    }
+    if (filterOptions?.cityCode) {
+      where.cityCode = filterOptions.cityCode;
+    }
+    if (filterOptions?.districtCode) {
+      where.districtCode = filterOptions.districtCode;
+    }
 
     const { skip, take, order } = buildFindOptions({
       paginationOptions,

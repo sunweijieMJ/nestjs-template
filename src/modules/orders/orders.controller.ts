@@ -33,7 +33,7 @@ export class OrdersController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create a new order' })
+  @ApiOperation({ operationId: 'createOrder', summary: '创建订单' })
   @ApiCreatedResponse({ type: Order })
   async create(
     @Request() request: RequestWithUser,
@@ -44,7 +44,7 @@ export class OrdersController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get user orders with pagination' })
+  @ApiOperation({ operationId: 'getOrders', summary: '获取订单列表' })
   @ApiOkResponse({ type: PaginationResponseDto })
   async findAll(
     @Request() request: RequestWithUser,
@@ -70,7 +70,7 @@ export class OrdersController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get order by ID' })
+  @ApiOperation({ operationId: 'getOrder', summary: '获取订单详情' })
   @ApiOkResponse({ type: Order })
   async findOne(@Request() request: RequestWithUser, @Param('id') id: string): Promise<Order & { items: OrderItem[] }> {
     return this.ordersService.findOne(id, request.user.id);
@@ -78,7 +78,7 @@ export class OrdersController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Cancel an unpaid order' })
+  @ApiOperation({ operationId: 'cancelOrder', summary: '取消未支付订单' })
   async cancel(@Request() request: RequestWithUser, @Param('id') id: string): Promise<void> {
     return this.ordersService.cancelOrder(id, request.user.id);
   }

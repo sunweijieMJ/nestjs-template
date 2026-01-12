@@ -34,7 +34,7 @@ export class HealthController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Health check endpoint' })
+  @ApiOperation({ operationId: 'healthCheck', summary: '健康检查' })
   @HealthCheck()
   async check(): Promise<import('@nestjs/terminus').HealthCheckResult> {
     const redisEnabled = this.configService.get('redis.enabled', { infer: true });
@@ -67,14 +67,14 @@ export class HealthController {
   }
 
   @Get('live')
-  @ApiOperation({ summary: 'Liveness probe for Kubernetes' })
+  @ApiOperation({ operationId: 'livenessProbe', summary: '存活探针（Kubernetes）' })
   @HealthCheck()
   liveness(): Promise<import('@nestjs/terminus').HealthCheckResult> {
     return this.health.check([() => this.memoryHealthIndicator.checkHeap('memory_heap', 300 * 1024 * 1024)]);
   }
 
   @Get('ready')
-  @ApiOperation({ summary: 'Readiness probe for Kubernetes' })
+  @ApiOperation({ operationId: 'readinessProbe', summary: '就绪探针（Kubernetes）' })
   @HealthCheck()
   async readiness(): Promise<import('@nestjs/terminus').HealthCheckResult> {
     return this.health.check([() => this.typeOrmHealthIndicator.pingCheck('database')]);

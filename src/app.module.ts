@@ -33,6 +33,7 @@ import { ThrottlerModule } from './infrastructure/throttler/throttler.module';
 import { MetricsModule } from './infrastructure/metrics/metrics.module';
 import { SmsModule } from './integrations/sms/sms.module';
 import { AddressesModule } from './modules/addresses/addresses.module';
+import { RegionsModule } from './modules/regions/regions.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
 import { FeedbacksModule } from './modules/feedbacks/feedbacks.module';
 import { PermissionsModule } from './core/permissions/permissions.module';
@@ -165,6 +166,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     MetricsModule.forRoot(),
     SmsModule,
     AddressesModule,
+    RegionsModule,
     FavoritesModule,
     FeedbacksModule,
     PermissionsModule,
