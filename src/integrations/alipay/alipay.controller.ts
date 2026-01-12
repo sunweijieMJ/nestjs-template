@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, HttpCode, HttpStatus, Logger } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, HttpCode, HttpStatus, Logger, Optional } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AlipayService } from './alipay.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -16,7 +16,7 @@ export class AlipayController {
 
   constructor(
     private readonly alipayService: AlipayService,
-    private readonly ordersService: OrdersService,
+    @Optional() private readonly ordersService?: OrdersService,
   ) {}
 
   @Post('payment/mobile')
@@ -108,7 +108,7 @@ export class AlipayController {
     const { out_trade_no, trade_status, trade_no, total_amount } = body;
 
     // 更新订单支付状态
-    if (trade_status === 'TRADE_SUCCESS' || trade_status === 'TRADE_FINISHED') {
+    if ((trade_status === 'TRADE_SUCCESS' || trade_status === 'TRADE_FINISHED') && this.ordersService) {
       try {
         await this.ordersService.updatePaymentStatus(out_trade_no, OrderStatus.PAID, {
           paymentChannel: PaymentChannel.ALIPAY,

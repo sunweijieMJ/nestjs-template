@@ -10,6 +10,7 @@ import {
   RawBodyRequest,
   Req,
   Logger,
+  Optional,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { WechatPayService } from './wechat-pay.service';
@@ -29,7 +30,7 @@ export class WechatPayController {
 
   constructor(
     private readonly wechatPayService: WechatPayService,
-    private readonly ordersService: OrdersService,
+    @Optional() private readonly ordersService?: OrdersService,
   ) {}
 
   @Post('payment/jsapi')
@@ -137,7 +138,7 @@ export class WechatPayController {
 
       const { out_trade_no, trade_state, transaction_id, amount } = resource;
 
-      if (trade_state === 'SUCCESS' && out_trade_no) {
+      if (trade_state === 'SUCCESS' && out_trade_no && this.ordersService) {
         try {
           await this.ordersService.updatePaymentStatus(out_trade_no, OrderStatus.PAID, {
             paymentChannel: PaymentChannel.WECHAT,
