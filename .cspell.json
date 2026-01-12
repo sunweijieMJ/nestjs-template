@@ -75,7 +75,18 @@
     "healthcheck",
     "healthchecks",
     "terminus",
-    "Procfile"
+    "Procfile",
+    "wechat",
+    "alipay",
+    "jsapi",
+    "openid",
+    "unionid",
+    "appid",
+    "mchid",
+    "prepay",
+    "refundable",
+    "outTradeNo",
+    "transactionId"
   ],
   "ignorePaths": ["node_modules", "dist", "coverage", "*.lock", "*.json", ".git", "CHANGELOG.md"]
 }
