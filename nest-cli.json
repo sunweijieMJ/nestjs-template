@@ -5,7 +5,8 @@
   "compilerOptions": {
     "assets": [
       { "include": "i18n/**/*", "watchAssets": true },
-      { "include": "integrations/mail/mail-templates/**/*", "watchAssets": true }
+      { "include": "integrations/mail/mail-templates/**/*", "watchAssets": true },
+      { "include": "infrastructure/database/seeds/**/*.json", "watchAssets": true }
     ]
   }
 }

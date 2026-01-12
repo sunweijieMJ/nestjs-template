@@ -48,12 +48,19 @@ else
   npm run migration:run
 fi
 
-# Run seed data (skip in production)
-if [ "$ENV_MODE" != "prod" ]; then
+# Run seed data
+# In production: only run if RUN_SEEDS=true (for initial deployment)
+# In other environments: always run
+if [ "$ENV_MODE" = "prod" ]; then
+  if [ "$RUN_SEEDS" = "true" ]; then
+    echo "Running seed data in production (RUN_SEEDS=true)..."
+    npm run seed:run:prod
+  else
+    echo "Skipping seed data in production mode (set RUN_SEEDS=true to enable)"
+  fi
+else
   echo "Running seed data..."
   npm run seed:run:relational
-else
-  echo "Skipping seed data in production mode"
 fi
 
 # Start application based on environment
