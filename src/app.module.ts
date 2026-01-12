@@ -69,7 +69,17 @@ const infrastructureDatabaseModule = isDocumentDatabase
 // </database-block>
 
 // Modules that only work with relational databases (TypeORM)
-const relationalOnlyModules = isDocumentDatabase ? [] : [TransactionModule, AuditModule, OrdersModule, SchedulerModule];
+const relationalOnlyModules = isDocumentDatabase
+  ? []
+  : [
+      TransactionModule,
+      AuditModule,
+      OrdersModule,
+      SchedulerModule,
+      NotificationsModule,
+      NotificationQueueModule,
+      SharesModule,
+    ];
 
 @Module({
   imports: [
@@ -188,11 +198,8 @@ const relationalOnlyModules = isDocumentDatabase ? [] : [TransactionModule, Audi
     FavoritesModule,
     FeedbacksModule,
     PermissionsModule,
-    NotificationsModule,
-    NotificationQueueModule,
     WechatModule,
     AlipayModule,
-    SharesModule,
     ...relationalOnlyModules,
   ],
 })
