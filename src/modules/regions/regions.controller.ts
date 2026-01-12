@@ -3,6 +3,7 @@ import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RegionsService, RegionTree } from './regions.service';
 import { Region } from './domain/region';
 import { QueryRegionDto } from './dto/query-region.dto';
+import { RegionTreeDto } from './dto/region-tree.dto';
 import { ProvinceCodeParam, CityCodeParam, RegionCodeParam } from './dto/region-code.param';
 
 @ApiTags('Regions')
@@ -65,7 +66,7 @@ export class RegionsController {
   }
 
   @ApiOkResponse({
-    type: 'object',
+    type: [RegionTreeDto],
     description: 'Region tree structure',
   })
   @ApiOperation({
