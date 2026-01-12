@@ -9,6 +9,7 @@ import { User } from '../../../../domain/user';
 import { UserRepository } from '../../user.repository';
 import { UserMapper } from '../mappers/user.mapper';
 import { IPaginationOptions } from '../../../../../../common/types/pagination-options';
+import { handleUniqueConstraintError } from '../../../../../../common/utils/exceptions.util';
 
 @Injectable()
 export class UsersRelationalRepository implements UserRepository {
@@ -19,8 +20,14 @@ export class UsersRelationalRepository implements UserRepository {
 
   async create(data: User): Promise<User> {
     const persistenceModel = UserMapper.toPersistence(data);
-    const newEntity = await this.usersRepository.save(this.usersRepository.create(persistenceModel));
-    return UserMapper.toDomain(newEntity);
+    try {
+      const newEntity = await this.usersRepository.save(this.usersRepository.create(persistenceModel));
+      return UserMapper.toDomain(newEntity);
+    } catch (error) {
+      // 处理数据库唯一约束异常（竞态条件下的并发创建）
+      handleUniqueConstraintError(error);
+      throw error;
+    }
   }
 
   async findManyWithPagination({
@@ -117,16 +124,22 @@ export class UsersRelationalRepository implements UserRepository {
       throw new NotFoundException('User not found');
     }
 
-    const updatedEntity = await this.usersRepository.save(
-      this.usersRepository.create(
-        UserMapper.toPersistence({
-          ...UserMapper.toDomain(entity),
-          ...payload,
-        }),
-      ),
-    );
+    try {
+      const updatedEntity = await this.usersRepository.save(
+        this.usersRepository.create(
+          UserMapper.toPersistence({
+            ...UserMapper.toDomain(entity),
+            ...payload,
+          }),
+        ),
+      );
 
-    return UserMapper.toDomain(updatedEntity);
+      return UserMapper.toDomain(updatedEntity);
+    } catch (error) {
+      // 处理数据库唯一约束异常
+      handleUniqueConstraintError(error);
+      throw error;
+    }
   }
 
   async remove(id: User['id']): Promise<void> {

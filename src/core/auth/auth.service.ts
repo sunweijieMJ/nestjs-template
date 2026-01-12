@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import ms from 'ms';
 import { JwtService, TokenExpiredError, JsonWebTokenError } from '@nestjs/jwt';
+import { DataSource } from 'typeorm';
 import { hashPassword, comparePassword } from '../../common/utils/crypto.utils';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthUpdateDto } from './dto/auth-update.dto';
@@ -37,6 +38,8 @@ import { maskEmail, maskPhone } from '../../common/utils/sanitize.utils';
 import { TokenService } from './services/token.service';
 import { NotificationsService } from '../../modules/notifications/notifications.service';
 import { verifySmsCode, validateUserStatusForAuth } from './helpers/auth-validation.helper';
+import { SessionEntity } from '../session/infrastructure/persistence/relational/entities/session.entity';
+import { UserEntity } from '../users/infrastructure/persistence/relational/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -53,6 +56,7 @@ export class AuthService {
     private tokenService: TokenService,
     @Inject(forwardRef(() => NotificationsService))
     private notificationsService: NotificationsService,
+    private dataSource: DataSource,
   ) {}
 
   /**
@@ -77,10 +81,11 @@ export class AuthService {
 
     if (user.provider !== AuthProvidersEnum.email) {
       this.logger.warn(`Login failed - wrong provider for user ${user.id}: ${user.provider}`);
+      // 返回通用错误信息，避免泄露用户注册渠道
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
-          email: `needLoginViaProvider:${user.provider}`,
+          password: 'incorrectPassword',
         },
       });
     }
@@ -137,7 +142,13 @@ export class AuthService {
     this.logger.log(`User registered successfully: ${user.id}`);
 
     // Initialize default notification settings for new user
-    await this.notificationsService.initializeDefaultSettings(user.id);
+    // 使用 try-catch 确保通知设置失败不影响注册流程
+    try {
+      await this.notificationsService.initializeDefaultSettings(user.id);
+    } catch (error) {
+      this.logger.warn(`Failed to initialize notification settings for user ${user.id}`, { error });
+      // 不抛出错误，通知设置可以稍后补充
+    }
 
     const hash = await this.jwtService.signAsync(
       {
@@ -396,12 +407,17 @@ export class AuthService {
     // Encrypt password before updating
     const hashedPassword = await hashPassword(password);
 
-    // Delete all user sessions and update password in a single operation
-    await this.sessionService.deleteByUserId({
-      userId: user.id,
+    // 使用事务确保删除会话和更新密码的原子性
+    await this.dataSource.transaction(async (manager) => {
+      // Delete all user sessions
+      await manager.softDelete(SessionEntity, {
+        user: { id: Number(user.id) },
+      });
+
+      // Update password
+      await manager.update(UserEntity, { id: Number(user.id) }, { password: hashedPassword });
     });
 
-    await this.usersService.update(user.id, { password: hashedPassword });
     this.logger.log(`Password reset successful for user: ${userId}`);
   }
 
@@ -445,12 +461,17 @@ export class AuthService {
     // 加密新密码
     const hashedPassword = await hashPassword(password);
 
-    // 删除所有用户会话并更新密码
-    await this.sessionService.deleteByUserId({
-      userId: user.id,
+    // 使用事务确保删除会话和更新密码的原子性
+    await this.dataSource.transaction(async (manager) => {
+      // 删除所有用户会话
+      await manager.softDelete(SessionEntity, {
+        user: { id: Number(user.id) },
+      });
+
+      // 更新密码
+      await manager.update(UserEntity, { id: Number(user.id) }, { password: hashedPassword });
     });
 
-    await this.usersService.update(user.id, { password: hashedPassword });
     this.logger.log(`Phone password reset successful for user: ${user.id}`);
   }
 
@@ -698,7 +719,6 @@ export class AuthService {
       this.logger.warn(`Phone login failed - user not found: ${maskPhone(loginDto.phone)}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
-        message: 'incorrectPhoneOrPassword',
         errors: {
           credentials: 'incorrectPhoneOrPassword',
         },
@@ -707,11 +727,11 @@ export class AuthService {
 
     if (user.provider !== AuthProvidersEnum.phone) {
       this.logger.warn(`Phone login failed - wrong provider for user ${user.id}: ${user.provider}`);
+      // 返回通用错误信息，避免泄露用户注册渠道
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
-        message: `needLoginViaProvider:${user.provider}`,
         errors: {
-          phone: `needLoginViaProvider:${user.provider}`,
+          credentials: 'incorrectPhoneOrPassword',
         },
       });
     }
@@ -720,7 +740,6 @@ export class AuthService {
       this.logger.warn(`Phone login failed - no password set for user: ${user.id}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
-        message: 'incorrectPhoneOrPassword',
         errors: {
           credentials: 'incorrectPhoneOrPassword',
         },
@@ -733,7 +752,6 @@ export class AuthService {
       this.logger.warn(`Phone login failed - incorrect password for user: ${user.id}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
-        message: 'incorrectPhoneOrPassword',
         errors: {
           credentials: 'incorrectPhoneOrPassword',
         },
@@ -820,7 +838,11 @@ export class AuthService {
     this.logger.log(`User registered successfully via phone: ${user.id}`);
 
     // Initialize default notification settings for new user
-    await this.notificationsService.initializeDefaultSettings(user.id);
+    try {
+      await this.notificationsService.initializeDefaultSettings(user.id);
+    } catch (error) {
+      this.logger.warn(`Failed to initialize notification settings for user ${user.id}`, { error });
+    }
 
     return this.createSessionAndTokens(user);
   }
@@ -919,7 +941,11 @@ export class AuthService {
       this.logger.log(`New WeChat user created: ${user.id}`);
 
       // Initialize default notification settings for new user
-      await this.notificationsService.initializeDefaultSettings(user.id);
+      try {
+        await this.notificationsService.initializeDefaultSettings(user.id);
+      } catch (error) {
+        this.logger.warn(`Failed to initialize notification settings for user ${user.id}`, { error });
+      }
     } else {
       this.logger.log(`Existing user found for WeChat openId: ${wechatUserInfo.openId}`);
     }

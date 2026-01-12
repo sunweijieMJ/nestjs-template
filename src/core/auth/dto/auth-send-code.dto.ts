@@ -10,9 +10,10 @@ export class AuthSendCodeDto {
   phone: string;
 
   @ApiProperty({
-    example: 'login',
+    example: SmsCodeType.LOGIN,
     enum: SmsCodeType,
-    description: 'Code type: login, register, reset_password, change_phone',
+    required: false,
+    description: '验证码类型: login(登录), register(注册), reset_password(重置密码), change_phone(换绑手机)',
   })
   @IsOptional()
   @IsEnum(SmsCodeType)

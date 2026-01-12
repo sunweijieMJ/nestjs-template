@@ -18,7 +18,16 @@ export function isStatusInactive(statusId: number | undefined): boolean {
 
 /**
  * Check if a user status is allowed for login/authentication
- * Allows both active and inactive (newly registered, not yet confirmed email)
+ *
+ * 业务规则说明：
+ * - active (1): 已激活用户，允许登录
+ * - inactive (2): 新注册用户（邮箱未确认），也允许登录
+ *
+ * 设计原因：允许未确认邮箱的用户登录，但他们的功能可能受限。
+ * 如需强制邮箱验证后才能登录，请修改此函数只允许 active 状态。
+ *
+ * @param statusId - 用户状态 ID
+ * @returns 是否允许登录
  */
 export function isUserStatusAllowedForAuth(statusId: number | undefined): boolean {
   return isStatusActive(statusId) || isStatusInactive(statusId);

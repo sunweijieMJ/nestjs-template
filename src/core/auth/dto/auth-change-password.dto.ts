@@ -1,14 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, MaxLength, MinLength } from 'class-validator';
+import { IsNotEmpty } from 'class-validator';
+import { IsMd5Password } from '../../../common/validators/md5-password.validator';
 
 export class AuthChangePasswordDto {
-  @ApiProperty()
+  @ApiProperty({ example: '5f4dcc3b5aa765d61d8327deb882cf99', description: 'MD5 encrypted old password' })
   @IsNotEmpty()
+  @IsMd5Password()
   oldPassword: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: '5f4dcc3b5aa765d61d8327deb882cf99', description: 'MD5 encrypted new password' })
   @IsNotEmpty()
-  @MinLength(8)
-  @MaxLength(128)
+  @IsMd5Password()
   newPassword: string;
 }

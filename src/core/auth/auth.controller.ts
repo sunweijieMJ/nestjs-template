@@ -131,6 +131,7 @@ export class AuthController {
   @Post('logout')
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ operationId: 'logout', summary: '退出登录' })
+  @ApiOkResponse({ description: '退出登录成功' })
   @HttpCode(HttpStatus.OK)
   public async logout(@Request() request: RequestWithUser): Promise<void> {
     await this.service.logout({
