@@ -1,8 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import databaseConfig from '../../../infrastructure/database/config/database.config';
-import { DatabaseConfig } from '../../../infrastructure/database/config/database-config.type';
-
-const idType = (databaseConfig() as DatabaseConfig).isDocumentDatabase ? String : Number;
 
 export enum NotificationType {
   INFO = 'INFO',
@@ -28,15 +24,15 @@ export enum NotificationChannel {
 
 export class Notification {
   @ApiProperty({
-    type: idType,
+    type: Number,
   })
-  id: number | string;
+  id: number;
 
   @ApiProperty({
-    type: idType,
+    type: Number,
     description: 'User ID who receives this notification',
   })
-  userId: number | string;
+  userId: number;
 
   @ApiProperty({
     enum: NotificationType,

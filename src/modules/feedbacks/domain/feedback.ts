@@ -1,8 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import databaseConfig from '../../../infrastructure/database/config/database.config';
-import { DatabaseConfig } from '../../../infrastructure/database/config/database-config.type';
-
-const idType = (databaseConfig() as DatabaseConfig).isDocumentDatabase ? String : Number;
 
 export enum FeedbackType {
   BUG = 'bug',
@@ -19,11 +15,11 @@ export enum FeedbackStatus {
 }
 
 export class Feedback {
-  @ApiProperty({ type: idType })
-  id: number | string;
+  @ApiProperty({ type: Number })
+  id: number;
 
-  @ApiProperty({ type: idType })
-  userId: number | string;
+  @ApiProperty({ type: Number })
+  userId: number;
 
   @ApiProperty({ enum: FeedbackType })
   type: FeedbackType;

@@ -10,6 +10,7 @@ import {
   HttpStatus,
   HttpCode,
   Request,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -75,10 +76,10 @@ export class NotificationsController {
 
   @ApiOkResponse({ type: Notification })
   @ApiOperation({ operationId: 'getNotification', summary: '获取通知详情' })
-  @ApiParam({ name: 'id', type: String })
+  @ApiParam({ name: 'id', type: Number })
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  findOne(@Request() request: RequestWithUser, @Param('id') id: string): Promise<Notification> {
+  findOne(@Request() request: RequestWithUser, @Param('id', ParseIntPipe) id: number): Promise<Notification> {
     return this.notificationsService.findOne(id, request.user.id);
   }
 
@@ -103,19 +104,19 @@ export class NotificationsController {
 
   @ApiOkResponse({ type: Notification })
   @ApiOperation({ operationId: 'markNotificationAsRead', summary: '标记通知为已读' })
-  @ApiParam({ name: 'id', type: String })
+  @ApiParam({ name: 'id', type: Number })
   @Patch(':id/read')
   @HttpCode(HttpStatus.OK)
-  markAsRead(@Request() request: RequestWithUser, @Param('id') id: string): Promise<Notification> {
+  markAsRead(@Request() request: RequestWithUser, @Param('id', ParseIntPipe) id: number): Promise<Notification> {
     return this.notificationsService.markAsRead(id, request.user.id);
   }
 
   @ApiOkResponse()
   @ApiOperation({ operationId: 'deleteNotification', summary: '删除通知' })
-  @ApiParam({ name: 'id', type: String })
+  @ApiParam({ name: 'id', type: Number })
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Request() request: RequestWithUser, @Param('id') id: string): Promise<void> {
+  async remove(@Request() request: RequestWithUser, @Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.notificationsService.remove(id, request.user.id);
   }
 }

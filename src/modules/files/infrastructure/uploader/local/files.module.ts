@@ -7,21 +7,12 @@ import { randomStringGenerator } from '@nestjs/common/utils/random-string-genera
 
 import { FilesLocalService } from './files.service';
 
-import { DocumentFilePersistenceModule } from '../../persistence/document/document-persistence.module';
 import { RelationalFilePersistenceModule } from '../../persistence/relational/relational-persistence.module';
 import { AllConfigType } from '../../../../../config/config.type';
-import { DatabaseConfig } from '../../../../../infrastructure/database/config/database-config.type';
-import databaseConfig from '../../../../../infrastructure/database/config/database.config';
-
-// <database-block>
-const infrastructurePersistenceModule = (databaseConfig() as DatabaseConfig).isDocumentDatabase
-  ? DocumentFilePersistenceModule
-  : RelationalFilePersistenceModule;
-// </database-block>
 
 @Module({
   imports: [
-    infrastructurePersistenceModule,
+    RelationalFilePersistenceModule,
     MulterModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

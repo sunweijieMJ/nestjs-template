@@ -1,21 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import databaseConfig from '../../../infrastructure/database/config/database.config';
-import { DatabaseConfig } from '../../../infrastructure/database/config/database-config.type';
 import { NotificationCategory } from './notification';
-
-const idType = (databaseConfig() as DatabaseConfig).isDocumentDatabase ? String : Number;
 
 export class NotificationSetting {
   @ApiProperty({
-    type: idType,
+    type: Number,
   })
-  id: number | string;
+  id: number;
 
   @ApiProperty({
-    type: idType,
+    type: Number,
     description: 'User ID who owns this setting',
   })
-  userId: number | string;
+  userId: number;
 
   @ApiProperty({
     enum: NotificationCategory,

@@ -12,6 +12,7 @@ import {
   Request,
   Ip,
   Headers,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -90,20 +91,20 @@ export class SharesController {
   @UseGuards(AuthGuard('jwt'))
   @ApiOkResponse({ type: Share })
   @ApiOperation({ operationId: 'getShareById', summary: '获取分享详情' })
-  @ApiParam({ name: 'id', type: String })
+  @ApiParam({ name: 'id', type: Number })
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  async findOne(@Request() request: RequestWithUser, @Param('id') id: string): Promise<Share> {
+  async findOne(@Request() request: RequestWithUser, @Param('id', ParseIntPipe) id: number): Promise<Share> {
     return this.sharesService.findOne(id, request.user.id);
   }
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ operationId: 'deleteShare', summary: '删除分享' })
-  @ApiParam({ name: 'id', type: String })
+  @ApiParam({ name: 'id', type: Number })
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Request() request: RequestWithUser, @Param('id') id: string): Promise<void> {
+  async remove(@Request() request: RequestWithUser, @Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.sharesService.remove(id, request.user.id);
   }
 
@@ -111,19 +112,19 @@ export class SharesController {
   @UseGuards(AuthGuard('jwt'))
   @ApiOkResponse({ type: ShareStatsDto })
   @ApiOperation({ operationId: 'getShareStats', summary: '获取分享统计' })
-  @ApiParam({ name: 'id', type: String })
+  @ApiParam({ name: 'id', type: Number })
   @Get(':id/stats')
   @HttpCode(HttpStatus.OK)
-  async getStats(@Request() request: RequestWithUser, @Param('id') id: string): Promise<ShareStatsDto> {
+  async getStats(@Request() request: RequestWithUser, @Param('id', ParseIntPipe) id: number): Promise<ShareStatsDto> {
     return this.sharesService.getStats(id, request.user.id);
   }
 
   @ApiOperation({ operationId: 'trackShare', summary: '追踪分享行为' })
-  @ApiParam({ name: 'id', type: String })
+  @ApiParam({ name: 'id', type: Number })
   @Post(':id/track')
   @HttpCode(HttpStatus.NO_CONTENT)
   async track(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() trackShareDto: TrackShareDto,
     @Ip() ip: string,
     @Headers('user-agent') userAgent: string,

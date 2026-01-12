@@ -1,8 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import databaseConfig from '../../../infrastructure/database/config/database.config';
-import { DatabaseConfig } from '../../../infrastructure/database/config/database-config.type';
-
-const idType = (databaseConfig() as DatabaseConfig).isDocumentDatabase ? String : Number;
 
 export enum ShareLogAction {
   VIEW = 'VIEW',
@@ -12,15 +8,15 @@ export enum ShareLogAction {
 
 export class ShareLog {
   @ApiProperty({
-    type: idType,
+    type: Number,
   })
-  id: number | string;
+  id: number;
 
   @ApiProperty({
-    type: idType,
+    type: Number,
     description: 'Share ID this log belongs to',
   })
-  shareId: number | string;
+  shareId: number;
 
   @ApiProperty({
     enum: ShareLogAction,

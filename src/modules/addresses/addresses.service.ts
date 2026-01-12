@@ -15,7 +15,7 @@ export class AddressesService {
 
   constructor(private readonly addressRepository: AddressRepository) {}
 
-  async create(userId: number | string, createAddressDto: CreateAddressDto): Promise<Address> {
+  async create(userId: number, createAddressDto: CreateAddressDto): Promise<Address> {
     this.logger.log(`Creating address for user: ${userId}`);
 
     // Check address count limit

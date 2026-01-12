@@ -18,7 +18,7 @@ export class SharesService {
     private readonly shareLogRepository: ShareLogRepository,
   ) {}
 
-  async create(userId: number | string, createShareDto: CreateShareDto): Promise<Share> {
+  async create(userId: number, createShareDto: CreateShareDto): Promise<Share> {
     this.logger.log(`Creating share for user: ${userId}`);
 
     // Generate unique share code with retry mechanism
@@ -63,7 +63,7 @@ export class SharesService {
   }
 
   async findManyWithPagination(
-    userId: number | string,
+    userId: number,
     queryShareDto: QueryShareDto,
     paginationOptions: IPaginationOptions,
   ): Promise<Share[]> {
@@ -74,7 +74,7 @@ export class SharesService {
     });
   }
 
-  async findOne(id: number | string, userId: number | string): Promise<Share> {
+  async findOne(id: number, userId: number): Promise<Share> {
     const share = await this.shareRepository.findByIdAndUserId(id, userId);
 
     if (!share) {
@@ -116,7 +116,7 @@ export class SharesService {
   }
 
   async trackShare(
-    id: number | string,
+    id: number,
     action: ShareLogAction,
     visitorIp?: string,
     userAgent?: string,
@@ -148,7 +148,7 @@ export class SharesService {
     this.logger.log(`Share tracked: ${id}, action: ${action}`);
   }
 
-  async getStats(id: number | string, userId: number | string): Promise<ShareStatsDto> {
+  async getStats(id: number, userId: number): Promise<ShareStatsDto> {
     const share = await this.shareRepository.findByIdAndUserId(id, userId);
 
     if (!share) {
@@ -165,7 +165,7 @@ export class SharesService {
     };
   }
 
-  async remove(id: number | string, userId: number | string): Promise<void> {
+  async remove(id: number, userId: number): Promise<void> {
     const share = await this.shareRepository.findByIdAndUserId(id, userId);
 
     if (!share) {
@@ -176,7 +176,7 @@ export class SharesService {
     this.logger.log(`Share deleted: ${id}`);
   }
 
-  async count(userId: number | string, queryShareDto?: QueryShareDto): Promise<number> {
+  async count(userId: number, queryShareDto?: QueryShareDto): Promise<number> {
     return this.shareRepository.countByUserId(userId, queryShareDto);
   }
 }

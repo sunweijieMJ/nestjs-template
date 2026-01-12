@@ -11,7 +11,7 @@ export class FavoritesService {
 
   constructor(private readonly favoriteRepository: FavoriteRepository) {}
 
-  async create(userId: number | string, createFavoriteDto: CreateFavoriteDto): Promise<Favorite> {
+  async create(userId: number, createFavoriteDto: CreateFavoriteDto): Promise<Favorite> {
     this.logger.log(
       `Creating favorite for user: ${userId}, target: ${createFavoriteDto.targetType}:${createFavoriteDto.targetId}`,
     );
@@ -80,11 +80,7 @@ export class FavoritesService {
     return { data, total };
   }
 
-  async check(
-    userId: number | string,
-    targetType: FavoriteTargetType,
-    targetId: string,
-  ): Promise<CheckFavoriteResponseDto> {
+  async check(userId: number, targetType: FavoriteTargetType, targetId: string): Promise<CheckFavoriteResponseDto> {
     const favorite = await this.favoriteRepository.findByUserAndTarget(userId, targetType, targetId);
     return {
       isFavorited: !!favorite,
@@ -108,7 +104,7 @@ export class FavoritesService {
   }
 
   async toggle(
-    userId: number | string,
+    userId: number,
     createFavoriteDto: CreateFavoriteDto,
   ): Promise<{ isFavorited: boolean; favorite?: Favorite }> {
     const existing = await this.favoriteRepository.findByUserAndTarget(

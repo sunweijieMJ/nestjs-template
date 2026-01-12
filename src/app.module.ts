@@ -24,9 +24,6 @@ import { MailModule } from './integrations/mail/mail.module';
 import { HomeModule } from './modules/home/home.module';
 import { AllConfigType } from './config/config.type';
 import { SessionModule } from './core/session/session.module';
-import { MongooseModule } from '@nestjs/mongoose';
-import { MongooseConfigService } from './infrastructure/database/mongoose-config.service';
-import { DatabaseConfig } from './infrastructure/database/config/database-config.type';
 import { LoggerModule } from 'nestjs-pino';
 import { randomUUID } from 'crypto';
 import { CacheModule } from './infrastructure/cache/cache.module';
@@ -49,37 +46,15 @@ import { SharesModule } from './modules/shares/shares.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { SchedulerModule } from './infrastructure/scheduler/scheduler.module';
 
-// <database-block>
-const dbConfig = databaseConfig() as DatabaseConfig;
-const isDocumentDatabase = dbConfig.isDocumentDatabase;
-
-const infrastructureDatabaseModule = isDocumentDatabase
-  ? MongooseModule.forRootAsync({
-      useClass: MongooseConfigService,
-    })
-  : TypeOrmModule.forRootAsync({
-      useClass: TypeOrmConfigService,
-      dataSourceFactory: async (options?: DataSourceOptions) => {
-        if (!options) {
-          throw new Error('DataSourceOptions is required');
-        }
-        return new DataSource(options).initialize();
-      },
-    });
-// </database-block>
-
-// Modules that only work with relational databases (TypeORM)
-const relationalOnlyModules = isDocumentDatabase
-  ? []
-  : [
-      TransactionModule,
-      AuditModule,
-      OrdersModule,
-      SchedulerModule,
-      NotificationsModule,
-      NotificationQueueModule,
-      SharesModule,
-    ];
+const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
+  useClass: TypeOrmConfigService,
+  dataSourceFactory: async (options?: DataSourceOptions) => {
+    if (!options) {
+      throw new Error('DataSourceOptions is required');
+    }
+    return new DataSource(options).initialize();
+  },
+});
 
 @Module({
   imports: [
@@ -200,7 +175,13 @@ const relationalOnlyModules = isDocumentDatabase
     PermissionsModule,
     WechatModule,
     AlipayModule,
-    ...relationalOnlyModules,
+    TransactionModule,
+    AuditModule,
+    OrdersModule,
+    SchedulerModule,
+    NotificationsModule,
+    NotificationQueueModule,
+    SharesModule,
   ],
 })
 export class AppModule {}

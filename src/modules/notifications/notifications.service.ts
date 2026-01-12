@@ -93,7 +93,7 @@ export class NotificationsService {
     filterOptions,
     paginationOptions,
   }: {
-    userId: number | string;
+    userId: number;
     filterOptions?: QueryNotificationDto | null;
     paginationOptions: IPaginationOptions;
   }): Promise<Notification[]> {
@@ -109,7 +109,7 @@ export class NotificationsService {
     filterOptions,
     paginationOptions,
   }: {
-    userId: number | string;
+    userId: number;
     filterOptions?: QueryNotificationDto | null;
     paginationOptions: IPaginationOptions;
   }): Promise<{ data: Notification[]; total: number }> {
@@ -125,7 +125,7 @@ export class NotificationsService {
     return { data, total };
   }
 
-  async findOne(id: number | string, userId: number | string): Promise<Notification> {
+  async findOne(id: number, userId: number): Promise<Notification> {
     const notification = await this.notificationRepository.findByIdAndUserId(id, userId);
 
     if (!notification) {
@@ -138,7 +138,7 @@ export class NotificationsService {
     return notification;
   }
 
-  async markAsRead(id: number | string, userId: number | string): Promise<Notification> {
+  async markAsRead(id: number, userId: number): Promise<Notification> {
     const notification = await this.notificationRepository.markAsRead(id, userId);
 
     if (!notification) {
@@ -152,20 +152,20 @@ export class NotificationsService {
     return notification;
   }
 
-  async markAllAsRead(userId: number | string): Promise<void> {
+  async markAllAsRead(userId: number): Promise<void> {
     await this.notificationRepository.markAllAsRead(userId);
     this.logger.log(`All notifications marked as read for user ${userId}`);
   }
 
-  async getUnreadCount(userId: number | string): Promise<number> {
+  async getUnreadCount(userId: number): Promise<number> {
     return this.notificationRepository.countUnreadByUserId(userId);
   }
 
-  async getUnreadCountByCategory(userId: number | string): Promise<Record<string, number>> {
+  async getUnreadCountByCategory(userId: number): Promise<Record<string, number>> {
     return this.notificationRepository.countUnreadByCategory(userId);
   }
 
-  async remove(id: number | string, userId: number | string): Promise<void> {
+  async remove(id: number, userId: number): Promise<void> {
     const notification = await this.notificationRepository.findByIdAndUserId(id, userId);
 
     if (!notification) {
@@ -179,14 +179,11 @@ export class NotificationsService {
     this.logger.log(`Notification ${id} deleted by user ${userId}`);
   }
 
-  async getSettings(userId: number | string): Promise<NotificationSetting[]> {
+  async getSettings(userId: number): Promise<NotificationSetting[]> {
     return this.settingRepository.findAllByUserId(userId);
   }
 
-  async updateSettings(
-    userId: number | string,
-    updateDto: UpdateNotificationSettingsDto,
-  ): Promise<NotificationSetting> {
+  async updateSettings(userId: number, updateDto: UpdateNotificationSettingsDto): Promise<NotificationSetting> {
     let setting = await this.settingRepository.findByUserIdAndCategory(userId, updateDto.category);
 
     if (!setting) {
@@ -222,7 +219,7 @@ export class NotificationsService {
     return setting;
   }
 
-  async initializeDefaultSettings(userId: number | string): Promise<void> {
+  async initializeDefaultSettings(userId: number): Promise<void> {
     await this.settingRepository.initializeDefaultSettings(userId);
     this.logger.log(`Default notification settings initialized for user ${userId}`);
   }

@@ -3,18 +3,12 @@ import { FileType } from '../../../modules/files/domain/file';
 import { Role } from '../../../common/enums/roles/role';
 import { Status } from '../../../common/enums/statuses/status';
 import { ApiProperty } from '@nestjs/swagger';
-import databaseConfig from '../../../infrastructure/database/config/database.config';
-import { DatabaseConfig } from '../../../infrastructure/database/config/database-config.type';
-
-// <database-block>
-const idType = (databaseConfig() as DatabaseConfig).isDocumentDatabase ? String : Number;
-// </database-block>
 
 export class User {
   @ApiProperty({
-    type: idType,
+    type: Number,
   })
-  id: number | string;
+  id: number;
 
   @ApiProperty({
     type: String,

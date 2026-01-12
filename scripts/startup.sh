@@ -1,28 +1,20 @@
 #!/usr/bin/env bash
 set -e
 
-# Unified startup script for all database types and environments
+# Unified startup script for PostgreSQL environments
 # Environment variables:
-#   DB_TYPE: relational | document (default: relational)
 #   ENV_MODE: dev | test | ci | prod (default: dev)
 
-DB_TYPE=${DB_TYPE:-relational}
 ENV_MODE=${ENV_MODE:-dev}
 
 echo "========================================"
 echo "Starting application..."
-echo "DB_TYPE: $DB_TYPE"
 echo "ENV_MODE: $ENV_MODE"
 echo "========================================"
 
-# Wait for database
-if [ "$DB_TYPE" = "document" ]; then
-  echo "Waiting for MongoDB..."
-  /opt/wait-for-it.sh mongo:27017 -t 60
-else
-  echo "Waiting for PostgreSQL..."
-  /opt/wait-for-it.sh postgres:5432 -t 60
-fi
+# Wait for PostgreSQL
+echo "Waiting for PostgreSQL..."
+/opt/wait-for-it.sh postgres:5432 -t 60
 
 # Wait for mail service (not in prod)
 if [ "$ENV_MODE" != "prod" ]; then
@@ -48,20 +40,18 @@ if [ "$ENV_MODE" = "ci" ] && [ ! -d "dist" ]; then
   npm run build
 fi
 
-# Run migrations (only for relational database)
-if [ "$DB_TYPE" = "relational" ]; then
-  echo "Running database migrations..."
-  if [ "$ENV_MODE" = "prod" ]; then
-    npm run migration:run:prod
-  else
-    npm run migration:run
-  fi
+# Run migrations
+echo "Running database migrations..."
+if [ "$ENV_MODE" = "prod" ]; then
+  npm run migration:run:prod
+else
+  npm run migration:run
 fi
 
 # Run seed data (skip in production)
 if [ "$ENV_MODE" != "prod" ]; then
   echo "Running seed data..."
-  npm run seed:run:${DB_TYPE}
+  npm run seed:run:relational
 else
   echo "Skipping seed data in production mode"
 fi

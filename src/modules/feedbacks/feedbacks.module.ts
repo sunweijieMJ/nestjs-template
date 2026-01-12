@@ -1,21 +1,12 @@
 import { Module } from '@nestjs/common';
 import { FeedbacksController } from './feedbacks.controller';
 import { FeedbacksService } from './feedbacks.service';
-import { DocumentFeedbackPersistenceModule } from './infrastructure/persistence/document/document-persistence.module';
 import { RelationalFeedbackPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
-import { DatabaseConfig } from '../../infrastructure/database/config/database-config.type';
-import databaseConfig from '../../infrastructure/database/config/database.config';
-
-// <database-block>
-const infrastructurePersistenceModule = (databaseConfig() as DatabaseConfig).isDocumentDatabase
-  ? DocumentFeedbackPersistenceModule
-  : RelationalFeedbackPersistenceModule;
-// </database-block>
 
 @Module({
-  imports: [infrastructurePersistenceModule],
+  imports: [RelationalFeedbackPersistenceModule],
   controllers: [FeedbacksController],
   providers: [FeedbacksService],
-  exports: [FeedbacksService, infrastructurePersistenceModule],
+  exports: [FeedbacksService, RelationalFeedbackPersistenceModule],
 })
 export class FeedbacksModule {}

@@ -4,7 +4,6 @@ import {
   HealthCheck,
   HealthCheckService,
   TypeOrmHealthIndicator,
-  MongooseHealthIndicator,
   MemoryHealthIndicator,
   DiskHealthIndicator,
   HealthIndicatorFunction,
@@ -15,8 +14,6 @@ import { RedisHealthIndicator } from './indicators/redis.health';
 import { WechatApiHealthIndicator } from './indicators/wechat-api.health';
 import { AlipayApiHealthIndicator } from './indicators/alipay-api.health';
 import { DatabasePoolHealthIndicator } from './indicators/database-pool.health';
-import databaseConfig from '../database/config/database.config';
-import { DatabaseConfig } from '../database/config/database-config.type';
 
 @ApiTags('Health')
 @Controller({
@@ -27,7 +24,6 @@ export class HealthController {
   constructor(
     private health: HealthCheckService,
     private typeOrmHealthIndicator: TypeOrmHealthIndicator,
-    private mongooseHealthIndicator: MongooseHealthIndicator,
     private memoryHealthIndicator: MemoryHealthIndicator,
     private diskHealthIndicator: DiskHealthIndicator,
     private redisHealthIndicator: RedisHealthIndicator,
@@ -41,7 +37,6 @@ export class HealthController {
   @ApiOperation({ summary: 'Health check endpoint' })
   @HealthCheck()
   async check(): Promise<import('@nestjs/terminus').HealthCheckResult> {
-    const isDocumentDatabase = (databaseConfig() as DatabaseConfig).isDocumentDatabase;
     const redisEnabled = this.configService.get('redis.enabled', { infer: true });
 
     const checks: HealthIndicatorFunction[] = [
@@ -53,23 +48,15 @@ export class HealthController {
           path: '/',
           thresholdPercent: 0.9,
         }),
+      // Database check
+      () => this.typeOrmHealthIndicator.pingCheck('database'),
+      // Database connection pool check
+      () => this.databasePoolHealthIndicator.isHealthy('database_pool'),
     ];
-
-    // Database check based on type
-    if (isDocumentDatabase) {
-      checks.push(() => this.mongooseHealthIndicator.pingCheck('database'));
-    } else {
-      checks.push(() => this.typeOrmHealthIndicator.pingCheck('database'));
-    }
 
     // Redis check if enabled
     if (redisEnabled) {
       checks.push(() => this.redisHealthIndicator.isHealthy('redis'));
-    }
-
-    // Database connection pool check (PostgreSQL only)
-    if (!isDocumentDatabase) {
-      checks.push(() => this.databasePoolHealthIndicator.isHealthy('database_pool'));
     }
 
     // External API health checks
@@ -90,16 +77,6 @@ export class HealthController {
   @ApiOperation({ summary: 'Readiness probe for Kubernetes' })
   @HealthCheck()
   async readiness(): Promise<import('@nestjs/terminus').HealthCheckResult> {
-    const isDocumentDatabase = (databaseConfig() as DatabaseConfig).isDocumentDatabase;
-
-    const checks: HealthIndicatorFunction[] = [];
-
-    if (isDocumentDatabase) {
-      checks.push(() => this.mongooseHealthIndicator.pingCheck('database'));
-    } else {
-      checks.push(() => this.typeOrmHealthIndicator.pingCheck('database'));
-    }
-
-    return this.health.check(checks);
+    return this.health.check([() => this.typeOrmHealthIndicator.pingCheck('database')]);
   }
 }

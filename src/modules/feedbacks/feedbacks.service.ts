@@ -10,7 +10,7 @@ export class FeedbacksService {
 
   constructor(private readonly feedbackRepository: FeedbackRepository) {}
 
-  async create(userId: number | string, createFeedbackDto: CreateFeedbackDto): Promise<Feedback> {
+  async create(userId: number, createFeedbackDto: CreateFeedbackDto): Promise<Feedback> {
     this.logger.log(`Creating feedback for user: ${userId}, type: ${createFeedbackDto.type}`);
 
     const feedback = await this.feedbackRepository.create({

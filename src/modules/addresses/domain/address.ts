@@ -1,20 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import databaseConfig from '../../../infrastructure/database/config/database.config';
-import { DatabaseConfig } from '../../../infrastructure/database/config/database-config.type';
-
-const idType = (databaseConfig() as DatabaseConfig).isDocumentDatabase ? String : Number;
 
 export class Address {
   @ApiProperty({
-    type: idType,
+    type: Number,
   })
-  id: number | string;
+  id: number;
 
   @ApiProperty({
-    type: idType,
+    type: Number,
     description: 'User ID who owns this address',
   })
-  userId: number | string;
+  userId: number;
 
   @ApiProperty({ example: 'John Doe', type: String })
   name: string;

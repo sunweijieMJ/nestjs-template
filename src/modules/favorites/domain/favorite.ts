@@ -1,8 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import databaseConfig from '../../../infrastructure/database/config/database.config';
-import { DatabaseConfig } from '../../../infrastructure/database/config/database-config.type';
-
-const idType = (databaseConfig() as DatabaseConfig).isDocumentDatabase ? String : Number;
 
 export enum FavoriteTargetType {
   PRODUCT = 'product',
@@ -11,11 +7,11 @@ export enum FavoriteTargetType {
 }
 
 export class Favorite {
-  @ApiProperty({ type: idType })
-  id: number | string;
+  @ApiProperty({ type: Number })
+  id: number;
 
-  @ApiProperty({ type: idType, description: 'User ID who owns this favorite' })
-  userId: number | string;
+  @ApiProperty({ type: Number, description: 'User ID who owns this favorite' })
+  userId: number;
 
   @ApiProperty({ enum: FavoriteTargetType, description: 'Type of the favorited item' })
   targetType: FavoriteTargetType;
