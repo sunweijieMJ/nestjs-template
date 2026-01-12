@@ -340,4 +340,21 @@ export class AlipayService {
     const seconds = String(date.getSeconds()).padStart(2, '0');
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   }
+
+  /**
+   * 获取支付宝分享配置
+   */
+  getShareConfig(params: { title: string; description: string; image: string; path: string }): {
+    title: string;
+    description: string;
+    image: string;
+    path: string;
+  } {
+    return {
+      title: params.title,
+      description: params.description,
+      image: params.image,
+      path: params.path,
+    };
+  }
 }
