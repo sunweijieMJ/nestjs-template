@@ -1,8 +1,10 @@
 import { Injectable, Logger, UnprocessableEntityException, HttpStatus, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { randomBytes } from 'crypto';
 import { AllConfigType } from '../../config/config.type';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { generateWeChatSignature } from '../../modules/shares/utils/wechat-signature.util';
 
 export interface WechatUserInfo {
   openId: string;
@@ -90,6 +92,17 @@ export class WechatService {
 
     try {
       const response = await fetch(url);
+
+      if (!response.ok) {
+        this.logger.error(`WeChat Mini App login HTTP error: ${response.status} ${response.statusText}`);
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            wechat: 'requestFailed',
+          },
+        });
+      }
+
       const data = (await response.json()) as WechatMiniLoginResult;
 
       if (data.errcode) {
@@ -146,6 +159,17 @@ export class WechatService {
 
     try {
       const tokenResponse = await fetch(tokenUrl);
+
+      if (!tokenResponse.ok) {
+        this.logger.error(`WeChat App token HTTP error: ${tokenResponse.status} ${tokenResponse.statusText}`);
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            wechat: 'requestFailed',
+          },
+        });
+      }
+
       const tokenData = (await tokenResponse.json()) as WechatAppTokenResult;
 
       if (tokenData.errcode) {
@@ -162,6 +186,17 @@ export class WechatService {
       // Step 2: Get user info using access_token
       const userInfoUrl = `https://api.weixin.qq.com/sns/userinfo?access_token=${tokenData.access_token}&openid=${tokenData.openid}`;
       const userInfoResponse = await fetch(userInfoUrl);
+
+      if (!userInfoResponse.ok) {
+        this.logger.error(`WeChat App user info HTTP error: ${userInfoResponse.status} ${userInfoResponse.statusText}`);
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            wechat: 'requestFailed',
+          },
+        });
+      }
+
       const userInfoData = (await userInfoResponse.json()) as WechatAppUserInfoResult;
 
       if (userInfoData.errcode) {
@@ -226,6 +261,17 @@ export class WechatService {
 
     try {
       const response = await fetch(url);
+
+      if (!response.ok) {
+        this.logger.error(`Get access_token HTTP error: ${response.status} ${response.statusText}`);
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            wechat: 'requestFailed',
+          },
+        });
+      }
+
       const data = (await response.json()) as WechatAccessTokenResult;
 
       if (data.errcode) {
@@ -273,6 +319,17 @@ export class WechatService {
 
     try {
       const response = await fetch(url);
+
+      if (!response.ok) {
+        this.logger.error(`Get jsapi_ticket HTTP error: ${response.status} ${response.statusText}`);
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            wechat: 'requestFailed',
+          },
+        });
+      }
+
       const data = (await response.json()) as WechatJsapiTicketResult;
 
       if (data.errcode && data.errcode !== 0) {
@@ -328,9 +385,6 @@ export class WechatService {
     const jsapiTicket = await this.getJsapiTicket();
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const nonceStr = this.generateNonceStr();
-
-    // Import signature utility
-    const { generateWeChatSignature } = await import('../../modules/shares/utils/wechat-signature.util');
     const signature = generateWeChatSignature(jsapiTicket, nonceStr, timestamp, url);
 
     return {
@@ -342,14 +396,11 @@ export class WechatService {
   }
 
   /**
-   * 生成随机字符串
+   * 生成加密安全的随机字符串
    */
   private generateNonceStr(length: number = 16): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < length; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
+    return randomBytes(Math.ceil(length / 2))
+      .toString('hex')
+      .slice(0, length);
   }
 }

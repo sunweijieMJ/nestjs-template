@@ -64,7 +64,7 @@ export class UserEntity extends EntityRelationalHelper {
   role?: RoleEntity | null;
 
   @ManyToOne(() => StatusEntity)
-  status?: StatusEntity;
+  status?: StatusEntity | null;
 
   @CreateDateColumn()
   createdAt: Date;

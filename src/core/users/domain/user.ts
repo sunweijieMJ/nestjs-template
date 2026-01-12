@@ -86,7 +86,7 @@ export class User {
   @ApiProperty({
     type: () => Status,
   })
-  status?: Status;
+  status?: Status | null;
 
   @ApiProperty()
   createdAt: Date;

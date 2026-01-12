@@ -17,7 +17,7 @@ import alipayConfig from './integrations/alipay/config/alipay.config';
 import path from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { DataSource, DataSourceOptions } from 'typeorm';
+import { dataSourceFactory } from './infrastructure/database/data-source.factory';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import { TypeOrmConfigService } from './infrastructure/database/typeorm-config.service';
 import { MailModule } from './integrations/mail/mail.module';
@@ -48,12 +48,7 @@ import { SchedulerModule } from './infrastructure/scheduler/scheduler.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
-  dataSourceFactory: async (options?: DataSourceOptions) => {
-    if (!options) {
-      throw new Error('DataSourceOptions is required');
-    }
-    return new DataSource(options).initialize();
-  },
+  dataSourceFactory,
 });
 
 @Module({

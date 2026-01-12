@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import ms from 'ms';
 import { JwtService, TokenExpiredError, JsonWebTokenError } from '@nestjs/jwt';
-import bcrypt from 'bcryptjs';
+import { hashPassword, comparePassword } from '../../common/utils/crypto.utils';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthUpdateDto } from './dto/auth-update.dto';
 import { AuthProvidersEnum } from './auth-providers.enum';
@@ -34,9 +34,9 @@ import { AuthPhoneRegisterDto } from './dto/auth-phone-register.dto';
 import { AuthWechatLoginDto, WechatLoginType } from './dto/auth-wechat-login.dto';
 import { WechatService } from '../../integrations/wechat/wechat.service';
 import { maskEmail, maskPhone } from '../../common/utils/sanitize.utils';
-import { isUserStatusAllowedForAuth } from '../../common/utils/status.util';
 import { TokenService } from './services/token.service';
 import { NotificationsService } from '../../modules/notifications/notifications.service';
+import { verifySmsCode, validateUserStatusForAuth } from './helpers/auth-validation.helper';
 
 @Injectable()
 export class AuthService {
@@ -95,7 +95,7 @@ export class AuthService {
       });
     }
 
-    const isValidPassword = await bcrypt.compare(loginDto.password, user.password);
+    const isValidPassword = await comparePassword(loginDto.password, user.password);
 
     if (!isValidPassword) {
       this.logger.warn(`Login failed - incorrect password for user: ${user.id}`);
@@ -109,15 +109,7 @@ export class AuthService {
 
     // Allow inactive users to login (they just haven't confirmed email yet)
     // Only block if status is explicitly set to something other than active/inactive
-    if (!isUserStatusAllowedForAuth(user.status?.id)) {
-      this.logger.warn(`Login failed - user status not allowed: ${user.id}, status: ${user.status?.id}`);
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          email: 'userNotActive',
-        },
-      });
-    }
+    validateUserStatusForAuth(user, 'email', this.logger);
 
     this.logger.log(`Login successful for user: ${user.id}`);
     return this.createSessionAndTokens(user);
@@ -233,11 +225,9 @@ export class AuthService {
       });
     }
 
-    user.status = {
-      id: StatusEnum.active,
-    };
-
-    await this.usersService.update(user.id, user);
+    await this.usersService.update(user.id, {
+      status: { id: StatusEnum.active },
+    });
     this.logger.log(`Email confirmed for user: ${userId}`);
   }
 
@@ -295,12 +285,10 @@ export class AuthService {
       });
     }
 
-    user.email = newEmail;
-    user.status = {
-      id: StatusEnum.active,
-    };
-
-    await this.usersService.update(user.id, user);
+    await this.usersService.update(user.id, {
+      email: newEmail,
+      status: { id: StatusEnum.active },
+    });
   }
 
   /**
@@ -406,8 +394,7 @@ export class AuthService {
     }
 
     // Encrypt password before updating
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await hashPassword(password);
 
     // Delete all user sessions and update password in a single operation
     await this.sessionService.deleteByUserId({
@@ -453,19 +440,10 @@ export class AuthService {
     }
 
     // 检查用户状态
-    if (!isUserStatusAllowedForAuth(user.status?.id)) {
-      this.logger.warn(`Phone password reset failed - user status not allowed: ${user.id}`);
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          phone: 'userStatusNotAllowed',
-        },
-      });
-    }
+    validateUserStatusForAuth(user, 'phone', this.logger);
 
     // 加密新密码
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await hashPassword(password);
 
     // 删除所有用户会话并更新密码
     await this.sessionService.deleteByUserId({
@@ -523,7 +501,7 @@ export class AuthService {
         });
       }
 
-      const isValidOldPassword = await bcrypt.compare(userDto.oldPassword, currentUser.password);
+      const isValidOldPassword = await comparePassword(userDto.oldPassword, currentUser.password);
 
       if (!isValidOldPassword) {
         throw new UnprocessableEntityException({
@@ -749,7 +727,7 @@ export class AuthService {
       });
     }
 
-    const isValidPassword = await bcrypt.compare(loginDto.password, user.password);
+    const isValidPassword = await comparePassword(loginDto.password, user.password);
 
     if (!isValidPassword) {
       this.logger.warn(`Phone login failed - incorrect password for user: ${user.id}`);
@@ -763,16 +741,7 @@ export class AuthService {
     }
 
     // Allow both active and inactive users to login (consistent with email login)
-    if (!isUserStatusAllowedForAuth(user.status?.id)) {
-      this.logger.warn(`Phone login failed - user status not allowed: ${user.id}, status: ${user.status?.id}`);
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        message: 'userNotActive',
-        errors: {
-          phone: 'userNotActive',
-        },
-      });
-    }
+    validateUserStatusForAuth(user, 'phone', this.logger);
 
     this.logger.log(`Phone login successful for user: ${user.id}`);
     return this.createSessionAndTokens(user);
@@ -788,16 +757,7 @@ export class AuthService {
     this.logger.log(`Phone SMS login attempt for: ${maskPhone(loginDto.phone)}`);
 
     // Verify SMS code
-    const verifyResult = await this.smsService.verifyCode(loginDto.phone, loginDto.code, SmsCodeType.LOGIN);
-    if (!verifyResult.success) {
-      this.logger.warn(`Phone SMS login failed - invalid code for: ${maskPhone(loginDto.phone)}`);
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          code: 'invalidCode',
-        },
-      });
-    }
+    await verifySmsCode(this.smsService, loginDto.phone, loginDto.code, SmsCodeType.LOGIN, this.logger);
 
     const user = await this.usersService.findByPhone(loginDto.phone);
 
@@ -812,15 +772,7 @@ export class AuthService {
     }
 
     // Allow both active and inactive users to login (consistent with email login)
-    if (!isUserStatusAllowedForAuth(user.status?.id)) {
-      this.logger.warn(`Phone SMS login failed - user status not allowed: ${user.id}, status: ${user.status?.id}`);
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          phone: 'userNotActive',
-        },
-      });
-    }
+    validateUserStatusForAuth(user, 'phone', this.logger);
 
     this.logger.log(`Phone SMS login successful for user: ${user.id}`);
     return this.createSessionAndTokens(user);
@@ -837,16 +789,7 @@ export class AuthService {
 
     // Verify SMS code only if provided (code-based registration)
     if (dto.code) {
-      const verifyResult = await this.smsService.verifyCode(dto.phone, dto.code, SmsCodeType.REGISTER);
-      if (!verifyResult.success) {
-        this.logger.warn(`Phone registration failed - invalid code for: ${maskPhone(dto.phone)}`);
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            code: 'invalidCode',
-          },
-        });
-      }
+      await verifySmsCode(this.smsService, dto.phone, dto.code, SmsCodeType.REGISTER, this.logger);
     }
 
     // Check if phone already exists
@@ -914,7 +857,7 @@ export class AuthService {
       });
     }
 
-    const isValidOldPassword = await bcrypt.compare(oldPassword, user.password);
+    const isValidOldPassword = await comparePassword(oldPassword, user.password);
 
     if (!isValidOldPassword) {
       this.logger.warn(`Password change failed - incorrect old password for user: ${userJwtPayload.id}`);

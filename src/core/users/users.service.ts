@@ -4,7 +4,7 @@ import { NullableType } from '../../common/types/nullable.type';
 import { FilterUserDto, SortUserDto } from './dto/query-user.dto';
 import { UserRepository } from './infrastructure/persistence/user.repository';
 import { User } from './domain/user';
-import bcrypt from 'bcryptjs';
+import { hashPassword } from '../../common/utils/crypto.utils';
 import { AuthProvidersEnum } from '../auth/auth-providers.enum';
 import { FilesService } from '../../modules/files/files.service';
 import { RoleEnum } from '../../common/enums/roles/roles.enum';
@@ -28,16 +28,6 @@ export class UsersService {
     private readonly usersRepository: UserRepository,
     private readonly filesService: FilesService,
   ) {}
-
-  /**
-   * 加密密码
-   * @param password - 明文密码
-   * @returns 加密后的密码
-   */
-  private async hashPassword(password: string): Promise<string> {
-    const salt = await bcrypt.genSalt();
-    return bcrypt.hash(password, salt);
-  }
 
   /**
    * 验证角色是否有效
@@ -118,7 +108,7 @@ export class UsersService {
     let password: string | undefined = undefined;
 
     if (createUserDto.password) {
-      password = await this.hashPassword(createUserDto.password);
+      password = await hashPassword(createUserDto.password);
     }
 
     let email: string | null = null;
@@ -250,7 +240,7 @@ export class UsersService {
       const userObject = await this.usersRepository.findById(id);
 
       if (userObject && userObject?.password !== updateUserDto.password) {
-        password = await this.hashPassword(updateUserDto.password);
+        password = await hashPassword(updateUserDto.password);
       }
     }
 

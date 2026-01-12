@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Repository } from 'typeorm';
-import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { hashPassword } from '../../../../../common/utils/crypto.utils';
 import { RoleEnum } from '../../../../../common/enums/roles/roles.enum';
 import { StatusEnum } from '../../../../../common/enums/statuses/statuses.enum';
 import { UserEntity } from '../../../../../core/users/infrastructure/persistence/relational/entities/user.entity';
@@ -33,9 +33,8 @@ export class UserSeedService {
     });
 
     if (!countAdmin) {
-      const salt = await bcrypt.genSalt();
       // Hash the MD5 of the password (frontend sends MD5, backend stores bcrypt of MD5)
-      const password = await bcrypt.hash(md5('Secret00'), salt);
+      const password = await hashPassword(md5('Secret00'));
 
       await this.repository.save(
         this.repository.create({
@@ -64,9 +63,8 @@ export class UserSeedService {
     });
 
     if (!countUser) {
-      const salt = await bcrypt.genSalt();
       // Hash the MD5 of the password (frontend sends MD5, backend stores bcrypt of MD5)
-      const password = await bcrypt.hash(md5('Secret00'), salt);
+      const password = await hashPassword(md5('Secret00'));
 
       await this.repository.save(
         this.repository.create({
