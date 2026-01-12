@@ -1,5 +1,5 @@
 import { registerAs } from '@nestjs/config';
-import { IsString, IsEnum, IsBoolean, IsOptional, IsUrl } from 'class-validator';
+import { IsString, IsEnum, IsBoolean, IsOptional, IsUrl, ValidateIf } from 'class-validator';
 import validateConfig from '../../../common/validate-config';
 import { AlipayConfig } from './alipay-config.type';
 import { Transform } from 'class-transformer';
@@ -22,6 +22,7 @@ class EnvironmentVariablesValidator {
   @IsOptional()
   ALIPAY_PUBLIC_KEY: string;
 
+  @ValidateIf((o) => o.ALIPAY_GATEWAY && o.ALIPAY_GATEWAY.length > 0)
   @IsUrl({ require_tld: false })
   @IsOptional()
   ALIPAY_GATEWAY: string;
@@ -34,10 +35,12 @@ class EnvironmentVariablesValidator {
   @IsOptional()
   ALIPAY_CHARSET: string;
 
+  @ValidateIf((o) => o.ALIPAY_NOTIFY_URL && o.ALIPAY_NOTIFY_URL.length > 0)
   @IsUrl({ require_tld: false })
   @IsOptional()
   ALIPAY_NOTIFY_URL: string;
 
+  @ValidateIf((o) => o.ALIPAY_RETURN_URL && o.ALIPAY_RETURN_URL.length > 0)
   @IsUrl({ require_tld: false })
   @IsOptional()
   ALIPAY_RETURN_URL: string;
