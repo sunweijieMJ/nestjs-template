@@ -5,7 +5,7 @@ export class CreateFeedback1734000003000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      CREATE TABLE "feedback" (
+      CREATE TABLE IF NOT EXISTS "feedback" (
         "id" SERIAL NOT NULL,
         "userId" integer NOT NULL,
         "type" character varying(20) NOT NULL,
@@ -20,17 +20,21 @@ export class CreateFeedback1734000003000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_feedback_userId" ON "feedback" ("userId")`);
-    await queryRunner.query(`CREATE INDEX "IDX_feedback_type" ON "feedback" ("type")`);
-    await queryRunner.query(`CREATE INDEX "IDX_feedback_status" ON "feedback" ("status")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_feedback_userId" ON "feedback" ("userId")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_feedback_type" ON "feedback" ("type")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_feedback_status" ON "feedback" ("status")`);
 
     await queryRunner.query(`
-      ALTER TABLE "feedback"
-      ADD CONSTRAINT "FK_feedback_user"
-      FOREIGN KEY ("userId")
-      REFERENCES "user"("id")
-      ON DELETE CASCADE
-      ON UPDATE NO ACTION
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'FK_feedback_user') THEN
+          ALTER TABLE "feedback"
+          ADD CONSTRAINT "FK_feedback_user"
+          FOREIGN KEY ("userId")
+          REFERENCES "user"("id")
+          ON DELETE CASCADE
+          ON UPDATE NO ACTION;
+        END IF;
+      END $$;
     `);
   }
 

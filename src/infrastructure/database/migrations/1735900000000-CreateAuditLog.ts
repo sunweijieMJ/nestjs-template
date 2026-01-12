@@ -5,7 +5,7 @@ export class CreateAuditLog1735900000000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      CREATE TABLE "audit_logs" (
+      CREATE TABLE IF NOT EXISTS "audit_logs" (
         "id" SERIAL NOT NULL,
         "userId" character varying,
         "action" character varying(50) NOT NULL,
@@ -21,12 +21,12 @@ export class CreateAuditLog1735900000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_audit_logs_userId" ON "audit_logs" ("userId")`);
-    await queryRunner.query(`CREATE INDEX "IDX_audit_logs_action" ON "audit_logs" ("action")`);
-    await queryRunner.query(`CREATE INDEX "IDX_audit_logs_entityType" ON "audit_logs" ("entityType")`);
-    await queryRunner.query(`CREATE INDEX "IDX_audit_logs_entityId" ON "audit_logs" ("entityId")`);
-    await queryRunner.query(`CREATE INDEX "IDX_audit_logs_requestId" ON "audit_logs" ("requestId")`);
-    await queryRunner.query(`CREATE INDEX "IDX_audit_logs_createdAt" ON "audit_logs" ("createdAt")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_audit_logs_userId" ON "audit_logs" ("userId")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_audit_logs_action" ON "audit_logs" ("action")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_audit_logs_entityType" ON "audit_logs" ("entityType")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_audit_logs_entityId" ON "audit_logs" ("entityId")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_audit_logs_requestId" ON "audit_logs" ("requestId")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_audit_logs_createdAt" ON "audit_logs" ("createdAt")`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

@@ -5,7 +5,7 @@ export class CreateFavorite1734000002000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      CREATE TABLE "favorite" (
+      CREATE TABLE IF NOT EXISTS "favorite" (
         "id" SERIAL NOT NULL,
         "userId" integer NOT NULL,
         "targetType" character varying(20) NOT NULL,
@@ -19,17 +19,21 @@ export class CreateFavorite1734000002000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_favorite_userId" ON "favorite" ("userId")`);
-    await queryRunner.query(`CREATE INDEX "IDX_favorite_targetType" ON "favorite" ("targetType")`);
-    await queryRunner.query(`CREATE INDEX "IDX_favorite_targetId" ON "favorite" ("targetId")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_favorite_userId" ON "favorite" ("userId")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_favorite_targetType" ON "favorite" ("targetType")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_favorite_targetId" ON "favorite" ("targetId")`);
 
     await queryRunner.query(`
-      ALTER TABLE "favorite"
-      ADD CONSTRAINT "FK_favorite_user"
-      FOREIGN KEY ("userId")
-      REFERENCES "user"("id")
-      ON DELETE CASCADE
-      ON UPDATE NO ACTION
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'FK_favorite_user') THEN
+          ALTER TABLE "favorite"
+          ADD CONSTRAINT "FK_favorite_user"
+          FOREIGN KEY ("userId")
+          REFERENCES "user"("id")
+          ON DELETE CASCADE
+          ON UPDATE NO ACTION;
+        END IF;
+      END $$;
     `);
   }
 

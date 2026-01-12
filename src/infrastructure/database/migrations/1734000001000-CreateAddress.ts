@@ -5,7 +5,7 @@ export class CreateAddress1734000001000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      CREATE TABLE "address" (
+      CREATE TABLE IF NOT EXISTS "address" (
         "id" SERIAL NOT NULL,
         "userId" integer NOT NULL,
         "name" character varying(50) NOT NULL,
@@ -22,17 +22,19 @@ export class CreateAddress1734000001000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`
-      CREATE INDEX "IDX_address_userId" ON "address" ("userId")
-    `);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_address_userId" ON "address" ("userId")`);
 
     await queryRunner.query(`
-      ALTER TABLE "address"
-      ADD CONSTRAINT "FK_address_user"
-      FOREIGN KEY ("userId")
-      REFERENCES "user"("id")
-      ON DELETE CASCADE
-      ON UPDATE NO ACTION
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'FK_address_user') THEN
+          ALTER TABLE "address"
+          ADD CONSTRAINT "FK_address_user"
+          FOREIGN KEY ("userId")
+          REFERENCES "user"("id")
+          ON DELETE CASCADE
+          ON UPDATE NO ACTION;
+        END IF;
+      END $$;
     `);
   }
 

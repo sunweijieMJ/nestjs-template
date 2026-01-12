@@ -5,7 +5,7 @@ export class CreateNotificationSetting1736150001000 implements MigrationInterfac
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      CREATE TABLE "notification_setting" (
+      CREATE TABLE IF NOT EXISTS "notification_setting" (
         "id" SERIAL NOT NULL,
         "userId" integer NOT NULL,
         "category" character varying(20) NOT NULL,
@@ -20,17 +20,21 @@ export class CreateNotificationSetting1736150001000 implements MigrationInterfac
       )
     `);
 
-    await queryRunner.query(`
-      CREATE INDEX "IDX_notification_setting_userId" ON "notification_setting" ("userId")
-    `);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IDX_notification_setting_userId" ON "notification_setting" ("userId")`,
+    );
 
     await queryRunner.query(`
-      ALTER TABLE "notification_setting"
-      ADD CONSTRAINT "FK_notification_setting_user"
-      FOREIGN KEY ("userId")
-      REFERENCES "user"("id")
-      ON DELETE CASCADE
-      ON UPDATE NO ACTION
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'FK_notification_setting_user') THEN
+          ALTER TABLE "notification_setting"
+          ADD CONSTRAINT "FK_notification_setting_user"
+          FOREIGN KEY ("userId")
+          REFERENCES "user"("id")
+          ON DELETE CASCADE
+          ON UPDATE NO ACTION;
+        END IF;
+      END $$;
     `);
   }
 

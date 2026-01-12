@@ -5,7 +5,7 @@ export class CreateNotification1736150000000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      CREATE TABLE "notification" (
+      CREATE TABLE IF NOT EXISTS "notification" (
         "id" SERIAL NOT NULL,
         "userId" integer NOT NULL,
         "type" character varying(20) NOT NULL,
@@ -24,29 +24,22 @@ export class CreateNotification1736150000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`
-      CREATE INDEX "IDX_notification_userId" ON "notification" ("userId")
-    `);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_notification_userId" ON "notification" ("userId")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_notification_category" ON "notification" ("category")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_notification_isRead" ON "notification" ("isRead")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_notification_createdAt" ON "notification" ("createdAt")`);
 
     await queryRunner.query(`
-      CREATE INDEX "IDX_notification_category" ON "notification" ("category")
-    `);
-
-    await queryRunner.query(`
-      CREATE INDEX "IDX_notification_isRead" ON "notification" ("isRead")
-    `);
-
-    await queryRunner.query(`
-      CREATE INDEX "IDX_notification_createdAt" ON "notification" ("createdAt")
-    `);
-
-    await queryRunner.query(`
-      ALTER TABLE "notification"
-      ADD CONSTRAINT "FK_notification_user"
-      FOREIGN KEY ("userId")
-      REFERENCES "user"("id")
-      ON DELETE CASCADE
-      ON UPDATE NO ACTION
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'FK_notification_user') THEN
+          ALTER TABLE "notification"
+          ADD CONSTRAINT "FK_notification_user"
+          FOREIGN KEY ("userId")
+          REFERENCES "user"("id")
+          ON DELETE CASCADE
+          ON UPDATE NO ACTION;
+        END IF;
+      END $$;
     `);
   }
 

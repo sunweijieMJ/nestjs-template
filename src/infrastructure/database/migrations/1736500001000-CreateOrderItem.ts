@@ -5,7 +5,7 @@ export class CreateOrderItem1736500001000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      CREATE TABLE "order_item" (
+      CREATE TABLE IF NOT EXISTS "order_item" (
         "id" SERIAL NOT NULL,
         "orderId" integer NOT NULL,
         "productId" character varying(100) NOT NULL,
@@ -21,21 +21,20 @@ export class CreateOrderItem1736500001000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`
-      CREATE INDEX "IDX_order_item_orderId" ON "order_item" ("orderId")
-    `);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_order_item_orderId" ON "order_item" ("orderId")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_order_item_productId" ON "order_item" ("productId")`);
 
     await queryRunner.query(`
-      CREATE INDEX "IDX_order_item_productId" ON "order_item" ("productId")
-    `);
-
-    await queryRunner.query(`
-      ALTER TABLE "order_item"
-      ADD CONSTRAINT "FK_order_item_order"
-      FOREIGN KEY ("orderId")
-      REFERENCES "order"("id")
-      ON DELETE CASCADE
-      ON UPDATE NO ACTION
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'FK_order_item_order') THEN
+          ALTER TABLE "order_item"
+          ADD CONSTRAINT "FK_order_item_order"
+          FOREIGN KEY ("orderId")
+          REFERENCES "order"("id")
+          ON DELETE CASCADE
+          ON UPDATE NO ACTION;
+        END IF;
+      END $$;
     `);
   }
 

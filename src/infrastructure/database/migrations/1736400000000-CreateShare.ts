@@ -5,7 +5,7 @@ export class CreateShare1736400000000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      CREATE TABLE "share" (
+      CREATE TABLE IF NOT EXISTS "share" (
         "id" SERIAL NOT NULL,
         "userId" integer NOT NULL,
         "shareCode" character varying(8) NOT NULL,
@@ -29,33 +29,23 @@ export class CreateShare1736400000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`
-      CREATE INDEX "IDX_share_userId" ON "share" ("userId")
-    `);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_share_userId" ON "share" ("userId")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_share_shareCode" ON "share" ("shareCode")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_share_targetType" ON "share" ("targetType")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_share_targetId" ON "share" ("targetId")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_share_createdAt" ON "share" ("createdAt")`);
 
     await queryRunner.query(`
-      CREATE INDEX "IDX_share_shareCode" ON "share" ("shareCode")
-    `);
-
-    await queryRunner.query(`
-      CREATE INDEX "IDX_share_targetType" ON "share" ("targetType")
-    `);
-
-    await queryRunner.query(`
-      CREATE INDEX "IDX_share_targetId" ON "share" ("targetId")
-    `);
-
-    await queryRunner.query(`
-      CREATE INDEX "IDX_share_createdAt" ON "share" ("createdAt")
-    `);
-
-    await queryRunner.query(`
-      ALTER TABLE "share"
-      ADD CONSTRAINT "FK_share_user"
-      FOREIGN KEY ("userId")
-      REFERENCES "user"("id")
-      ON DELETE CASCADE
-      ON UPDATE NO ACTION
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'FK_share_user') THEN
+          ALTER TABLE "share"
+          ADD CONSTRAINT "FK_share_user"
+          FOREIGN KEY ("userId")
+          REFERENCES "user"("id")
+          ON DELETE CASCADE
+          ON UPDATE NO ACTION;
+        END IF;
+      END $$;
     `);
   }
 

@@ -5,7 +5,7 @@ export class CreateOrder1736500000000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      CREATE TABLE "order" (
+      CREATE TABLE IF NOT EXISTS "order" (
         "id" SERIAL NOT NULL,
         "userId" integer NOT NULL,
         "orderNo" character varying(32) NOT NULL,
@@ -26,29 +26,22 @@ export class CreateOrder1736500000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`
-      CREATE INDEX "IDX_order_userId" ON "order" ("userId")
-    `);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_order_userId" ON "order" ("userId")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_order_orderNo" ON "order" ("orderNo")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_order_status" ON "order" ("status")`);
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_order_createdAt" ON "order" ("createdAt")`);
 
     await queryRunner.query(`
-      CREATE INDEX "IDX_order_orderNo" ON "order" ("orderNo")
-    `);
-
-    await queryRunner.query(`
-      CREATE INDEX "IDX_order_status" ON "order" ("status")
-    `);
-
-    await queryRunner.query(`
-      CREATE INDEX "IDX_order_createdAt" ON "order" ("createdAt")
-    `);
-
-    await queryRunner.query(`
-      ALTER TABLE "order"
-      ADD CONSTRAINT "FK_order_user"
-      FOREIGN KEY ("userId")
-      REFERENCES "user"("id")
-      ON DELETE CASCADE
-      ON UPDATE NO ACTION
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'FK_order_user') THEN
+          ALTER TABLE "order"
+          ADD CONSTRAINT "FK_order_user"
+          FOREIGN KEY ("userId")
+          REFERENCES "user"("id")
+          ON DELETE CASCADE
+          ON UPDATE NO ACTION;
+        END IF;
+      END $$;
     `);
   }
 
