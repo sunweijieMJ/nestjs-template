@@ -9,6 +9,7 @@ import { ThrottlerConfig } from '../infrastructure/throttler/config/throttler-co
 import { MetricsConfig } from '../infrastructure/metrics/config/metrics-config.type';
 import { SmsConfig } from '../integrations/sms/config/sms-config.type';
 import { WechatConfig } from '../integrations/wechat/config/wechat-config.type';
+import { AlipayConfig } from '../integrations/alipay/config/alipay-config.type';
 
 export type AllConfigType = {
   app: AppConfig;
@@ -22,4 +23,5 @@ export type AllConfigType = {
   metrics: MetricsConfig;
   sms: SmsConfig;
   wechat: WechatConfig;
+  alipay: AlipayConfig;
 };

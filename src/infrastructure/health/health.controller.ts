@@ -12,6 +12,9 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '../../config/config.type';
 import { RedisHealthIndicator } from './indicators/redis.health';
+import { WechatApiHealthIndicator } from './indicators/wechat-api.health';
+import { AlipayApiHealthIndicator } from './indicators/alipay-api.health';
+import { DatabasePoolHealthIndicator } from './indicators/database-pool.health';
 import databaseConfig from '../database/config/database.config';
 import { DatabaseConfig } from '../database/config/database-config.type';
 
@@ -28,6 +31,9 @@ export class HealthController {
     private memoryHealthIndicator: MemoryHealthIndicator,
     private diskHealthIndicator: DiskHealthIndicator,
     private redisHealthIndicator: RedisHealthIndicator,
+    private wechatApiHealthIndicator: WechatApiHealthIndicator,
+    private alipayApiHealthIndicator: AlipayApiHealthIndicator,
+    private databasePoolHealthIndicator: DatabasePoolHealthIndicator,
     private configService: ConfigService<AllConfigType>,
   ) {}
 
@@ -60,6 +66,15 @@ export class HealthController {
     if (redisEnabled) {
       checks.push(() => this.redisHealthIndicator.isHealthy('redis'));
     }
+
+    // Database connection pool check (PostgreSQL only)
+    if (!isDocumentDatabase) {
+      checks.push(() => this.databasePoolHealthIndicator.isHealthy('database_pool'));
+    }
+
+    // External API health checks
+    checks.push(() => this.wechatApiHealthIndicator.isHealthy('wechat_api'));
+    checks.push(() => this.alipayApiHealthIndicator.isHealthy('alipay_api'));
 
     return this.health.check(checks);
   }

@@ -1,9 +1,23 @@
-import { Controller, Post, Body, Get, Param, HttpCode, HttpStatus, Headers, RawBodyRequest, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  HttpCode,
+  HttpStatus,
+  Headers,
+  RawBodyRequest,
+  Req,
+  Logger,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { WechatPayService } from './wechat-pay.service';
 import { CreateWechatJsapiPaymentDto } from './dto/create-jsapi-payment.dto';
 import { CreateWechatAppPaymentDto } from './dto/create-app-payment.dto';
 import { WechatRefundDto } from './dto/wechat-refund.dto';
+import { OrdersService } from '../../modules/orders/orders.service';
+import { OrderStatus, PaymentChannel } from '../../modules/orders/domain/order';
 
 @ApiTags('Wechat Pay')
 @Controller({
@@ -11,7 +25,12 @@ import { WechatRefundDto } from './dto/wechat-refund.dto';
   version: '1',
 })
 export class WechatPayController {
-  constructor(private readonly wechatPayService: WechatPayService) {}
+  private readonly logger = new Logger(WechatPayController.name);
+
+  constructor(
+    private readonly wechatPayService: WechatPayService,
+    private readonly ordersService: OrdersService,
+  ) {}
 
   @Post('payment/jsapi')
   @HttpCode(HttpStatus.OK)
@@ -97,16 +116,41 @@ export class WechatPayController {
     @Headers() headers: Record<string, string>,
     @Req() req: RawBodyRequest<Request>,
   ): Promise<{ code: string; message: string }> {
+    this.logger.log('Received WeChat Pay notification');
+
     const body = req.rawBody?.toString() ?? '';
     const result = this.wechatPayService.verifyNotify(headers, body);
 
     if (!result.isValid) {
+      this.logger.warn('WeChat Pay notification signature verification failed');
       return { code: 'FAIL', message: '签名验证失败' };
     }
 
-    // 处理业务逻辑，例如更新订单状态
-    // const { out_trade_no, trade_state } = result.data.resource;
-    // TODO: 调用订单服务更新订单状态
+    // 处理业务逻辑，更新订单状态
+    if (result.data?.resource) {
+      const resource = result.data.resource as {
+        out_trade_no?: string;
+        trade_state?: string;
+        transaction_id?: string;
+        amount?: { total?: number; payer_total?: number };
+      };
+
+      const { out_trade_no, trade_state, transaction_id, amount } = resource;
+
+      if (trade_state === 'SUCCESS' && out_trade_no) {
+        try {
+          await this.ordersService.updatePaymentStatus(out_trade_no, OrderStatus.PAID, {
+            paymentChannel: PaymentChannel.WECHAT,
+            transactionId: transaction_id ?? '',
+            paidAmount: amount?.payer_total ?? amount?.total ?? 0,
+          });
+          this.logger.log(`Order ${out_trade_no} payment status updated to PAID`);
+        } catch (error) {
+          this.logger.error(`Failed to update order ${out_trade_no}: ${error}`);
+          return { code: 'FAIL', message: '订单更新失败' };
+        }
+      }
+    }
 
     return { code: 'SUCCESS', message: '成功' };
   }

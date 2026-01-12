@@ -45,6 +45,9 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { NotificationQueueModule } from './infrastructure/queue/notification-queue/notification-queue.module';
 import { WechatModule } from './integrations/wechat/wechat.module';
 import { AlipayModule } from './integrations/alipay/alipay.module';
+import { SharesModule } from './modules/shares/shares.module';
+import { OrdersModule } from './modules/orders/orders.module';
+import { SchedulerModule } from './infrastructure/scheduler/scheduler.module';
 
 // <database-block>
 const dbConfig = databaseConfig() as DatabaseConfig;
@@ -66,7 +69,7 @@ const infrastructureDatabaseModule = isDocumentDatabase
 // </database-block>
 
 // Modules that only work with relational databases (TypeORM)
-const relationalOnlyModules = isDocumentDatabase ? [] : [TransactionModule, AuditModule];
+const relationalOnlyModules = isDocumentDatabase ? [] : [TransactionModule, AuditModule, OrdersModule, SchedulerModule];
 
 @Module({
   imports: [
@@ -189,6 +192,7 @@ const relationalOnlyModules = isDocumentDatabase ? [] : [TransactionModule, Audi
     NotificationQueueModule,
     WechatModule,
     AlipayModule,
+    SharesModule,
     ...relationalOnlyModules,
   ],
 })
