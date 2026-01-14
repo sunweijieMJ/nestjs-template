@@ -10,6 +10,7 @@ export enum OrderStatus {
 export enum PaymentChannel {
   WECHAT = 'WECHAT',
   ALIPAY = 'ALIPAY',
+  QQ = 'QQ',
 }
 
 export class Order {

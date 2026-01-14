@@ -33,6 +33,7 @@ import { AuthSendCodeDto } from './dto/auth-send-code.dto';
 import { AuthChangePasswordDto } from './dto/auth-change-password.dto';
 import { SmsCodeType } from '../../integrations/sms/sms.service';
 import { AuthWechatLoginDto } from './dto/auth-wechat-login.dto';
+import { AuthQqLoginDto } from './dto/auth-qq-login.dto';
 import { AuthPhoneResetPasswordDto } from './dto/auth-phone-reset-password.dto';
 
 @ApiTags('Auth')
@@ -246,5 +247,19 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   public wechatLogin(@Body() loginDto: AuthWechatLoginDto): Promise<LoginResponseDto> {
     return this.service.wechatLogin(loginDto);
+  }
+
+  @SerializeOptions({
+    groups: ['me'],
+  })
+  @Post('qq/login')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ operationId: 'loginWithQq', summary: 'QQ登录' })
+  @ApiOkResponse({
+    type: LoginResponseDto,
+  })
+  @HttpCode(HttpStatus.OK)
+  public qqLogin(@Body() loginDto: AuthQqLoginDto): Promise<LoginResponseDto> {
+    return this.service.qqLogin(loginDto);
   }
 }

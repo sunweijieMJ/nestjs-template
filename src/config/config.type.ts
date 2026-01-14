@@ -10,6 +10,7 @@ import { MetricsConfig } from '../infrastructure/metrics/config/metrics-config.t
 import { SmsConfig } from '../integrations/sms/config/sms-config.type';
 import { WechatConfig } from '../integrations/wechat/config/wechat-config.type';
 import { AlipayConfig } from '../integrations/alipay/config/alipay-config.type';
+import { QqConfig } from '../integrations/qq/config/qq-config.type';
 
 export type AllConfigType = {
   app: AppConfig;
@@ -24,4 +25,5 @@ export type AllConfigType = {
   sms: SmsConfig;
   wechat: WechatConfig;
   alipay: AlipayConfig;
+  qq: QqConfig;
 };

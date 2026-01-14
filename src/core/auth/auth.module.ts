@@ -10,6 +10,7 @@ import { SessionModule } from '../session/session.module';
 import { UsersModule } from '../users/users.module';
 import { SmsModule } from '../../integrations/sms/sms.module';
 import { WechatModule } from '../../integrations/wechat/wechat.module';
+import { QqModule } from '../../integrations/qq/qq.module';
 import { TokenService } from './services/token.service';
 import { NotificationsModule } from '../../modules/notifications/notifications.module';
 
@@ -21,6 +22,7 @@ import { NotificationsModule } from '../../modules/notifications/notifications.m
     MailModule,
     SmsModule,
     WechatModule,
+    QqModule,
     JwtModule.register({}),
     forwardRef(() => NotificationsModule),
   ],

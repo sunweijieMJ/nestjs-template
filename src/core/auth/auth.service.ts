@@ -34,6 +34,8 @@ import { AuthPhoneSmsLoginDto } from './dto/auth-phone-sms-login.dto';
 import { AuthPhoneRegisterDto } from './dto/auth-phone-register.dto';
 import { AuthWechatLoginDto, WechatLoginType } from './dto/auth-wechat-login.dto';
 import { WechatService } from '../../integrations/wechat/wechat.service';
+import { AuthQqLoginDto, QqLoginType } from './dto/auth-qq-login.dto';
+import { QqService } from '../../integrations/qq/qq.service';
 import { maskEmail, maskPhone } from '../../common/utils/sanitize.utils';
 import { TokenService } from './services/token.service';
 import { NotificationsService } from '../../modules/notifications/notifications.service';
@@ -53,6 +55,7 @@ export class AuthService {
     private configService: ConfigService<AllConfigType>,
     private smsService: SmsService,
     private wechatService: WechatService,
+    private qqService: QqService,
     private tokenService: TokenService,
     @Inject(forwardRef(() => NotificationsService))
     private notificationsService: NotificationsService,
@@ -951,6 +954,94 @@ export class AuthService {
     }
 
     this.logger.log(`WeChat login successful for user: ${user.id}`);
+    return this.createSessionAndTokens(user);
+  }
+
+  /**
+   * QQ登录
+   * @param dto - QQ登录数据传输对象
+   * @returns 登录响应，包含用户信息和令牌
+   */
+  async qqLogin(dto: AuthQqLoginDto): Promise<LoginResponseDto> {
+    this.logger.log(`QQ login attempt with type: ${dto.type}`);
+
+    let qqUserInfo;
+
+    if (dto.type === QqLoginType.WEB) {
+      // Web登录：使用code换取用户信息
+      if (!dto.code || !dto.redirectUri) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            code: 'codeRequired',
+            redirectUri: 'redirectUriRequired',
+          },
+        });
+      }
+      qqUserInfo = await this.qqService.login(dto.code, dto.redirectUri);
+    } else if (dto.type === QqLoginType.MINI_APP) {
+      // 小程序登录：使用code换取用户信息
+      if (!dto.code) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            code: 'codeRequired',
+          },
+        });
+      }
+      qqUserInfo = await this.qqService.miniAppLogin(dto.code);
+    } else {
+      // APP登录：使用accessToken和openId获取用户信息
+      if (!dto.accessToken || !dto.openId) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            accessToken: 'accessTokenRequired',
+            openId: 'openIdRequired',
+          },
+        });
+      }
+      qqUserInfo = await this.qqService.appLogin(dto.accessToken, dto.openId, dto.unionId);
+    }
+
+    // Check if user already exists
+    let user = await this.usersService.findByQqOpenId(qqUserInfo.openId);
+
+    if (!user) {
+      // Create new user for first-time QQ login
+      this.logger.log(`Creating new user for QQ openId: ${qqUserInfo.openId}`);
+
+      user = await this.usersService.create({
+        qqOpenId: qqUserInfo.openId,
+        qqUnionId: qqUserInfo.unionId,
+        nickname: dto.nickname ?? qqUserInfo.nickname ?? 'QQ用户',
+        gender: qqUserInfo.gender ?? 0,
+        provider: AuthProvidersEnum.qq,
+        role: {
+          id: RoleEnum.user,
+        },
+        status: {
+          id: StatusEnum.active,
+        },
+      });
+
+      this.logger.log(`New QQ user created: ${user.id}`);
+
+      // Initialize default notification settings for new user
+      try {
+        await this.notificationsService.initializeDefaultSettings(user.id);
+      } catch (error) {
+        this.logger.warn(`Failed to initialize notification settings for user ${user.id}`, { error });
+      }
+    } else {
+      this.logger.log(`Existing user found for QQ openId: ${qqUserInfo.openId}`);
+      // 更新unionId（如果之前没有保存）
+      if (qqUserInfo.unionId && !user.qqUnionId) {
+        await this.usersService.update(user.id, { qqUnionId: qqUserInfo.unionId });
+      }
+    }
+
+    this.logger.log(`QQ login successful for user: ${user.id}`);
     return this.createSessionAndTokens(user);
   }
 

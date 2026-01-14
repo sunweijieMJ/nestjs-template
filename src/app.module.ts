@@ -14,6 +14,7 @@ import metricsConfig from './infrastructure/metrics/config/metrics.config';
 import smsConfig from './integrations/sms/config/sms.config';
 import wechatConfig from './integrations/wechat/config/wechat.config';
 import alipayConfig from './integrations/alipay/config/alipay.config';
+import qqConfig from './integrations/qq/config/qq.config';
 import path from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -69,6 +70,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
         smsConfig,
         wechatConfig,
         alipayConfig,
+        qqConfig,
       ],
       envFilePath: ['.env'],
     }),

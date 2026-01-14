@@ -148,6 +148,8 @@ export class UsersService {
       provider: createUserDto.provider ?? AuthProvidersEnum.email,
       wechatOpenId: createUserDto.wechatOpenId ?? null,
       wechatUnionId: createUserDto.wechatUnionId ?? null,
+      qqOpenId: createUserDto.qqOpenId ?? null,
+      qqUnionId: createUserDto.qqUnionId ?? null,
     });
 
     this.logger.log(`User created successfully: ${user.id}`);
@@ -220,6 +222,24 @@ export class UsersService {
    */
   findByWechatOpenId(openId: string): Promise<NullableType<User>> {
     return this.usersRepository.findByWechatOpenId(openId);
+  }
+
+  /**
+   * 根据 QQ OpenID 查找用户
+   * @param openId - QQ OpenID
+   * @returns 用户对象或 null
+   */
+  findByQqOpenId(openId: string): Promise<NullableType<User>> {
+    return this.usersRepository.findByQqOpenId(openId);
+  }
+
+  /**
+   * 根据 QQ UnionID 查找用户
+   * @param unionId - QQ UnionID
+   * @returns 用户对象或 null
+   */
+  findByQqUnionId(unionId: string): Promise<NullableType<User>> {
+    return this.usersRepository.findByQqUnionId(unionId);
   }
 
   /**

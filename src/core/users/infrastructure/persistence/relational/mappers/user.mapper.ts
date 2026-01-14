@@ -30,6 +30,8 @@ export class UserMapper {
     domainEntity.deletedAt = raw.deletedAt;
     domainEntity.wechatOpenId = raw.wechatOpenId;
     domainEntity.wechatUnionId = raw.wechatUnionId;
+    domainEntity.qqOpenId = raw.qqOpenId;
+    domainEntity.qqUnionId = raw.qqUnionId;
     return domainEntity;
   }
 
@@ -79,6 +81,8 @@ export class UserMapper {
     persistenceEntity.deletedAt = domainEntity.deletedAt;
     persistenceEntity.wechatOpenId = domainEntity.wechatOpenId;
     persistenceEntity.wechatUnionId = domainEntity.wechatUnionId;
+    persistenceEntity.qqOpenId = domainEntity.qqOpenId;
+    persistenceEntity.qqUnionId = domainEntity.qqUnionId;
     return persistenceEntity;
   }
 }

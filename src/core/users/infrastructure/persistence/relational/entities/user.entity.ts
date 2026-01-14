@@ -82,4 +82,12 @@ export class UserEntity extends EntityRelationalHelper {
   @Index()
   @Column({ type: String, nullable: true })
   wechatUnionId: string | null;
+
+  @Index()
+  @Column({ type: String, unique: true, nullable: true })
+  qqOpenId: string | null;
+
+  @Index()
+  @Column({ type: String, nullable: true })
+  qqUnionId: string | null;
 }

@@ -112,4 +112,20 @@ export class User {
   })
   @Expose({ groups: ['me', 'admin'] })
   wechatUnionId: string | null;
+
+  @ApiProperty({
+    type: String,
+    example: 'XXXXXX',
+    description: 'QQ OpenID',
+  })
+  @Expose({ groups: ['me', 'admin'] })
+  qqOpenId: string | null;
+
+  @ApiProperty({
+    type: String,
+    example: 'XXXXXX',
+    description: 'QQ UnionID',
+  })
+  @Expose({ groups: ['me', 'admin'] })
+  qqUnionId: string | null;
 }

@@ -98,4 +98,14 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   wechatUnionId?: string | null;
+
+  @ApiPropertyOptional({ example: 'XXXXXX', type: String })
+  @IsOptional()
+  @IsString()
+  qqOpenId?: string | null;
+
+  @ApiPropertyOptional({ example: 'XXXXXX', type: String })
+  @IsOptional()
+  @IsString()
+  qqUnionId?: string | null;
 }

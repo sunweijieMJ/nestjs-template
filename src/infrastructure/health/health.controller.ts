@@ -13,6 +13,7 @@ import { AllConfigType } from '../../config/config.type';
 import { RedisHealthIndicator } from './indicators/redis.health';
 import { WechatApiHealthIndicator } from './indicators/wechat-api.health';
 import { AlipayApiHealthIndicator } from './indicators/alipay-api.health';
+import { QqApiHealthIndicator } from './indicators/qq-api.health';
 import { DatabasePoolHealthIndicator } from './indicators/database-pool.health';
 
 @ApiTags('Health')
@@ -29,6 +30,7 @@ export class HealthController {
     private redisHealthIndicator: RedisHealthIndicator,
     private wechatApiHealthIndicator: WechatApiHealthIndicator,
     private alipayApiHealthIndicator: AlipayApiHealthIndicator,
+    private qqApiHealthIndicator: QqApiHealthIndicator,
     private databasePoolHealthIndicator: DatabasePoolHealthIndicator,
     private configService: ConfigService<AllConfigType>,
   ) {}
@@ -62,6 +64,7 @@ export class HealthController {
     // External API health checks
     checks.push(() => this.wechatApiHealthIndicator.isHealthy('wechat_api'));
     checks.push(() => this.alipayApiHealthIndicator.isHealthy('alipay_api'));
+    checks.push(() => this.qqApiHealthIndicator.isHealthy('qq_api'));
 
     return this.health.check(checks);
   }

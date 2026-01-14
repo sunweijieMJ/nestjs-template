@@ -21,6 +21,7 @@ import { CreateShareDto } from './dto/create-share.dto';
 import { QueryShareDto } from './dto/query-share.dto';
 import { WeChatConfigDto, WeChatJsSdkConfigResponseDto } from './dto/wechat-config.dto';
 import { AlipayConfigDto, AlipayShareConfigResponseDto } from './dto/alipay-config.dto';
+import { QqConfigDto, QqShareConfigResponseDto } from './dto/qq-config.dto';
 import { TrackShareDto } from './dto/track-share.dto';
 import { ShareStatsDto } from './dto/share-stats.dto';
 import { Share } from './domain/share';
@@ -29,6 +30,7 @@ import { pagination } from '../../common/pagination';
 import { RequestWithUser } from '../../common/types/request-with-user.type';
 import { WechatService } from '../../integrations/wechat/wechat.service';
 import { AlipayService } from '../../integrations/alipay/alipay.service';
+import { QqService } from '../../integrations/qq/qq.service';
 
 @ApiTags('Shares')
 @Controller({
@@ -40,6 +42,7 @@ export class SharesController {
     private readonly sharesService: SharesService,
     private readonly wechatService: WechatService,
     private readonly alipayService: AlipayService,
+    private readonly qqService: QqService,
   ) {}
 
   @ApiBearerAuth()
@@ -146,5 +149,13 @@ export class SharesController {
   @HttpCode(HttpStatus.OK)
   async getAlipayConfig(@Body() alipayConfigDto: AlipayConfigDto): Promise<AlipayShareConfigResponseDto> {
     return this.alipayService.getShareConfig(alipayConfigDto);
+  }
+
+  @ApiOkResponse({ type: QqShareConfigResponseDto })
+  @ApiOperation({ operationId: 'getQqConfig', summary: '获取QQ分享配置' })
+  @Post('qq/config')
+  @HttpCode(HttpStatus.OK)
+  async getQqConfig(@Body() qqConfigDto: QqConfigDto): Promise<QqShareConfigResponseDto> {
+    return this.qqService.getShareConfig(qqConfigDto);
   }
 }

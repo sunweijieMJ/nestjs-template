@@ -114,6 +114,28 @@ export class UsersRelationalRepository implements UserRepository {
     return entity ? UserMapper.toDomain(entity) : null;
   }
 
+  async findByQqOpenId(openId: string): Promise<NullableType<User>> {
+    if (!openId) return null;
+
+    const entity = await this.usersRepository.findOne({
+      where: { qqOpenId: openId },
+      relations: ['photo', 'role', 'status'],
+    });
+
+    return entity ? UserMapper.toDomain(entity) : null;
+  }
+
+  async findByQqUnionId(unionId: string): Promise<NullableType<User>> {
+    if (!unionId) return null;
+
+    const entity = await this.usersRepository.findOne({
+      where: { qqUnionId: unionId },
+      relations: ['photo', 'role', 'status'],
+    });
+
+    return entity ? UserMapper.toDomain(entity) : null;
+  }
+
   async update(id: User['id'], payload: Partial<User>): Promise<User> {
     const entity = await this.usersRepository.findOne({
       where: { id: Number(id) },

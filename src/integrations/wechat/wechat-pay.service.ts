@@ -117,6 +117,26 @@ export class WechatPayService {
   /**
    * 查询订单
    */
+  /**   * H5 支付（移动端浏览器）   */ async createH5Payment(params: {
+    outTradeNo: string;
+    description: string;
+    amount: number;
+    payerClientIp: string;
+    h5Type?: 'Wap' | 'iOS' | 'Android';
+  }): Promise<{ h5Url: string }> {
+    const url = 'https://api.mch.weixin.qq.com/v3/pay/transactions/h5';
+    const body = {
+      appid: this.config.appId,
+      mchid: this.config.pay.mchId,
+      description: params.description,
+      out_trade_no: params.outTradeNo,
+      notify_url: this.config.pay.notifyUrl,
+      amount: { total: params.amount, currency: 'CNY' },
+      scene_info: { payer_client_ip: params.payerClientIp, h5_info: { type: params.h5Type ?? 'Wap' } },
+    };
+    const result = await this.request<{ h5_url: string }>('POST', url, body);
+    return { h5Url: result.h5_url };
+  }
   async queryOrder(outTradeNo: string): Promise<WechatOrderResponse> {
     const url = `https://api.mch.weixin.qq.com/v3/pay/transactions/out-trade-no/${outTradeNo}?mchid=${this.config.pay.mchId}`;
     return this.request('GET', url);
@@ -125,6 +145,11 @@ export class WechatPayService {
   /**
    * 申请退款
    */
+  /**   * 关闭订单   */ async closeOrder(outTradeNo: string): Promise<void> {
+    const url = `https://api.mch.weixin.qq.com/v3/pay/transactions/out-trade-no/${outTradeNo}/close`;
+    const body = { mchid: this.config.pay.mchId };
+    await this.request('POST', url, body);
+  }
   async refund(params: WechatRefundParams): Promise<{
     refund_id: string;
     out_refund_no: string;
@@ -320,6 +345,11 @@ export class WechatPayService {
       retryDelay: 1000,
       timeout: 30000,
     });
+
+    // 关闭订单等接口返回204 No Content
+    if (response.status === 204) {
+      return {} as T;
+    }
 
     const result = (await response.json()) as { message?: string; [key: string]: unknown };
 
