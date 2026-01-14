@@ -1,8 +1,9 @@
 import {
   Controller,
   Get,
+  Post,
+  Put,
   Body,
-  Patch,
   Param,
   Delete,
   UseGuards,
@@ -85,7 +86,7 @@ export class NotificationsController {
 
   @ApiOkResponse()
   @ApiOperation({ operationId: 'markAllNotificationsAsRead', summary: '标记所有通知为已读' })
-  @Patch('read-all')
+  @Post('read-all')
   @HttpCode(HttpStatus.OK)
   async markAllAsRead(@Request() request: RequestWithUser): Promise<void> {
     return this.notificationsService.markAllAsRead(request.user.id);
@@ -93,7 +94,7 @@ export class NotificationsController {
 
   @ApiOkResponse({ type: NotificationSetting })
   @ApiOperation({ operationId: 'updateNotificationSettings', summary: '更新通知设置' })
-  @Patch('settings')
+  @Put('settings')
   @HttpCode(HttpStatus.OK)
   updateSettings(
     @Request() request: RequestWithUser,
@@ -105,7 +106,7 @@ export class NotificationsController {
   @ApiOkResponse({ type: Notification })
   @ApiOperation({ operationId: 'markNotificationAsRead', summary: '标记通知为已读' })
   @ApiParam({ name: 'id', type: Number })
-  @Patch(':id/read')
+  @Post(':id/read')
   @HttpCode(HttpStatus.OK)
   markAsRead(@Request() request: RequestWithUser, @Param('id', ParseIntPipe) id: number): Promise<Notification> {
     return this.notificationsService.markAsRead(id, request.user.id);
