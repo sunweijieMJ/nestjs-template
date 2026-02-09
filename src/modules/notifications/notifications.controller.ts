@@ -116,7 +116,7 @@ export class NotificationsController {
   @ApiOperation({ operationId: 'deleteNotification', summary: '删除通知' })
   @ApiParam({ name: 'id', type: Number })
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   async remove(@Request() request: RequestWithUser, @Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.notificationsService.remove(id, request.user.id);
   }

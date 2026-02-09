@@ -32,7 +32,7 @@ export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
-  @HttpCode(HttpStatus.CREATED)
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ operationId: 'createOrder', summary: '创建订单' })
   @ApiCreatedResponse({ type: Order })
   async create(
@@ -77,7 +77,7 @@ export class OrdersController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ operationId: 'cancelOrder', summary: '取消未支付订单' })
   async cancel(@Request() request: RequestWithUser, @Param('id') id: string): Promise<void> {
     return this.ordersService.cancelOrder(id, request.user.id);

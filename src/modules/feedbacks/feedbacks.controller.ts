@@ -34,7 +34,7 @@ export class FeedbacksController {
   @ApiCreatedResponse({ type: Feedback })
   @ApiOperation({ operationId: 'createFeedback', summary: '提交反馈' })
   @Post()
-  @HttpCode(HttpStatus.CREATED)
+  @HttpCode(HttpStatus.OK)
   create(@Request() request: RequestWithUser, @Body() createFeedbackDto: CreateFeedbackDto): Promise<Feedback> {
     return this.feedbacksService.create(request.user.id, createFeedbackDto);
   }

@@ -37,7 +37,7 @@ export class AddressesController {
   @ApiCreatedResponse({ type: Address })
   @ApiOperation({ operationId: 'createAddress', summary: '创建地址' })
   @Post()
-  @HttpCode(HttpStatus.CREATED)
+  @HttpCode(HttpStatus.OK)
   create(@Request() request: RequestWithUser, @Body() createAddressDto: CreateAddressDto): Promise<Address> {
     return this.addressesService.create(request.user.id, createAddressDto);
   }
@@ -126,7 +126,7 @@ export class AddressesController {
     type: String,
     required: true,
   })
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   remove(@Request() request: RequestWithUser, @Param('id') id: Address['id']): Promise<void> {
     return this.addressesService.remove(id, request.user.id);
   }

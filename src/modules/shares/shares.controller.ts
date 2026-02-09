@@ -47,7 +47,7 @@ export class SharesController {
   @ApiOkResponse({ type: Share })
   @ApiOperation({ operationId: 'createShare', summary: '创建分享' })
   @Post()
-  @HttpCode(HttpStatus.CREATED)
+  @HttpCode(HttpStatus.OK)
   async create(@Request() request: RequestWithUser, @Body() createShareDto: CreateShareDto): Promise<Share> {
     return this.sharesService.create(request.user.id, createShareDto);
   }
@@ -103,7 +103,7 @@ export class SharesController {
   @ApiOperation({ operationId: 'deleteShare', summary: '删除分享' })
   @ApiParam({ name: 'id', type: Number })
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   async remove(@Request() request: RequestWithUser, @Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.sharesService.remove(id, request.user.id);
   }
@@ -122,7 +122,7 @@ export class SharesController {
   @ApiOperation({ operationId: 'trackShare', summary: '追踪分享行为' })
   @ApiParam({ name: 'id', type: Number })
   @Post(':id/track')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   async track(
     @Param('id', ParseIntPipe) id: number,
     @Body() trackShareDto: TrackShareDto,

@@ -59,21 +59,21 @@ export class AuthController {
 
   @Post('email/register')
   @ApiOperation({ operationId: 'registerWithEmail', summary: '邮箱注册' })
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   async register(@Body() createUserDto: AuthRegisterLoginDto): Promise<void> {
     return this.service.register(createUserDto);
   }
 
   @Post('email/confirm')
   @ApiOperation({ operationId: 'confirmEmail', summary: '确认邮箱' })
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   async confirmEmail(@Body() confirmEmailDto: AuthConfirmEmailDto): Promise<void> {
     return this.service.confirmEmail(confirmEmailDto.hash);
   }
 
   @Post('email/confirm/new')
   @ApiOperation({ operationId: 'confirmNewEmail', summary: '确认新邮箱' })
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   async confirmNewEmail(@Body() confirmEmailDto: AuthConfirmEmailDto): Promise<void> {
     return this.service.confirmNewEmail(confirmEmailDto.hash);
   }
@@ -81,7 +81,7 @@ export class AuthController {
   @Post('forgot/password')
   @Throttle({ default: { limit: 3, ttl: 300000 } })
   @ApiOperation({ operationId: 'forgotPassword', summary: '忘记密码' })
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() forgotPasswordDto: AuthForgotPasswordDto): Promise<void> {
     return this.service.forgotPassword(forgotPasswordDto.email);
   }
@@ -89,7 +89,7 @@ export class AuthController {
   @Post('reset/password')
   @Throttle({ default: { limit: 5, ttl: 300000 } })
   @ApiOperation({ operationId: 'resetPassword', summary: '重置密码' })
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   resetPassword(@Body() resetPasswordDto: AuthResetPasswordDto): Promise<void> {
     return this.service.resetPassword(resetPasswordDto.hash, resetPasswordDto.password);
   }
@@ -158,7 +158,7 @@ export class AuthController {
   @Delete('me')
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ operationId: 'deleteCurrentUser', summary: '删除当前用户账号' })
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   public async delete(@Request() request: RequestWithUser): Promise<void> {
     return this.service.softDelete(request.user);
   }
@@ -166,7 +166,7 @@ export class AuthController {
   @Post('phone/send-code')
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @ApiOperation({ operationId: 'sendSmsCode', summary: '发送短信验证码' })
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   async sendCode(@Body() sendCodeDto: AuthSendCodeDto): Promise<void> {
     return this.service.sendCode(sendCodeDto.phone, sendCodeDto.type ?? SmsCodeType.LOGIN);
   }
@@ -208,7 +208,7 @@ export class AuthController {
   @ApiOkResponse({
     type: LoginResponseDto,
   })
-  @HttpCode(HttpStatus.CREATED)
+  @HttpCode(HttpStatus.OK)
   public phoneRegister(@Body() registerDto: AuthPhoneRegisterDto): Promise<LoginResponseDto> {
     return this.service.registerByPhone(registerDto);
   }
@@ -216,7 +216,7 @@ export class AuthController {
   @Post('phone/reset-password')
   @Throttle({ default: { limit: 5, ttl: 300000 } })
   @ApiOperation({ operationId: 'resetPasswordByPhone', summary: '通过手机验证码重置密码' })
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   public async resetPasswordByPhone(@Body() resetPasswordDto: AuthPhoneResetPasswordDto): Promise<void> {
     return this.service.resetPasswordByPhone(resetPasswordDto.phone, resetPasswordDto.code, resetPasswordDto.password);
   }

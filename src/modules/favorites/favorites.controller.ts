@@ -35,7 +35,7 @@ export class FavoritesController {
   @ApiCreatedResponse({ type: Favorite })
   @ApiOperation({ operationId: 'createFavorite', summary: '添加收藏' })
   @Post()
-  @HttpCode(HttpStatus.CREATED)
+  @HttpCode(HttpStatus.OK)
   create(@Request() request: RequestWithUser, @Body() createFavoriteDto: CreateFavoriteDto): Promise<Favorite> {
     return this.favoritesService.create(request.user.id, createFavoriteDto);
   }
@@ -96,7 +96,7 @@ export class FavoritesController {
   @ApiOperation({ operationId: 'deleteFavorite', summary: '取消收藏' })
   @Delete(':id')
   @ApiParam({ name: 'id', type: String, required: true })
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   remove(@Request() request: RequestWithUser, @Param('id') id: Favorite['id']): Promise<void> {
     return this.favoritesService.remove(id, request.user.id);
   }

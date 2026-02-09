@@ -49,7 +49,7 @@ export class UsersController {
     groups: ['admin'],
   })
   @Post()
-  @HttpCode(HttpStatus.CREATED)
+  @HttpCode(HttpStatus.OK)
   create(@Body() createProfileDto: CreateUserDto): Promise<User> {
     return this.usersService.create(createProfileDto);
   }
@@ -126,7 +126,7 @@ export class UsersController {
     type: String,
     required: true,
   })
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   remove(@Param('id') id: User['id']): Promise<void> {
     return this.usersService.remove(id);
   }
