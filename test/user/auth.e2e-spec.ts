@@ -33,7 +33,7 @@ describe('Auth Module', () => {
           firstName: newUserFirstName,
           lastName: newUserLastName,
         })
-        .expect(204);
+        .expect(200);
     });
 
     describe('Login', () => {
