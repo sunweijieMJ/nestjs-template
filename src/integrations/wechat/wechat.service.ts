@@ -6,6 +6,9 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { generateWeChatSignature } from '../../modules/shares/utils/wechat-signature.util';
 
+/** 外部 API 调用默认超时时间（毫秒） */
+const WECHAT_API_TIMEOUT_MS = 10_000;
+
 export interface WechatUserInfo {
   openId: string;
   unionId?: string;
@@ -72,7 +75,28 @@ export class WechatService {
   ) {}
 
   /**
+   * 封装 fetch 调用：统一超时 + 避免将含 secret 的 URL 写入日志
+   */
+  private async wechatFetch(url: string, label: string): Promise<Response> {
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(WECHAT_API_TIMEOUT_MS),
+    });
+
+    if (!response.ok) {
+      this.logger.error(`${label} HTTP error: ${response.status} ${response.statusText}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: { wechat: 'requestFailed' },
+      });
+    }
+
+    return response;
+  }
+
+  /**
    * 微信小程序登录 - 通过code换取openid和session_key
+   * 注意：微信 API 要求 secret 通过 GET 参数传递，此处使用 URLSearchParams 构建，
+   * 并通过 wechatFetch 避免将完整 URL 写入日志。生产环境应确保反向代理不记录请求参数。
    */
   async miniAppLogin(code: string): Promise<WechatUserInfo> {
     const appId = this.configService.get('wechat.miniAppId', { infer: true });
@@ -82,37 +106,27 @@ export class WechatService {
       this.logger.error('WeChat Mini App credentials not configured');
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          wechat: 'notConfigured',
-        },
+        errors: { wechat: 'notConfigured' },
       });
     }
 
-    const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appId}&secret=${appSecret}&js_code=${code}&grant_type=authorization_code`;
+    const params = new URLSearchParams({
+      appid: appId,
+      secret: appSecret,
+      js_code: code,
+      grant_type: 'authorization_code',
+    });
+    const url = `https://api.weixin.qq.com/sns/jscode2session?${params}`;
 
     try {
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        this.logger.error(`WeChat Mini App login HTTP error: ${response.status} ${response.statusText}`);
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            wechat: 'requestFailed',
-          },
-        });
-      }
-
+      const response = await this.wechatFetch(url, 'WeChat Mini App login');
       const data = (await response.json()) as WechatMiniLoginResult;
 
       if (data.errcode) {
         this.logger.error(`WeChat Mini App login failed: ${data.errcode} - ${data.errmsg}`);
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            code: 'invalidCode',
-            wechatError: data.errmsg,
-          },
+          errors: { code: 'invalidCode', wechatError: data.errmsg },
         });
       }
 
@@ -130,9 +144,7 @@ export class WechatService {
       this.logger.error('WeChat Mini App login request failed', error);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          wechat: 'requestFailed',
-        },
+        errors: { wechat: 'requestFailed' },
       });
     }
   }
@@ -148,65 +160,45 @@ export class WechatService {
       this.logger.error('WeChat App credentials not configured');
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          wechat: 'notConfigured',
-        },
+        errors: { wechat: 'notConfigured' },
       });
     }
 
-    // Step 1: Exchange code for access_token
-    const tokenUrl = `https://api.weixin.qq.com/sns/oauth2/access_token?appid=${appId}&secret=${appSecret}&code=${code}&grant_type=authorization_code`;
+    const tokenParams = new URLSearchParams({
+      appid: appId,
+      secret: appSecret,
+      code,
+      grant_type: 'authorization_code',
+    });
+    const tokenUrl = `https://api.weixin.qq.com/sns/oauth2/access_token?${tokenParams}`;
 
     try {
-      const tokenResponse = await fetch(tokenUrl);
-
-      if (!tokenResponse.ok) {
-        this.logger.error(`WeChat App token HTTP error: ${tokenResponse.status} ${tokenResponse.statusText}`);
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            wechat: 'requestFailed',
-          },
-        });
-      }
-
+      // Step 1: Exchange code for access_token
+      const tokenResponse = await this.wechatFetch(tokenUrl, 'WeChat App token');
       const tokenData = (await tokenResponse.json()) as WechatAppTokenResult;
 
       if (tokenData.errcode) {
         this.logger.error(`WeChat App token exchange failed: ${tokenData.errcode} - ${tokenData.errmsg}`);
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            code: 'invalidCode',
-            wechatError: tokenData.errmsg,
-          },
+          errors: { code: 'invalidCode', wechatError: tokenData.errmsg },
         });
       }
 
-      // Step 2: Get user info using access_token
-      const userInfoUrl = `https://api.weixin.qq.com/sns/userinfo?access_token=${tokenData.access_token}&openid=${tokenData.openid}`;
-      const userInfoResponse = await fetch(userInfoUrl);
-
-      if (!userInfoResponse.ok) {
-        this.logger.error(`WeChat App user info HTTP error: ${userInfoResponse.status} ${userInfoResponse.statusText}`);
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            wechat: 'requestFailed',
-          },
-        });
-      }
-
+      // Step 2: Get user info using access_token (access_token 非长期密钥，可出现在 URL 中)
+      const userInfoParams = new URLSearchParams({
+        access_token: tokenData.access_token,
+        openid: tokenData.openid,
+      });
+      const userInfoUrl = `https://api.weixin.qq.com/sns/userinfo?${userInfoParams}`;
+      const userInfoResponse = await this.wechatFetch(userInfoUrl, 'WeChat App user info');
       const userInfoData = (await userInfoResponse.json()) as WechatAppUserInfoResult;
 
       if (userInfoData.errcode) {
         this.logger.error(`WeChat App user info failed: ${userInfoData.errcode} - ${userInfoData.errmsg}`);
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            wechat: 'userInfoFailed',
-            wechatError: userInfoData.errmsg,
-          },
+          errors: { wechat: 'userInfoFailed', wechatError: userInfoData.errmsg },
         });
       }
 
@@ -226,9 +218,7 @@ export class WechatService {
       this.logger.error('WeChat App login request failed', error);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          wechat: 'requestFailed',
-        },
+        errors: { wechat: 'requestFailed' },
       });
     }
   }
@@ -251,37 +241,26 @@ export class WechatService {
       this.logger.error('WeChat credentials not configured');
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          wechat: 'notConfigured',
-        },
+        errors: { wechat: 'notConfigured' },
       });
     }
 
-    const url = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appId}&secret=${appSecret}`;
+    const params = new URLSearchParams({
+      grant_type: 'client_credential',
+      appid: appId,
+      secret: appSecret,
+    });
+    const url = `https://api.weixin.qq.com/cgi-bin/token?${params}`;
 
     try {
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        this.logger.error(`Get access_token HTTP error: ${response.status} ${response.statusText}`);
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            wechat: 'requestFailed',
-          },
-        });
-      }
-
+      const response = await this.wechatFetch(url, 'Get access_token');
       const data = (await response.json()) as WechatAccessTokenResult;
 
       if (data.errcode) {
         this.logger.error(`Get access_token failed: ${data.errcode} - ${data.errmsg}`);
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            wechat: 'accessTokenFailed',
-            wechatError: data.errmsg,
-          },
+          errors: { wechat: 'accessTokenFailed', wechatError: data.errmsg },
         });
       }
 
@@ -296,9 +275,7 @@ export class WechatService {
       this.logger.error('Get access_token request failed', error);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          wechat: 'requestFailed',
-        },
+        errors: { wechat: 'requestFailed' },
       });
     }
   }
@@ -315,31 +292,21 @@ export class WechatService {
     }
 
     const accessToken = await this.getAccessToken();
-    const url = `https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=${accessToken}&type=jsapi`;
+    const params = new URLSearchParams({
+      access_token: accessToken,
+      type: 'jsapi',
+    });
+    const url = `https://api.weixin.qq.com/cgi-bin/ticket/getticket?${params}`;
 
     try {
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        this.logger.error(`Get jsapi_ticket HTTP error: ${response.status} ${response.statusText}`);
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            wechat: 'requestFailed',
-          },
-        });
-      }
-
+      const response = await this.wechatFetch(url, 'Get jsapi_ticket');
       const data = (await response.json()) as WechatJsapiTicketResult;
 
       if (data.errcode && data.errcode !== 0) {
         this.logger.error(`Get jsapi_ticket failed: ${data.errcode} - ${data.errmsg}`);
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            wechat: 'jsapiTicketFailed',
-            wechatError: data.errmsg,
-          },
+          errors: { wechat: 'jsapiTicketFailed', wechatError: data.errmsg },
         });
       }
 
@@ -354,9 +321,7 @@ export class WechatService {
       this.logger.error('Get jsapi_ticket request failed', error);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          wechat: 'requestFailed',
-        },
+        errors: { wechat: 'requestFailed' },
       });
     }
   }

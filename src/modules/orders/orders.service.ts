@@ -67,7 +67,7 @@ export class OrdersService {
   }
 
   async findOne(id: number | string, userId: number | string): Promise<Order & { items: OrderItem[] }> {
-    const order = await this.orderRepository.findByIdAndUserId(id, userId);
+    const order = await this.orderRepository.findByIdAndUserIdWithItems(id, userId);
 
     if (!order) {
       throw new NotFoundException({
@@ -76,9 +76,7 @@ export class OrdersService {
       });
     }
 
-    const items = await this.orderItemRepository.findByOrderId(order.id);
-
-    return { ...order, items };
+    return order;
   }
 
   async findByOrderNo(orderNo: string): Promise<Order | null> {

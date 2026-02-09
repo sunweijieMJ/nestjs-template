@@ -2,6 +2,7 @@ import { DeepPartial } from '../../../../common/types/deep-partial.type';
 import { NullableType } from '../../../../common/types/nullable.type';
 import { IPaginationOptions } from '../../../../common/types/pagination-options';
 import { Order, OrderStatus, PaymentChannel } from '../../domain/order';
+import { OrderItem } from '../../domain/order-item';
 import { QueryOrderDto } from '../../dto/query-order.dto';
 
 export abstract class OrderRepository {
@@ -22,6 +23,11 @@ export abstract class OrderRepository {
   abstract findByOrderNo(orderNo: string): Promise<NullableType<Order>>;
 
   abstract findByIdAndUserId(id: Order['id'], userId: Order['userId']): Promise<NullableType<Order>>;
+
+  abstract findByIdAndUserIdWithItems(
+    id: Order['id'],
+    userId: Order['userId'],
+  ): Promise<NullableType<Order & { items: OrderItem[] }>>;
 
   abstract update(id: Order['id'], payload: DeepPartial<Order>): Promise<Order | null>;
 

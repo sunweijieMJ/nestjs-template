@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
 import { OrderEntity } from '../entities/order.entity';
 import { OrderMapper } from '../mappers/order.mapper';
+import { OrderItemMapper } from '../mappers/order-item.mapper';
 import { Order, OrderStatus, PaymentChannel } from '../../../../domain/order';
 import { OrderRepository } from '../../order.repository';
 import { NullableType } from '../../../../../../common/types/nullable.type';
@@ -77,6 +78,25 @@ export class OrderRelationalRepository implements OrderRepository {
       where: { id: Number(id), userId: Number(userId) },
     });
     return entity ? OrderMapper.toDomain(entity) : null;
+  }
+
+  async findByIdAndUserIdWithItems(
+    id: Order['id'],
+    userId: Order['userId'],
+  ): Promise<NullableType<Order & { items: import('../../../../domain/order-item').OrderItem[] }>> {
+    // 使用 relations 一次性 JOIN 加载 items，避免 N+1 查询
+    const entity = await this.orderRepository.findOne({
+      where: { id: Number(id), userId: Number(userId) },
+      relations: ['items'],
+    });
+
+    if (!entity) {
+      return null;
+    }
+
+    const order = OrderMapper.toDomain(entity);
+    const items = (entity.items ?? []).map((item) => OrderItemMapper.toDomain(item));
+    return { ...order, items };
   }
 
   async update(id: Order['id'], payload: DeepPartial<Order>): Promise<Order | null> {
