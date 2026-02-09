@@ -12,7 +12,7 @@ export function IsRegionCode(validationOptions?: ValidationOptions) {
       propertyName: propertyName,
       options: validationOptions,
       validator: {
-        validate(value: any) {
+        validate(value: unknown) {
           if (value === null || value === undefined) {
             return true; // Let @IsOptional handle this
           }

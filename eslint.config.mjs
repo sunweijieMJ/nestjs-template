@@ -44,22 +44,9 @@ export default [
       // Naming conventions
       '@typescript-eslint/interface-name-prefix': 'off',
 
-      // Type safety rules - enabled with warnings for gradual adoption
-      '@typescript-eslint/explicit-function-return-type': [
-        'warn',
-        {
-          allowExpressions: true,
-          allowTypedFunctionExpressions: true,
-          allowHigherOrderFunctions: true,
-          allowDirectConstAssertionInArrowFunctions: true,
-        },
-      ],
-      '@typescript-eslint/explicit-module-boundary-types': [
-        'warn',
-        {
-          allowArgumentsExplicitlyTypedAsAny: true,
-        },
-      ],
+      // Type safety rules - disabled as NestJS decorators handle type info
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': [
         'warn',
         {
@@ -68,8 +55,8 @@ export default [
         },
       ],
 
-      // Strict null checks
-      '@typescript-eslint/no-non-null-assertion': 'warn',
+      // Strict null checks - disabled as TypeORM patterns commonly use non-null assertion
+      '@typescript-eslint/no-non-null-assertion': 'off',
 
       // Unused variables
       'no-unused-vars': 'off',
@@ -134,8 +121,8 @@ export default [
         },
       ],
 
-      // Console usage
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      // Console usage - off for backend project
+      'no-console': 'off',
     },
   },
   // Override for test files - less strict

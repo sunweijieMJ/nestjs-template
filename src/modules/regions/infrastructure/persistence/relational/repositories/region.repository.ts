@@ -31,7 +31,7 @@ export class RegionRelationalRepository implements RegionRepository {
 
   async findByParentCode(parentCode: string | null): Promise<Region[]> {
     const entities = await this.regionRepository.find({
-      where: { parentCode: parentCode === null ? IsNull() : parentCode },
+      where: { parentCode: parentCode ?? IsNull() },
       order: { sort: 'ASC', code: 'ASC' },
     });
     return entities.map((entity) => RegionMapper.toDomain(entity));

@@ -34,7 +34,7 @@
     "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "lint:md": "markdownlint-cli2",
     "type-check": "tsc --noEmit -p tsconfig.json",
-    "cspell": "cspell \"src/**/*.ts\" \"test/**/*.ts\"",
+    "cspell": "cspell",
     "commit": "czg",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
@@ -51,7 +51,7 @@
     "release": "release-it"
   },
   "lint-staged": {
-    "*.{ts,js}": [
+    "{src,test}/**/*.{ts,js}": [
       "eslint --fix"
     ],
     "*.{ts,js,json,md}": [
@@ -139,6 +139,7 @@
     "@typescript-eslint/eslint-plugin": "8.47.0",
     "@typescript-eslint/parser": "8.47.0",
     "chalk": "^5.6.2",
+    "conventional-changelog-conventionalcommits": "^9.1.0",
     "cspell": "^9.4.0",
     "cz-git": "^1.12.0",
     "czg": "^1.12.0",

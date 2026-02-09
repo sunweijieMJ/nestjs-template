@@ -65,7 +65,7 @@ export class PermissionsService implements OnModuleInit {
   async getPermissionsForRole(roleId: RoleEnum): Promise<string[]> {
     // 首先检查内存缓存
     if (this.cacheLoaded && this.rolePermissionsCache.has(roleId)) {
-      return this.rolePermissionsCache.get(roleId) || [];
+      return this.rolePermissionsCache.get(roleId) ?? [];
     }
 
     // 如果内存缓存未加载，检查Redis缓存

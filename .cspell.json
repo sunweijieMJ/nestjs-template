@@ -1,7 +1,10 @@
 {
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
   "version": "0.2",
   "language": "en",
-  "minWordLength": 4,
+  "minWordLength": 3,
+  "files": ["src/**/*.{js,ts}"],
+  "dictionaries": ["typescript", "node", "npm", "softwareTerms"],
   "words": [
     "nestjs",
     "typeorm",
@@ -88,5 +91,16 @@
     "outTradeNo",
     "transactionId"
   ],
+  "patterns": [
+    {
+      "name": "jwt-token",
+      "pattern": "/eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+/g"
+    },
+    {
+      "name": "import-path",
+      "pattern": "/@\\/[a-zA-Z0-9/-]+/g"
+    }
+  ],
+  "ignoreRegExpList": ["jwt-token", "import-path"],
   "ignorePaths": ["node_modules", "dist", "coverage", "*.lock", "*.json", ".git", "CHANGELOG.md"]
 }

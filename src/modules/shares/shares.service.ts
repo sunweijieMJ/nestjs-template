@@ -49,9 +49,10 @@ export class SharesService {
 
         this.logger.log(`Share created with code: ${shareCode}`);
         return share;
-      } catch (error: any) {
-        // Check if it's a unique constraint violation
-        if (error.code === '23505' && attempt < maxRetries - 1) {
+      } catch (error: unknown) {
+        // Check if it's a unique constraint violation (PostgreSQL error code)
+        const pgError = error as { code?: string };
+        if (pgError.code === '23505' && attempt < maxRetries - 1) {
           this.logger.warn(`ShareCode collision detected, retrying... (attempt ${attempt + 1}/${maxRetries})`);
           continue;
         }

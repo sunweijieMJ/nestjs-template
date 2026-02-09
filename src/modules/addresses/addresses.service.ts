@@ -42,7 +42,7 @@ export class AddressesService {
     const { provinceCode, cityCode, districtCode, province, city, district } = dto;
 
     // Check if any code is provided
-    const hasAnyCode = Boolean(provinceCode || cityCode || districtCode);
+    const hasAnyCode = provinceCode !== undefined || cityCode !== undefined || districtCode !== undefined;
     const hasAllCodes = Boolean(provinceCode && cityCode && districtCode);
 
     // If any code is provided, all must be provided
@@ -225,9 +225,9 @@ export class AddressesService {
         provinceCode: updateAddressDto.provinceCode ?? address.provinceCode ?? undefined,
         cityCode: updateAddressDto.cityCode ?? address.cityCode ?? undefined,
         districtCode: updateAddressDto.districtCode ?? address.districtCode ?? undefined,
-        province: updateAddressDto.province || address.province,
-        city: updateAddressDto.city || address.city,
-        district: updateAddressDto.district || address.district,
+        province: updateAddressDto.province ?? address.province,
+        city: updateAddressDto.city ?? address.city,
+        district: updateAddressDto.district ?? address.district,
       });
 
       Object.assign(updateData, regionData);

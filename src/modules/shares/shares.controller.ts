@@ -144,7 +144,7 @@ export class SharesController {
   @ApiOperation({ operationId: 'getAlipayConfig', summary: '获取支付宝分享配置' })
   @Post('alipay/config')
   @HttpCode(HttpStatus.OK)
-  async getAlipayConfig(@Body() alipayConfigDto: AlipayConfigDto): Promise<AlipayShareConfigResponseDto> {
+  getAlipayConfig(@Body() alipayConfigDto: AlipayConfigDto): AlipayShareConfigResponseDto {
     return this.alipayService.getShareConfig(alipayConfigDto);
   }
 }
