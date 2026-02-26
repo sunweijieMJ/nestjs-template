@@ -1,3 +1,20 @@
+# 构建与部署工作流
+# 构建 Docker 镜像并推送到容器仓库，通过 SSH 部署到阿里云 ECS
+#
+# 触发条件:
+#   1. tag 推送 (v* 格式)
+#   2. 手动触发 (workflow_dispatch，可选择分支和是否部署)
+#
+# 配置步骤:
+#   在 GitHub 仓库 Settings -> Secrets and variables -> Actions 中添加:
+#     - ALIYUN_HOST: 服务器 IP 或域名
+#     - ALIYUN_PORT: SSH 端口 (默认 22)
+#     - ALIYUN_USER: SSH 用户名
+#     - ALIYUN_SSH_KEY: SSH 私钥 (完整内容)
+#     - ALIYUN_DEPLOY_PATH: 部署目标路径
+#     - DOCKERHUB_USERNAME: Docker Hub 用户名
+#     - DOCKERHUB_TOKEN: Docker Hub 访问令牌
+
 name: Deploy
 
 on:
@@ -7,9 +24,18 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch to deploy (default: main)'
+        description: '部署分支 (默认: main)'
         required: false
         default: 'main'
+      deploy:
+        description: '是否部署到服务器'
+        required: true
+        default: true
+        type: boolean
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   GHCR_REGISTRY: ghcr.io
@@ -18,14 +44,17 @@ env:
   DOCKERHUB_IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/nestjs-template
 
 jobs:
+  # ==================== 构建并推送镜像 ====================
   build-and-push:
-    name: Build and Push to Registries
+    name: Build and Push
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     outputs:
       image_tag: ${{ steps.meta.outputs.tag }}
+      git_hash: ${{ steps.meta.outputs.git_hash }}
+      build_time: ${{ steps.meta.outputs.build_time }}
 
     steps:
       - name: Checkout code
@@ -37,14 +66,24 @@ jobs:
       - name: Generate image metadata
         id: meta
         run: |
-          # 如果是 tag 触发，使用 tag 作为镜像标签；否则使用 commit sha
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          GIT_HASH=$(git rev-parse --short HEAD)
+          BUILD_TIME=$(date "+%Y-%m-%d %H:%M:%S")
+          REF="${{ github.ref }}"
+
+          if [[ "${REF}" == refs/tags/* ]]; then
             TAG="${{ github.ref_name }}"
           else
             TAG="${{ github.sha }}"
           fi
-          echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "📌 Image tag: ${TAG}"
+
+          {
+            echo "tag=${TAG}"
+            echo "git_hash=${GIT_HASH}"
+            echo "build_time=${BUILD_TIME}"
+          } >> "$GITHUB_OUTPUT"
+          echo "Image tag: ${TAG}"
+          echo "Git hash: ${GIT_HASH}"
+          echo "Build time: ${BUILD_TIME}"
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -62,38 +101,68 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          # Convert image names to lowercase for Docker compatibility
           GHCR_IMAGE_LOWER=$(echo "${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
           DOCKERHUB_IMAGE_LOWER=$(echo "${{ env.DOCKERHUB_IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
           TAG="${{ steps.meta.outputs.tag }}"
+          GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
 
-          echo "🔨 Building and pushing to multiple registries..."
-          echo "  - GHCR: ${{ env.GHCR_REGISTRY }}/${GHCR_IMAGE_LOWER}:${TAG}"
-          echo "  - Docker Hub: ${DOCKERHUB_IMAGE_LOWER}:${TAG}"
+          echo "Building and pushing to multiple registries..."
+          echo "  GHCR: ${GHCR_REGISTRY}/${GHCR_IMAGE_LOWER}:${TAG}"
+          echo "  Docker Hub: ${DOCKERHUB_IMAGE_LOWER}:${TAG}"
 
           docker buildx build \
             --platform linux/amd64 \
             --target production \
             --build-arg DB_TYPE=relational \
-            --tag ${{ env.GHCR_REGISTRY }}/${GHCR_IMAGE_LOWER}:${TAG} \
-            --tag ${{ env.GHCR_REGISTRY }}/${GHCR_IMAGE_LOWER}:latest \
-            --tag ${DOCKERHUB_IMAGE_LOWER}:${TAG} \
-            --tag ${DOCKERHUB_IMAGE_LOWER}:latest \
+            --tag "${GHCR_REGISTRY}/${GHCR_IMAGE_LOWER}:${TAG}" \
+            --tag "${GHCR_REGISTRY}/${GHCR_IMAGE_LOWER}:latest" \
+            --tag "${DOCKERHUB_IMAGE_LOWER}:${TAG}" \
+            --tag "${DOCKERHUB_IMAGE_LOWER}:latest" \
             --push \
             .
 
-          echo "✅ Images pushed successfully to both registries"
-          echo "📦 GHCR: ${{ env.GHCR_REGISTRY }}/${GHCR_IMAGE_LOWER}:${TAG}"
-          echo "📦 Docker Hub: ${DOCKERHUB_IMAGE_LOWER}:${TAG}"
+          echo "Images pushed successfully to both registries"
 
+  # ==================== 部署到阿里云 ECS ====================
   deploy:
     name: Deploy to ECS
     runs-on: ubuntu-latest
     needs: build-and-push
+    if: |
+      (github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy == 'true')
     permissions:
       packages: read
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
 
     steps:
+      - name: Check deploy secrets
+        run: |
+          has_error=0
+          if [[ -z "${{ secrets.ALIYUN_HOST }}" ]]; then
+            echo "::error::缺少 ALIYUN_HOST secret"
+            has_error=1
+          fi
+          if [[ -z "${{ secrets.ALIYUN_USER }}" ]]; then
+            echo "::error::缺少 ALIYUN_USER secret"
+            has_error=1
+          fi
+          if [[ -z "${{ secrets.ALIYUN_SSH_KEY }}" ]]; then
+            echo "::error::缺少 ALIYUN_SSH_KEY secret"
+            has_error=1
+          fi
+          if [[ -z "${{ secrets.ALIYUN_DEPLOY_PATH }}" ]]; then
+            echo "::error::缺少 ALIYUN_DEPLOY_PATH secret"
+            has_error=1
+          fi
+          if [[ $has_error -eq 1 ]]; then
+            echo "请在 Settings -> Secrets and variables -> Actions 中配置以上 secrets"
+            exit 1
+          fi
+          echo "Secrets 配置检查通过"
+
       - name: Deploy to server via SSH
         uses: appleboy/ssh-action@v1.2.0
         env:
@@ -115,11 +184,10 @@ jobs:
 
             cd "$DEPLOY_PATH"
 
-            echo "🔐 Logging in to GitHub Container Registry..."
+            echo "Logging in to GitHub Container Registry..."
             echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
 
-            echo "📥 Pulling latest image from GHCR..."
-            # Convert image name to lowercase for Docker compatibility
+            echo "Pulling latest image from GHCR..."
             IMAGE_NAME_LOWER=$(echo "${IMAGE_NAME}" | tr '[:upper:]' '[:lower:]')
             IMAGE_FULL_NAME="${IMAGE_NAME_LOWER}:${IMAGE_TAG}"
 
@@ -132,26 +200,26 @@ jobs:
             done
 
             if [ $retry -eq $max_retries ]; then
-              echo "❌ Failed to pull image after $max_retries attempts"
+              echo "Failed to pull image after $max_retries attempts"
               exit 1
             fi
-            echo "✅ Image pulled successfully"
+            echo "Image pulled successfully"
 
-            echo "📝 Updating docker-compose configuration..."
+            echo "Updating docker-compose configuration..."
             export IMAGE_FULL_NAME="${IMAGE_FULL_NAME}"
 
-            echo "🚀 Restarting services..."
+            echo "Restarting services..."
             docker compose -f docker/docker-compose.ecs.yaml up -d --remove-orphans
 
             # 等待服务启动并检查健康状态
-            echo "⏳ Waiting for API to be healthy..."
+            echo "Waiting for API to be healthy..."
             for i in $(seq 1 30); do
               if docker compose -f docker/docker-compose.ecs.yaml exec -T api wget -q --spider http://localhost:3000/api/v1/health/ready 2>/dev/null; then
-                echo "✅ API is healthy!"
+                echo "API is healthy!"
                 break
               fi
               if [ $i -eq 30 ]; then
-                echo "❌ API health check failed after 30 attempts"
+                echo "API health check failed after 30 attempts"
                 docker compose -f docker/docker-compose.ecs.yaml logs api --tail=50
                 exit 1
               fi
@@ -160,12 +228,40 @@ jobs:
             done
 
             # 清理旧镜像（保留最新的 3 个版本）
-            echo "🧹 Cleaning up old images..."
+            echo "Cleaning up old images..."
             docker images "${IMAGE_NAME_LOWER}" --format "{{.ID}} {{.CreatedAt}}" | \
               sort -rk 2 | \
               tail -n +4 | \
               awk '{print $1}' | \
               xargs -r docker rmi -f || true
 
-            echo "✅ Deployment completed!"
-            echo "📌 Deployed image: ${IMAGE_FULL_NAME}"
+            echo "Deployment completed!"
+            echo "Deployed image: ${IMAGE_FULL_NAME}"
+
+  # ==================== 部署结果通知 ====================
+  notify:
+    name: Notify
+    needs: [build-and-push, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Deployment summary
+        run: |
+          {
+            echo "# 部署结果"
+            echo ""
+            echo "| 阶段 | 状态 |"
+            echo "|------|------|"
+            echo "| 构建推送 | ${{ needs.build-and-push.result }} |"
+            echo "| 部署 | ${{ needs.deploy.result || 'skipped' }} |"
+            echo ""
+            echo "**镜像标签**: \`${{ needs.build-and-push.outputs.image_tag }}\`"
+            echo "**Git Hash**: \`${{ needs.build-and-push.outputs.git_hash }}\`"
+            echo "**构建时间**: ${{ needs.build-and-push.outputs.build_time }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ "${{ needs.deploy.result }}" == "failure" ]]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "> 部署失败，请检查日志排查问题" >> "$GITHUB_STEP_SUMMARY"
+          fi

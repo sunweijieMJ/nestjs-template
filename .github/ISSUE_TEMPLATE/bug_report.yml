@@ -1,0 +1,74 @@
+name: Bug 报告
+description: 提交一个 Bug
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢你提交 Bug 报告！请尽量详细描述问题，以便我们快速定位和修复。
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 清晰简洁地描述遇到的问题
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      description: 如何复现这个问题？
+      placeholder: |
+        1. 发送请求到 '...'
+        2. 传入参数 '...'
+        3. 出现错误
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+      description: 你期望发生什么？
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: 运行平台
+      options:
+        - Linux (服务器)
+        - macOS (本地开发)
+        - Windows (本地开发)
+        - Docker
+    validations:
+      required: true
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js 版本
+      placeholder: 例如 22.x
+
+  - type: dropdown
+    id: database
+    attributes:
+      label: 数据库类型
+      options:
+        - PostgreSQL
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 错误日志
+      description: 如有错误日志或控制台输出，请粘贴在此
+      render: shell
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 补充信息
+      description: 其他相关的上下文、截图或参考链接
