@@ -1,0 +1,62 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm run:*)",
+      "Bash(pnpm :*)",
+      "Bash(make -C docker:*)",
+      "Bash(npx hygen:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker exec:*)",
+      "Bash(curl:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git branch:*)",
+      "Bash(git stash:*)",
+      "Bash(git add:*)",
+      "Bash(git show:*)"
+    ],
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git checkout -- .:*)",
+      "Bash(git clean -f:*)",
+      "Bash(rm -rf:*)",
+      "Bash(pnpm run schema:drop:*)",
+      "Bash(pnpm schema:drop:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "file=\"$TOOL_INPUT_FILE_PATH\"; if echo \"$file\" | grep -q 'src/infrastructure/database/migrations/.*\\.ts$'; then committed=$(git log --oneline -- \"$file\" 2>/dev/null | head -1); if [ -n \"$committed\" ]; then echo '❌ 禁止修改已提交的 Migration 文件: '\"$file\"; echo '请使用 pnpm migration:generate 生成新的迁移'; exit 1; fi; fi"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '📋 项目: NestJS Boilerplate (六边形架构)' && echo '🌿 当前分支:' $(git branch --show-current) && echo '' && changed=$(git status --short | head -10) && if [ -n \"$changed\" ]; then echo '📝 未提交的文件:' && echo \"$changed\"; else echo '✅ 工作目录干净'; fi && echo '' && echo '⚠️  提醒: Domain 实体不引入 TypeORM | Service 依赖抽象 Repository | 配置必须用 ConfigService'"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "status=$(git status --short | head -5) && if [ -n \"$status\" ]; then echo '📝 Git 状态:' && echo \"$status\"; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
