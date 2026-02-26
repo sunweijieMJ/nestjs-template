@@ -613,6 +613,8 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
+    validateUserStatusForAuth(user, 'refresh', this.logger);
+
     await this.sessionService.update(session.id, {
       hash,
     });
@@ -805,10 +807,8 @@ export class AuthService {
   async registerByPhone(dto: AuthPhoneRegisterDto): Promise<LoginResponseDto> {
     this.logger.log(`Phone registration attempt for: ${maskPhone(dto.phone)}`);
 
-    // Verify SMS code only if provided (code-based registration)
-    if (dto.code) {
-      await verifySmsCode(this.smsService, dto.phone, dto.code, SmsCodeType.REGISTER, this.logger);
-    }
+    // Verify SMS code
+    await verifySmsCode(this.smsService, dto.phone, dto.code, SmsCodeType.REGISTER, this.logger);
 
     // Check if phone already exists
     const existingUser = await this.usersService.findByPhone(dto.phone);
@@ -948,6 +948,7 @@ export class AuthService {
       }
     } else {
       this.logger.log(`Existing user found for WeChat openId: ${wechatUserInfo.openId}`);
+      validateUserStatusForAuth(user, 'wechat', this.logger);
     }
 
     this.logger.log(`WeChat login successful for user: ${user.id}`);

@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, Matches, Length, MaxLength } from 'class-validator';
+
 import { Transform } from 'class-transformer';
 import { sanitizeTransformer } from '../../../common/transformers/sanitize.transformer';
 import { IsMd5Password } from '../../../common/validators/md5-password.validator';
@@ -11,15 +12,15 @@ export class AuthPhoneRegisterDto {
   @Matches(/^1[3-9]\d{9}$/, { message: 'phone must be a valid Chinese mobile number' })
   phone: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: '123456',
     type: String,
-    description: 'SMS verification code (optional, required for code-based registration)',
+    description: 'SMS verification code',
   })
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
   @Length(4, 8)
-  code?: string;
+  code: string;
 
   @ApiProperty({ example: '5f4dcc3b5aa765d61d8327deb882cf99', description: 'MD5 encrypted password' })
   @IsNotEmpty()
