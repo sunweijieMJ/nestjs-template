@@ -46,6 +46,7 @@ import { AlipayModule } from './integrations/alipay/alipay.module';
 import { SharesModule } from './modules/shares/shares.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { SchedulerModule } from './infrastructure/scheduler/scheduler.module';
+import { AppConfigModule } from './modules/config/config.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -179,6 +180,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     NotificationsModule,
     NotificationQueueModule,
     SharesModule,
+    AppConfigModule,
   ],
 })
 export class AppModule {}
