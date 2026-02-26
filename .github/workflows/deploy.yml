@@ -172,7 +172,7 @@ jobs:
           echo "Secrets 配置检查通过"
 
       - name: Deploy to server via SSH
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         env:
           DEPLOY_PATH: ${{ secrets.ALIYUN_DEPLOY_PATH }}
           GHCR_USERNAME: ${{ github.actor }}
