@@ -296,10 +296,16 @@ export class AuthService {
       });
     }
 
-    await this.usersService.update(user.id, {
+    const updateData: { email: User['email']; status?: { id: StatusEnum } } = {
       email: newEmail,
-      status: { id: StatusEnum.active },
-    });
+    };
+
+    // 仅当用户是 inactive（未确认邮箱）时才激活，避免被封禁用户通过确认邮箱"复活"
+    if (user.status?.id === StatusEnum.inactive) {
+      updateData.status = { id: StatusEnum.active };
+    }
+
+    await this.usersService.update(user.id, updateData);
   }
 
   /**
