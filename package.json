@@ -116,7 +116,7 @@
   },
   "devDependencies": {
     "@commitlint/cli": "20.1.0",
-    "@commitlint/config-conventional": "20.0.0",
+    "@commitlint/config-conventional": "20.4.2",
     "@commitlint/format": "^20.0.0",
     "@commitlint/types": "^20.0.0",
     "@eslint/eslintrc": "^3.2.0",
