@@ -194,11 +194,9 @@ cleanup_images() {
     fi
 
     log_info "Cleaning up old images for pattern: ${image_pattern}"
+    # docker images 默认按创建时间倒序排列（最新在前），直接 tail -n +4 保留最新 3 个
     local old_images
-    old_images=$(docker images "$image_pattern" --format "{{.ID}} {{.CreatedAt}}" | \
-        sort -rk 2 | \
-        tail -n +4 | \
-        awk '{print $1}')
+    old_images=$(docker images "$image_pattern" -q | tail -n +4)
 
     if [ -n "$old_images" ]; then
         echo "$old_images" | xargs -r docker rmi -f || true

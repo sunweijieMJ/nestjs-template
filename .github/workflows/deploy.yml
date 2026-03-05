@@ -1,5 +1,5 @@
 # 构建与部署工作流
-# 构建 Docker 镜像并推送到容器仓库，通过 SSH 部署到阿里云 ECS
+# 构建 Docker 镜像并推送到 GHCR，通过 SSH 部署到阿里云 ECS
 #
 # 触发条件:
 #   1. Check 工作流在 main/master 分支成功后自动触发
@@ -13,8 +13,6 @@
 #     - ALIYUN_USER: SSH 用户名
 #     - ALIYUN_SSH_KEY: SSH 私钥 (完整内容)
 #     - ALIYUN_DEPLOY_PATH: 部署目标路径
-#     - DOCKERHUB_USERNAME: Docker Hub 用户名
-#     - DOCKERHUB_TOKEN: Docker Hub 访问令牌
 
 name: Deploy
 
@@ -40,9 +38,7 @@ concurrency:
 
 env:
   GHCR_REGISTRY: ghcr.io
-  DOCKERHUB_REGISTRY: docker.io
   IMAGE_NAME: ${{ github.repository_owner }}/nestjs-template
-  DOCKERHUB_IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/nestjs-template
 
 jobs:
   # ==================== 构建并推送镜像 ====================
@@ -99,23 +95,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.DOCKERHUB_REGISTRY }}
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - name: Build and push Docker image
         run: |
           GHCR_IMAGE_LOWER=$(echo "${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
-          DOCKERHUB_IMAGE_LOWER=$(echo "${{ env.DOCKERHUB_IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
           TAG="${{ steps.meta.outputs.tag }}"
           GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
 
-          echo "Building and pushing to multiple registries..."
+          echo "Building and pushing to GHCR..."
           echo "  GHCR: ${GHCR_REGISTRY}/${GHCR_IMAGE_LOWER}:${TAG}"
-          echo "  Docker Hub: ${DOCKERHUB_IMAGE_LOWER}:${TAG}"
 
           docker buildx build \
             --platform linux/amd64 \
@@ -123,12 +110,10 @@ jobs:
             --build-arg DB_TYPE=relational \
             --tag "${GHCR_REGISTRY}/${GHCR_IMAGE_LOWER}:${TAG}" \
             --tag "${GHCR_REGISTRY}/${GHCR_IMAGE_LOWER}:latest" \
-            --tag "${DOCKERHUB_IMAGE_LOWER}:${TAG}" \
-            --tag "${DOCKERHUB_IMAGE_LOWER}:latest" \
             --push \
             .
 
-          echo "Images pushed successfully to both registries"
+          echo "Image pushed successfully"
 
   # ==================== 部署到阿里云 ECS ====================
   deploy:
@@ -146,6 +131,11 @@ jobs:
       cancel-in-progress: false
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
       - name: Check deploy secrets
         run: |
           has_error=0
@@ -171,6 +161,17 @@ jobs:
           fi
           echo "Secrets 配置检查通过"
 
+      - name: Sync deploy files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.ALIYUN_HOST }}
+          port: ${{ secrets.ALIYUN_PORT || 22 }}
+          username: ${{ secrets.ALIYUN_USER }}
+          key: ${{ secrets.ALIYUN_SSH_KEY }}
+          source: "docker/docker-compose.ecs.yaml,deploy/manage.sh"
+          target: ${{ secrets.ALIYUN_DEPLOY_PATH }}
+          strip_components: 0
+
       - name: Deploy to server via SSH
         uses: appleboy/ssh-action@v1.2.0
         env:
@@ -191,6 +192,9 @@ jobs:
             set -e
 
             cd "$DEPLOY_PATH"
+
+            # 确保 manage.sh 可执行
+            chmod +x deploy/manage.sh
 
             echo "Logging in to GitHub Container Registry..."
             echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
@@ -213,7 +217,6 @@ jobs:
             fi
             echo "Image pulled successfully"
 
-            echo "Updating docker-compose configuration..."
             export IMAGE_FULL_NAME="${IMAGE_FULL_NAME}"
 
             echo "Restarting services..."
@@ -235,13 +238,9 @@ jobs:
               sleep 5
             done
 
-            # 清理旧镜像（保留最新的 3 个版本）
+            # 清理旧镜像（保留最新的 3 个，docker images 默认按创建时间倒序排列）
             echo "Cleaning up old images..."
-            docker images "${IMAGE_NAME_LOWER}" --format "{{.ID}} {{.CreatedAt}}" | \
-              sort -rk 2 | \
-              tail -n +4 | \
-              awk '{print $1}' | \
-              xargs -r docker rmi -f || true
+            docker images "${IMAGE_NAME_LOWER}" -q | tail -n +4 | xargs -r docker rmi -f || true
 
             echo "Deployment completed!"
             echo "Deployed image: ${IMAGE_FULL_NAME}"

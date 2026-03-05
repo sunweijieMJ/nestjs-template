@@ -1,13 +1,13 @@
-# ECS 服务器部署配置 (Docker Hub 镜像模式)
-# 使用 Docker Hub 部署，通过阿里云镜像加速器提速
+# ECS 服务器部署配置 (GHCR 镜像模式)
+# 镜像托管于 GitHub Container Registry，CI/CD 自动拉取部署
 #
 # 首次部署:
-#   1. 在服务器上创建部署目录
-#   2. 复制本文件和 .env 到服务器
-#   3. 配置 Docker 镜像加速器（已配置）
-#   4. docker compose -f docker/docker-compose.ecs.yaml up -d
+#   1. 在服务器上创建部署目录（对应 ALIYUN_DEPLOY_PATH secret）
+#   2. 复制 .env 到部署目录（参考 docker/.env.ecs.example）
+#   3. 后续部署由 CI/CD 自动完成（同步本文件 + manage.sh 并重启服务）
 #
-# CI/CD 会自动登录、拉取新镜像并重启服务
+# 手动操作:
+#   ./deploy/manage.sh start|stop|restart|logs|status|health
 
 services:
   api:
