@@ -1,7 +1,7 @@
 import { registerAs } from '@nestjs/config';
 import { AppConfig } from './app-config.type';
 import validateConfig from '../common/validate-config';
-import { IsEnum, IsInt, IsOptional, IsString, IsUrl, Max, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, IsUrl, Matches, Max, Min } from 'class-validator';
 
 enum Environment {
   Development = 'development',
@@ -20,7 +20,10 @@ class EnvironmentVariablesValidator {
   @IsOptional()
   APP_PORT: number;
 
-  @IsUrl({ require_tld: false })
+  // 支持逗号分隔的多个域名，用于 CORS 配置
+  @Matches(/^https?:\/\/[^,\s]+(,\s*https?:\/\/[^,\s]+)*$/, {
+    message: 'FRONTEND_DOMAIN must be a URL or comma-separated list of URLs (e.g. https://a.com,https://b.com)',
+  })
   @IsOptional()
   FRONTEND_DOMAIN: string;
 

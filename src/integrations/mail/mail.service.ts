@@ -31,7 +31,8 @@ export class MailService {
     // Use __dirname to get the correct path in both dev and prod environments
     this.templatesDir = path.join(__dirname, 'mail-templates');
     this.appName = this.configService.get('app.name', { infer: true });
-    this.frontendDomain = this.configService.getOrThrow('app.frontendDomain', { infer: true });
+    // 支持多域名逗号分隔，邮件链接取第一个
+    this.frontendDomain = this.configService.getOrThrow('app.frontendDomain', { infer: true }).split(',')[0].trim();
   }
 
   /**
