@@ -53,9 +53,9 @@ jobs:
       contents: read
       packages: write
     outputs:
-      image_tag: ${{ steps.meta.outputs.tag }}
-      git_hash: ${{ steps.meta.outputs.git_hash }}
-      build_time: ${{ steps.meta.outputs.build_time }}
+      image_tag: ${{ steps.meta.outputs.tags }}
+      git_hash: ${{ steps.info.outputs.git_hash }}
+      build_time: ${{ steps.info.outputs.build_time }}
 
     steps:
       - name: Checkout code
@@ -66,27 +66,17 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Generate image metadata
-        id: meta
+      - name: Generate build info
+        id: info
         run: |
-          GIT_HASH=$(git rev-parse --short HEAD)
-          BUILD_TIME=$(date "+%Y-%m-%d %H:%M:%S")
-          REF="${{ github.ref }}"
+          echo "git_hash=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          echo "build_time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
 
-          if [[ "${REF}" == refs/tags/* ]]; then
-            TAG="${{ github.ref_name }}"
-          else
-            TAG="${{ github.sha }}"
-          fi
-
-          {
-            echo "tag=${TAG}"
-            echo "git_hash=${GIT_HASH}"
-            echo "build_time=${BUILD_TIME}"
-          } >> "$GITHUB_OUTPUT"
-          echo "Image tag: ${TAG}"
-          echo "Git hash: ${GIT_HASH}"
-          echo "Build time: ${BUILD_TIME}"
+      - name: Normalize image name
+        id: repo
+        run: echo "image_name=${IMAGE_NAME,,}" >> "$GITHUB_OUTPUT"
+        env:
+          IMAGE_NAME: ${{ env.GHCR_REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -95,25 +85,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.repo.outputs.image_name }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
       - name: Build and push Docker image
-        run: |
-          GHCR_IMAGE_LOWER=$(echo "${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
-          TAG="${{ steps.meta.outputs.tag }}"
-          GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
-
-          echo "Building and pushing to GHCR..."
-          echo "  GHCR: ${GHCR_REGISTRY}/${GHCR_IMAGE_LOWER}:${TAG}"
-
-          docker buildx build \
-            --platform linux/amd64 \
-            --target production \
-            --build-arg DB_TYPE=relational \
-            --tag "${GHCR_REGISTRY}/${GHCR_IMAGE_LOWER}:${TAG}" \
-            --tag "${GHCR_REGISTRY}/${GHCR_IMAGE_LOWER}:latest" \
-            --push \
-            .
-
-          echo "Image pushed successfully"
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64
+          target: production
+          build-args: DB_TYPE=relational
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
   # ==================== 部署到阿里云 ECS ====================
   deploy:
@@ -129,6 +121,8 @@ jobs:
     concurrency:
       group: deploy-production
       cancel-in-progress: false
+    environment:
+      name: production
 
     steps:
       - name: Checkout code
@@ -178,8 +172,7 @@ jobs:
           DEPLOY_PATH: ${{ secrets.ALIYUN_DEPLOY_PATH }}
           GHCR_USERNAME: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/nestjs-template
-          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+          IMAGE_FULL_NAME: ${{ env.GHCR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.git_hash }}
         with:
           host: ${{ secrets.ALIYUN_HOST }}
           port: ${{ secrets.ALIYUN_PORT || 22 }}
@@ -187,7 +180,7 @@ jobs:
           key: ${{ secrets.ALIYUN_SSH_KEY }}
           timeout: 60s
           command_timeout: 30m
-          envs: DEPLOY_PATH,GHCR_USERNAME,GHCR_TOKEN,IMAGE_NAME,IMAGE_TAG
+          envs: DEPLOY_PATH,GHCR_USERNAME,GHCR_TOKEN,IMAGE_FULL_NAME
           script: |
             set -e
 
@@ -199,9 +192,8 @@ jobs:
             echo "Logging in to GitHub Container Registry..."
             echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
 
-            echo "Pulling latest image from GHCR..."
-            IMAGE_NAME_LOWER=$(echo "${IMAGE_NAME}" | tr '[:upper:]' '[:lower:]')
-            IMAGE_FULL_NAME="${IMAGE_NAME_LOWER}:${IMAGE_TAG}"
+            echo "Pulling image: ${IMAGE_FULL_NAME}..."
+            IMAGE_FULL_NAME="${IMAGE_FULL_NAME,,}"
 
             retry=0
             max_retries=3
@@ -217,7 +209,7 @@ jobs:
             fi
             echo "Image pulled successfully"
 
-            export IMAGE_FULL_NAME="${IMAGE_FULL_NAME}"
+            export IMAGE_FULL_NAME
 
             echo "Restarting services..."
             docker compose -f docker/docker-compose.ecs.yaml up -d --remove-orphans
@@ -240,7 +232,8 @@ jobs:
 
             # 清理旧镜像（保留最新的 3 个，docker images 默认按创建时间倒序排列）
             echo "Cleaning up old images..."
-            docker images "${IMAGE_NAME_LOWER}" -q | tail -n +4 | xargs -r docker rmi -f || true
+            IMAGE_REPO="${IMAGE_FULL_NAME%:*}"
+            docker images "${IMAGE_REPO}" -q | tail -n +4 | xargs -r docker rmi -f || true
 
             echo "Deployment completed!"
             echo "Deployed image: ${IMAGE_FULL_NAME}"
@@ -263,7 +256,6 @@ jobs:
             echo "| 构建推送 | ${{ needs.build-and-push.result }} |"
             echo "| 部署 | ${{ needs.deploy.result || 'skipped' }} |"
             echo ""
-            echo "**镜像标签**: \`${{ needs.build-and-push.outputs.image_tag }}\`"
             echo "**Git Hash**: \`${{ needs.build-and-push.outputs.git_hash }}\`"
             echo "**构建时间**: ${{ needs.build-and-push.outputs.build_time }}"
           } >> "$GITHUB_STEP_SUMMARY"
