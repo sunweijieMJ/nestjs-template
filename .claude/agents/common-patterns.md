@@ -182,6 +182,7 @@ throw new NotFoundException('userNotFound');
 ## 9. 导入顺序
 
 ```typescript
+// src/modules/feature/feature.service.ts
 // 1. NestJS 核心
 import { Injectable, Logger } from '@nestjs/common';
 // 2. NestJS 扩展
@@ -189,9 +190,9 @@ import { ConfigService } from '@nestjs/config';
 // 3. 第三方库
 import { InjectRepository } from '@nestjs/typeorm';
 // 4. 项目内 - 共享
-import { NullableType } from '@/common/types/nullable.type';
+import { NullableType } from '../../common/types/nullable.type';
 // 5. 项目内 - 同模块
-import { Feature } from '../domain/feature';
+import { Feature } from './domain/feature';
 ```
 
 ## 10. 快速检查清单

@@ -190,8 +190,9 @@ getRawData() {
 ## 分页响应
 
 ```typescript
-import { infinityPagination } from '@/common/utils/infinity-pagination';
-import { InfinityPaginationResponseDto } from '@/common/dto/infinity-pagination-response.dto';
+// src/modules/feature/feature.controller.ts
+import { infinityPagination } from '../../common/infinity-pagination';
+import { InfinityPaginationResponseDto } from '../../common/dto/infinity-pagination-response.dto';
 
 // 返回格式
 {

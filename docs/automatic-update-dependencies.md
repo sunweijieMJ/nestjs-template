@@ -1,6 +1,6 @@
 # Automatic update of dependencies
 
-If you want to automatically update dependencies, you can connect [Renovate](https://github.com/marketplace/renovate) for your project.
+Dependencies are updated automatically by [Dependabot](https://docs.github.com/en/code-security/dependabot). The schedule and package groups are configured in `.github/dependabot.yml`.
 
 ---
 

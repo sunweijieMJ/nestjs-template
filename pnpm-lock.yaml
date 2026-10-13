@@ -9,10 +9,10 @@ importers:
   .:
     dependencies:
       '@alicloud/dysmsapi20170525':
-        specifier: ^4.3.0
+        specifier: 4.3.0
         version: 4.3.0(supports-color@8.1.1)
       '@alicloud/openapi-client':
-        specifier: ^0.4.15
+        specifier: 0.4.15
         version: 0.4.15(supports-color@8.1.1)
       '@aws-sdk/client-s3':
         specifier: 3.864.0
@@ -24,10 +24,10 @@ importers:
         specifier: 5.1.5
         version: 5.1.5(keyv@5.5.5)
       '@nestjs/bullmq':
-        specifier: ^11.0.4
+        specifier: 11.0.4
         version: 11.0.4(@nestjs/common@11.1.6(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.1.6)(bullmq@5.65.1(supports-color@8.1.1))
       '@nestjs/cache-manager':
-        specifier: ^3.0.1
+        specifier: 3.0.1
         version: 3.0.1(@nestjs/common@11.1.6(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.1.6)(cache-manager@7.2.7)(keyv@5.5.5)(rxjs@7.8.2)
       '@nestjs/common':
         specifier: 11.1.6
@@ -48,34 +48,31 @@ importers:
         specifier: 11.1.6
         version: 11.1.6(@nestjs/common@11.1.6(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.1.6)(supports-color@8.1.1)
       '@nestjs/schedule':
-        specifier: ^6.1.0
+        specifier: 6.1.0
         version: 6.1.0(@nestjs/common@11.1.6(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.1.6)
       '@nestjs/swagger':
         specifier: 11.2.0
         version: 11.2.0(@nestjs/common@11.1.6(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.1.6)(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)
       '@nestjs/terminus':
-        specifier: ^11.0.0
+        specifier: 11.0.0
         version: 11.0.0(17c80744c24a36c5f9cfe20dd501be31)
       '@nestjs/throttler':
-        specifier: ^6.5.0
+        specifier: 6.5.0
         version: 6.5.0(@nestjs/common@11.1.6(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.1.6)(reflect-metadata@0.2.2)
       '@nestjs/typeorm':
         specifier: 11.0.0
         version: 11.0.0(@nestjs/common@11.1.6(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.1.6)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.27(ioredis@5.8.2(supports-color@8.1.1))(mongodb@6.20.0(socks@2.8.7))(pg@8.16.3)(redis@5.10.0)(reflect-metadata@0.2.2)(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.13.4)(@types/node@22.19.1)(typescript@5.9.3)))
-      '@types/multer-s3':
-        specifier: 3.0.3
-        version: 3.0.3
       '@willsoto/nestjs-prometheus':
-        specifier: ^6.0.2
+        specifier: 6.0.2
         version: 6.0.2(@nestjs/common@11.1.6(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(prom-client@15.1.3)
       bcryptjs:
         specifier: 3.0.2
         version: 3.0.2
       bullmq:
-        specifier: ^5.65.1
+        specifier: 5.65.1
         version: 5.65.1(supports-color@8.1.1)
       cache-manager:
-        specifier: ^7.2.7
+        specifier: 7.2.7
         version: 7.2.7
       class-transformer:
         specifier: 0.5.1
@@ -90,13 +87,13 @@ importers:
         specifier: 4.7.8
         version: 4.7.8
       helmet:
-        specifier: ^8.1.0
+        specifier: 8.1.0
         version: 8.1.0
       ioredis:
-        specifier: ^5.8.2
+        specifier: 5.8.2
         version: 5.8.2(supports-color@8.1.1)
       keyv:
-        specifier: ^5.5.5
+        specifier: 5.5.5
         version: 5.5.5
       ms:
         specifier: 2.1.3
@@ -111,7 +108,7 @@ importers:
         specifier: 10.5.1
         version: 10.5.1(@nestjs/common@11.1.6(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.1.6)(class-validator@0.14.2)(rxjs@7.8.2)
       nestjs-pino:
-        specifier: ^4.5.0
+        specifier: 4.5.0
         version: 4.5.0(@nestjs/common@11.1.6(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(pino-http@11.0.0)(pino@10.1.0)(rxjs@7.8.2)
       nodemailer:
         specifier: 7.0.7
@@ -126,29 +123,20 @@ importers:
         specifier: 8.16.3
         version: 8.16.3
       pino-http:
-        specifier: ^11.0.0
+        specifier: 11.0.0
         version: 11.0.0
       pino-pretty:
-        specifier: ^13.1.3
+        specifier: 13.1.3
         version: 13.1.3
       prom-client:
-        specifier: ^15.1.3
+        specifier: 15.1.3
         version: 15.1.3
-      redis:
-        specifier: ^5.10.0
-        version: 5.10.0
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
-      rimraf:
-        specifier: 6.0.1
-        version: 6.0.1
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
-      source-map-support:
-        specifier: 0.5.21
-        version: 0.5.21
       swagger-ui-express:
         specifier: 5.0.1
         version: 5.0.1(express@5.1.0(supports-color@8.1.1))
@@ -163,10 +151,10 @@ importers:
         specifier: 20.0.0
         version: 20.0.0
       '@commitlint/format':
-        specifier: ^20.0.0
+        specifier: 20.2.0
         version: 20.2.0
       '@commitlint/types':
-        specifier: ^20.0.0
+        specifier: 20.2.0
         version: 20.2.0
       '@nestjs/cli':
         specifier: 11.0.10
@@ -186,6 +174,9 @@ importers:
       '@swc/core':
         specifier: 1.13.4
         version: 1.13.4
+      '@swc/jest':
+        specifier: 0.2.39
+        version: 0.2.39(@swc/core@1.13.4)
       '@types/bcryptjs':
         specifier: 3.0.0
         version: 3.0.0
@@ -201,11 +192,14 @@ importers:
       '@types/multer':
         specifier: 2.0.0
         version: 2.0.0
+      '@types/multer-s3':
+        specifier: 3.0.3
+        version: 3.0.3
       '@types/node':
         specifier: 22.19.1
         version: 22.19.1
       '@types/nodemailer':
-        specifier: ^7.0.4
+        specifier: 7.0.4
         version: 7.0.4
       '@types/passport-jwt':
         specifier: 4.0.1
@@ -214,19 +208,19 @@ importers:
         specifier: 6.0.3
         version: 6.0.3
       chalk:
-        specifier: ^5.6.2
+        specifier: 5.6.2
         version: 5.6.2
       conventional-changelog-conventionalcommits:
-        specifier: ^9.1.0
+        specifier: 9.1.0
         version: 9.1.0
       cspell:
-        specifier: ^9.4.0
+        specifier: 9.4.0
         version: 9.4.0
       cz-git:
-        specifier: ^1.12.0
+        specifier: 1.12.0
         version: 1.12.0
       czg:
-        specifier: ^1.12.0
+        specifier: 1.12.0
         version: 1.12.0
       env-cmd:
         specifier: 10.1.0
@@ -241,7 +235,7 @@ importers:
         specifier: 3.3.2
         version: 3.3.2(eslint@9.39.1(jiti@2.6.1)(supports-color@8.1.1))
       globals:
-        specifier: ^16.0.0
+        specifier: 16.5.0
         version: 16.5.0
       husky:
         specifier: 9.1.7
@@ -256,10 +250,10 @@ importers:
         specifier: 30.1.3
         version: 30.1.3(@types/node@22.19.1)(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.13.4)(@types/node@22.19.1)(typescript@5.9.3))
       lint-staged:
-        specifier: ^16.2.7
+        specifier: 16.2.7
         version: 16.2.7
       markdownlint-cli2:
-        specifier: ^0.20.0
+        specifier: 0.20.0
         version: 0.20.0(supports-color@8.1.1)
       prettier:
         specifier: 3.6.2
@@ -267,26 +261,17 @@ importers:
       release-it:
         specifier: 19.0.5
         version: 19.0.5(@types/node@22.19.1)(supports-color@8.1.1)
+      rimraf:
+        specifier: 6.0.1
+        version: 6.0.1
       supertest:
         specifier: 7.1.4
         version: 7.1.4(supports-color@8.1.1)
-      ts-jest:
-        specifier: 29.4.5
-        version: 29.4.5(@babel/core@7.28.5(supports-color@8.1.1))(@jest/transform@30.1.2(supports-color@8.1.1))(@jest/types@30.2.0)(babel-jest@30.1.2(@babel/core@7.28.5(supports-color@8.1.1))(supports-color@8.1.1))(esbuild@0.27.1)(jest-util@30.2.0)(jest@30.1.3(@types/node@22.19.1)(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.13.4)(@types/node@22.19.1)(typescript@5.9.3)))(typescript@5.9.3)
-      ts-loader:
-        specifier: 9.5.4
-        version: 9.5.4(typescript@5.9.3)(webpack@5.100.2(@swc/core@1.13.4)(esbuild@0.27.1)(uglify-js@3.19.3))
       ts-node:
         specifier: 10.9.2
         version: 10.9.2(@swc/core@1.13.4)(@types/node@22.19.1)(typescript@5.9.3)
-      tsconfig-paths:
-        specifier: 4.2.0
-        version: 4.2.0
-      tslib:
-        specifier: 2.8.1
-        version: 2.8.1
       tsx:
-        specifier: ^4.21.0
+        specifier: 4.21.0
         version: 4.21.0
       typescript:
         specifier: 5.9.3
@@ -1551,6 +1536,10 @@ packages:
       node-notifier:
         optional: true
 
+  '@jest/create-cache-key-function@30.5.1':
+    resolution: {integrity: sha512-5qkif//qhlbt54255O/M2JtUZNlnefOzE12bi7FlApOIYO4pqrZcAwhNCfP4jOGFubez8uoLgY9czWFjYY57ow==}
+    engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
+
   '@jest/diff-sequences@30.0.1':
     resolution: {integrity: sha512-n5H8QLDJ47QqbCNn5SuFjCRDrOLEZ0h8vAHCK5RL9Ls7Xa8AQLa/YxAc9UjFqoEDM48muwtBGjtMY5cr0PLDCw==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
@@ -1587,6 +1576,10 @@ packages:
     resolution: {integrity: sha512-gWp7NfQW27LaBQz3TITS8L7ZCQ0TLvtmI//4OwlQRx4rnWxcPNIYjxZpDcN4+UlGxgm3jS5QPz8IPTCkb59wZA==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
 
+  '@jest/pattern@30.5.0':
+    resolution: {integrity: sha512-HdNQYSdRTEBNrginaqzQtTjG0HRMfrra/z6Ok7uL3S87vSlarIVohEsJsSj5edu3MiHoHjAkvPROz5ZjoKai+w==}
+    engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
+
   '@jest/reporters@30.1.3':
     resolution: {integrity: sha512-VWEQmJWfXMOrzdFEOyGjUEOuVXllgZsoPtEHZzfdNz18RmzJ5nlR6kp8hDdY8dDS1yGOXAY7DHT+AOHIPSBV0w==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
@@ -1598,6 +1591,10 @@ packages:
 
   '@jest/schemas@30.0.5':
     resolution: {integrity: sha512-DmdYgtezMkh3cpU8/1uyXakv3tJRcmcXxBOcO0tbaozPwpmh4YMsnWrQm9ZmZMfa5ocbxzbFk6O4bDPEc/iAnA==}
+    engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
+
+  '@jest/schemas@30.5.0':
+    resolution: {integrity: sha512-/hunigyNpc4RCjC0VaW3f5RCUZVM2+WQ65qP7z083Gmvac7or2LI50XVNOtE4YPgBpV0yxYiAgorAPGniCoJmg==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
 
   '@jest/snapshot-utils@30.1.2':
@@ -1626,6 +1623,10 @@ packages:
 
   '@jest/types@30.2.0':
     resolution: {integrity: sha512-H9xg1/sfVvyfU7o3zMfBEjQ1gcsdeTMgqHoYdN79tuLqfTtuu7WckRA1R5whDwOzxaZAeMKTYWqP+WCAi0CHsg==}
+    engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
+
+  '@jest/types@30.5.1':
+    resolution: {integrity: sha512-LvVYn83nnXPl+Rg98nvcFgjx6nRMTArhSn6RAX/w3ELn54S8A42TYZvsCMdGUqTM8S0wyXbtlQdU6Hi6dykj9g==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
 
   '@jridgewell/gen-mapping@0.3.13':
@@ -2502,6 +2503,12 @@ packages:
   '@swc/counter@0.1.3':
     resolution: {integrity: sha512-e2BR4lsJkkRlKZ/qCHPw9ZaSxc0MVUd7gtbtaB7aMvHeJVYe8sOB8DBZkP2DtISHGSku9sCK6T6cnY0CtXrOCQ==}
 
+  '@swc/jest@0.2.39':
+    resolution: {integrity: sha512-eyokjOwYd0Q8RnMHri+8/FS1HIrIUKK/sRrFp8c1dThUOfNeCWbLmBP1P5VsKdvmkd25JaH+OKYwEYiAYg9YAA==}
+    engines: {npm: '>= 7.0.0'}
+    peerDependencies:
+      '@swc/core': '*'
+
   '@swc/types@0.1.25':
     resolution: {integrity: sha512-iAoY/qRhNH8a/hBvm3zKj9qQ4oc2+3w1unPJa2XvTK3XjeLXtzcCingVPw/9e5mn1+0yPqxcBGp9Jf0pkfMb1g==}
 
@@ -3236,10 +3243,6 @@ packages:
     resolution: {integrity: sha512-ZC5Bd0LgJXgwGqUknZY/vkUQ04r8NXnJZ3yYi4vDmSiZmC/pdSN0NbNRPxZpbtO4uAfDUAFffO8IZoM3Gj8IkA==}
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
-
-  bs-logger@0.2.6:
-    resolution: {integrity: sha512-pd8DCoxmbgc7hyPKOvxtqNcjYoOsABPQdcCUjGp3d42VR2CX1ORhk2A87oqqu5R1kk+76nsxZupkmyd+MVtCog==}
-    engines: {node: '>= 6'}
 
   bser@2.1.1:
     resolution: {integrity: sha512-gQxTNE/GAfIIrmHLUE3oJyp5FO6HRBfhjnw4/wMmA63ZGDJnWBmgY/lyQBpnDUkGmAhbSe39tx2d/iTOAfglwQ==}
@@ -4782,6 +4785,10 @@ packages:
     resolution: {integrity: sha512-jHEQgBXAgc+Gh4g0p3bCevgRCVRkB4VB70zhoAE48gxeSr1hfUOsM/C2WoJgVL7Eyg//hudYENbm3Ne+/dRVVA==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
 
+  jest-regex-util@30.5.0:
+    resolution: {integrity: sha512-Mg0WK7A6xRHLSA1udJ8y9f3lM0uUhFTBnLKzwPmqB9AylvpleJ6BLemR8K9dK27DY+cesDryoA7yLZCAHsPG1A==}
+    engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
+
   jest-resolve-dependencies@30.1.3:
     resolution: {integrity: sha512-DNfq3WGmuRyHRHfEet+Zm3QOmVFtIarUOQHHryKPc0YL9ROfgWZxl4+aZq/VAzok2SS3gZdniP+dO4zgo59hBg==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
@@ -5016,9 +5023,6 @@ packages:
 
   lodash.kebabcase@4.1.1:
     resolution: {integrity: sha512-N8XRTIMMqqDgSy4VLKPnJ/+hpGZN+PHQiJnSenYqPaVV/NCqEogTnAdZLQiGKhxX+JCs8waWq2t1XHWKOmlY8g==}
-
-  lodash.memoize@4.1.2:
-    resolution: {integrity: sha512-t7j+NzmgnQzTAYXcsHYLgimltOV1MXHtlOWf6GjL9Kj8GK5FInw5JotxvbOs+IvV1/Dzo04/fCGfLVs7aXb4Ag==}
 
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
@@ -6414,40 +6418,6 @@ packages:
     peerDependencies:
       typescript: '>=4.8.4'
 
-  ts-jest@29.4.5:
-    resolution: {integrity: sha512-HO3GyiWn2qvTQA4kTgjDcXiMwYQt68a1Y8+JuLRVpdIzm+UOLSHgl/XqR4c6nzJkq5rOkjc02O2I7P7l/Yof0Q==}
-    engines: {node: ^14.15.0 || ^16.10.0 || ^18.0.0 || >=20.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@jest/transform': ^29.0.0 || ^30.0.0
-      '@jest/types': ^29.0.0 || ^30.0.0
-      babel-jest: ^29.0.0 || ^30.0.0
-      esbuild: '*'
-      jest: ^29.0.0 || ^30.0.0
-      jest-util: ^29.0.0 || ^30.0.0
-      typescript: '>=4.3 <6'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@jest/transform':
-        optional: true
-      '@jest/types':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-      jest-util:
-        optional: true
-
-  ts-loader@9.5.4:
-    resolution: {integrity: sha512-nCz0rEwunlTZiy6rXFByQU1kVVpCIgUpc/psFiKVrUwrizdnIbRFu8w7bxhUF0X613DYwT4XzrZHpVyMe758hQ==}
-    engines: {node: '>=12.0.0'}
-    peerDependencies:
-      typescript: '*'
-      webpack: ^5.0.0
-
   ts-node@10.9.2:
     resolution: {integrity: sha512-f0FFpIdcHgn8zcPSbf1dRevwt047YMnaiJM3u2w2RewrB+fob/zePZcrOyQoLMMO7aBIddLcQIEK5dYjkLnGrQ==}
     hasBin: true
@@ -6497,10 +6467,6 @@ packages:
   type-fest@2.19.0:
     resolution: {integrity: sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==}
     engines: {node: '>=12.20'}
-
-  type-fest@4.41.0:
-    resolution: {integrity: sha512-TeTSQ6H5YHvpqVwBRcnLDCBnDOHWYu7IvGbHT6N8AOymcr9PJGjc1GTtiWZTYg0NCgYwvnYWEkVChQAr9bjfwA==}
-    engines: {node: '>=16'}
 
   type-is@1.6.18:
     resolution: {integrity: sha512-TkRKr9sUTxEH8MdfuCSP7VizJyzRNMjj2J2do2Jr3Kym598JVdEksuzPQCnlFPW4ky9Q+iA+ma9BGm06XQBy8g==}
@@ -6957,7 +6923,7 @@ snapshots:
   '@alicloud/openapi-util@0.3.2(supports-color@8.1.1)':
     dependencies:
       '@alicloud/tea-typescript': 1.8.0(supports-color@8.1.1)
-      '@alicloud/tea-util': 1.4.9(supports-color@8.1.1)
+      '@alicloud/tea-util': 1.4.11(supports-color@8.1.1)
       kitx: 2.2.0
       sm3: 1.0.3
     transitivePeerDependencies:
@@ -8835,6 +8801,10 @@ snapshots:
       - supports-color
       - ts-node
 
+  '@jest/create-cache-key-function@30.5.1':
+    dependencies:
+      '@jest/types': 30.5.1
+
   '@jest/diff-sequences@30.0.1': {}
 
   '@jest/environment@30.1.2':
@@ -8884,6 +8854,11 @@ snapshots:
       '@types/node': 22.19.1
       jest-regex-util: 30.0.1
 
+  '@jest/pattern@30.5.0':
+    dependencies:
+      '@types/node': 22.19.1
+      jest-regex-util: 30.5.0
+
   '@jest/reporters@30.1.3(supports-color@8.1.1)':
     dependencies:
       '@bcoe/v8-coverage': 0.2.3
@@ -8913,6 +8888,10 @@ snapshots:
       - supports-color
 
   '@jest/schemas@30.0.5':
+    dependencies:
+      '@sinclair/typebox': 0.34.41
+
+  '@jest/schemas@30.5.0':
     dependencies:
       '@sinclair/typebox': 0.34.41
 
@@ -8977,6 +8956,16 @@ snapshots:
     dependencies:
       '@jest/pattern': 30.0.1
       '@jest/schemas': 30.0.5
+      '@types/istanbul-lib-coverage': 2.0.6
+      '@types/istanbul-reports': 3.0.4
+      '@types/node': 22.19.1
+      '@types/yargs': 17.0.35
+      chalk: 4.1.2
+
+  '@jest/types@30.5.1':
+    dependencies:
+      '@jest/pattern': 30.5.0
+      '@jest/schemas': 30.5.0
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
       '@types/node': 22.19.1
@@ -9442,6 +9431,7 @@ snapshots:
   '@redis/bloom@5.10.0(@redis/client@5.10.0)':
     dependencies:
       '@redis/client': 5.10.0
+    optional: true
 
   '@redis/client@5.10.0':
     dependencies:
@@ -9450,14 +9440,17 @@ snapshots:
   '@redis/json@5.10.0(@redis/client@5.10.0)':
     dependencies:
       '@redis/client': 5.10.0
+    optional: true
 
   '@redis/search@5.10.0(@redis/client@5.10.0)':
     dependencies:
       '@redis/client': 5.10.0
+    optional: true
 
   '@redis/time-series@5.10.0(@redis/client@5.10.0)':
     dependencies:
       '@redis/client': 5.10.0
+    optional: true
 
   '@release-it/conventional-changelog@10.0.2(conventional-commits-filter@5.0.0)(conventional-commits-parser@6.2.1)(release-it@19.0.5(@types/node@22.19.1)(supports-color@8.1.1))':
     dependencies:
@@ -9904,6 +9897,13 @@ snapshots:
       '@swc/core-win32-x64-msvc': 1.13.4
 
   '@swc/counter@0.1.3': {}
+
+  '@swc/jest@0.2.39(@swc/core@1.13.4)':
+    dependencies:
+      '@jest/create-cache-key-function': 30.5.1
+      '@swc/core': 1.13.4
+      '@swc/counter': 0.1.3
+      jsonc-parser: 3.3.1
 
   '@swc/types@0.1.25':
     dependencies:
@@ -10755,10 +10755,6 @@ snapshots:
       electron-to-chromium: 1.5.267
       node-releases: 2.0.27
       update-browserslist-db: 1.2.2(browserslist@4.28.1)
-
-  bs-logger@0.2.6:
-    dependencies:
-      fast-json-stable-stringify: 2.1.0
 
   bser@2.1.1:
     dependencies:
@@ -12549,6 +12545,8 @@ snapshots:
 
   jest-regex-util@30.0.1: {}
 
+  jest-regex-util@30.5.0: {}
+
   jest-resolve-dependencies@30.1.3(supports-color@8.1.1):
     dependencies:
       jest-regex-util: 30.0.1
@@ -12897,8 +12895,6 @@ snapshots:
   lodash.isstring@4.0.1: {}
 
   lodash.kebabcase@4.1.1: {}
-
-  lodash.memoize@4.1.2: {}
 
   lodash.merge@4.6.2: {}
 
@@ -13893,6 +13889,7 @@ snapshots:
       '@redis/json': 5.10.0(@redis/client@5.10.0)
       '@redis/search': 5.10.0(@redis/client@5.10.0)
       '@redis/time-series': 5.10.0(@redis/client@5.10.0)
+    optional: true
 
   reflect-metadata@0.2.2: {}
 
@@ -14453,37 +14450,6 @@ snapshots:
     dependencies:
       typescript: 5.9.3
 
-  ts-jest@29.4.5(@babel/core@7.28.5(supports-color@8.1.1))(@jest/transform@30.1.2(supports-color@8.1.1))(@jest/types@30.2.0)(babel-jest@30.1.2(@babel/core@7.28.5(supports-color@8.1.1))(supports-color@8.1.1))(esbuild@0.27.1)(jest-util@30.2.0)(jest@30.1.3(@types/node@22.19.1)(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.13.4)(@types/node@22.19.1)(typescript@5.9.3)))(typescript@5.9.3):
-    dependencies:
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      handlebars: 4.7.8
-      jest: 30.1.3(@types/node@22.19.1)(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.13.4)(@types/node@22.19.1)(typescript@5.9.3))
-      json5: 2.2.3
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.7.3
-      type-fest: 4.41.0
-      typescript: 5.9.3
-      yargs-parser: 21.1.1
-    optionalDependencies:
-      '@babel/core': 7.28.5(supports-color@8.1.1)
-      '@jest/transform': 30.1.2(supports-color@8.1.1)
-      '@jest/types': 30.2.0
-      babel-jest: 30.1.2(@babel/core@7.28.5(supports-color@8.1.1))(supports-color@8.1.1)
-      esbuild: 0.27.1
-      jest-util: 30.2.0
-
-  ts-loader@9.5.4(typescript@5.9.3)(webpack@5.100.2(@swc/core@1.13.4)(esbuild@0.27.1)(uglify-js@3.19.3)):
-    dependencies:
-      chalk: 4.1.2
-      enhanced-resolve: 5.18.3
-      micromatch: 4.0.8
-      semver: 7.7.3
-      source-map: 0.7.6
-      typescript: 5.9.3
-      webpack: 5.100.2(@swc/core@1.13.4)(esbuild@0.27.1)(uglify-js@3.19.3)
-
   ts-node@10.9.2(@swc/core@1.13.4)(@types/node@22.19.1)(typescript@5.9.3):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
@@ -14537,8 +14503,6 @@ snapshots:
   type-fest@0.21.3: {}
 
   type-fest@2.19.0: {}
-
-  type-fest@4.41.0: {}
 
   type-is@1.6.18:
     dependencies:

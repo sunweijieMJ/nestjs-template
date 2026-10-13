@@ -33,7 +33,7 @@ export type FeatureConfig = {
 // src/modules/feature/config/feature.config.ts
 import { registerAs } from '@nestjs/config';
 import { IsBoolean, IsNumber, IsString, IsOptional } from 'class-validator';
-import validateConfig from '@/common/validate-config';
+import validateConfig from '../../../common/validate-config';
 import { FeatureConfig } from './feature-config.type';
 
 class EnvironmentVariablesValidator {

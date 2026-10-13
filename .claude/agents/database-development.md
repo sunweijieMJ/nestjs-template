@@ -13,6 +13,7 @@
 ### Persistence Entity（TypeORM）
 
 ```typescript
+// src/modules/feature/infrastructure/persistence/relational/entities/feature.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -23,7 +24,7 @@ import {
   ManyToOne,
   Index,
 } from 'typeorm';
-import { EntityRelationalHelper } from '@/common/utils/relational-entity-helper';
+import { EntityRelationalHelper } from '../../../../../../common/relational-entity-helper';
 
 @Entity({ name: 'feature' })
 export class FeatureEntity extends EntityRelationalHelper {
@@ -188,7 +189,8 @@ pnpm seed:run:prod         # 生产环境种子数据
 ## 事务管理
 
 ```typescript
-import { TransactionService } from '@/infrastructure/database/transaction/transaction.service';
+// src/modules/orders/orders.service.ts
+import { TransactionService } from '../../infrastructure/database/transaction/transaction.service';
 
 @Injectable()
 export class OrderService {

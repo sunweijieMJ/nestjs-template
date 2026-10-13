@@ -6,9 +6,7 @@
 
 services:
   maildev:
-    build:
-      context: ..
-      dockerfile: maildev.Dockerfile
+    image: maildev/maildev:2.2.1
     ports:
       - '${MAIL_CLIENT_PORT:-1080}:1080'
       - '${MAIL_PORT:-1025}:1025'
@@ -33,7 +31,7 @@ services:
       test:
         [
           'CMD-SHELL',
-          'node -e "require(''http'').get(''http://localhost:3000/api'', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"',
+          'node -e "require(''http'').get(''http://localhost:$${APP_PORT:-3000}/$${API_PREFIX:-api}/v1/health/live'', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"',
         ]
       interval: 30s
       timeout: 10s

@@ -4,7 +4,7 @@
 
 ## 测试框架
 
-- **单元测试**: Jest + ts-jest
+- **单元测试**: Jest + @swc/jest（只转译不做类型检查，类型由 `pnpm type-check` 覆盖）
 - **E2E 测试**: Jest + Supertest
 - **覆盖率**: Jest Coverage（60% 阈值）
 

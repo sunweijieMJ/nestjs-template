@@ -26,16 +26,16 @@ updates:
           - 'eslint*'
           - '@eslint/*'
           - '@typescript-eslint/*'
+          - 'typescript-eslint'
       jest:
         patterns:
           - 'jest'
           - '@types/jest'
-          - 'ts-jest'
+          - '@swc/jest'
           - 'supertest'
           - '@nestjs/testing'
       redis:
         patterns:
-          - 'redis'
           - 'ioredis'
           - 'cache-manager*'
           - 'bullmq'
