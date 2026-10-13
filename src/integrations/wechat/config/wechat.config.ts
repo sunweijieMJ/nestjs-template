@@ -39,6 +39,14 @@ class EnvironmentVariablesValidator {
   @IsString()
   @IsOptional()
   WECHAT_PAY_NOTIFY_URL: string;
+
+  @IsString()
+  @IsOptional()
+  WECHAT_PAY_PUBLIC_KEY_ID: string;
+
+  @IsString()
+  @IsOptional()
+  WECHAT_PAY_PUBLIC_KEY: string;
 }
 
 export default registerAs<WechatConfig>('wechat', () => {
@@ -55,6 +63,8 @@ export default registerAs<WechatConfig>('wechat', () => {
       serialNo: process.env.WECHAT_PAY_SERIAL_NO ?? '',
       privateKey: process.env.WECHAT_PAY_PRIVATE_KEY ?? '',
       notifyUrl: process.env.WECHAT_PAY_NOTIFY_URL ?? '',
+      publicKeyId: process.env.WECHAT_PAY_PUBLIC_KEY_ID ?? '',
+      publicKey: process.env.WECHAT_PAY_PUBLIC_KEY ?? '',
     },
   };
 });

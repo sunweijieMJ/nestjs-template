@@ -1,0 +1,10 @@
+# 允许执行构建脚本的依赖（pnpm 11 默认全部拒绝，未列出会报 ERR_PNPM_IGNORED_BUILDS）
+allowBuilds:
+  '@swc/core': true
+  esbuild: true
+  msgpackr-extract: true
+  unrs-resolver: true
+  # 仅为赞助提示、统计上报，或只在 Node 10/12 下生效
+  '@alicloud/openapi-core': false
+  '@nestjs/core': false
+  '@scarf/scarf': false

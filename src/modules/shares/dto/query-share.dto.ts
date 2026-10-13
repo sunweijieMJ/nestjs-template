@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsInt, Min } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ShareTargetType, SharePlatform } from '../domain/share';
 
@@ -10,6 +10,8 @@ export class QueryShareDto {
   })
   @IsOptional()
   @Transform(({ value }) => (value ? Number(value) : 1))
+  @IsInt()
+  @Min(1)
   page?: number = 1;
 
   @ApiPropertyOptional({
@@ -18,6 +20,8 @@ export class QueryShareDto {
   })
   @IsOptional()
   @Transform(({ value }) => (value ? Number(value) : 10))
+  @IsInt()
+  @Min(1)
   limit?: number = 10;
 
   @ApiPropertyOptional({

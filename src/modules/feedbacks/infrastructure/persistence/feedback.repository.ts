@@ -19,5 +19,8 @@ export abstract class FeedbackRepository {
     paginationOptions: IPaginationOptions;
   }): Promise<Feedback[]>;
 
-  abstract countByUserId(userId: Feedback['userId']): Promise<number>;
+  abstract countByUserId(
+    userId: Feedback['userId'],
+    filters?: { type?: FeedbackType; status?: FeedbackStatus },
+  ): Promise<number>;
 }

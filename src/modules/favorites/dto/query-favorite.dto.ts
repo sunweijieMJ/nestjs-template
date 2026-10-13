@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNumber, IsOptional } from 'class-validator';
+import { IsEnum, IsOptional, IsInt, Min } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { FavoriteTargetType } from '../domain/favorite';
 
@@ -11,13 +11,15 @@ export class QueryFavoriteDto {
 
   @ApiPropertyOptional()
   @Transform(({ value }) => (value ? Number(value) : 1))
-  @IsNumber()
+  @IsInt()
+  @Min(1)
   @IsOptional()
   page?: number;
 
   @ApiPropertyOptional()
   @Transform(({ value }) => (value ? Number(value) : 10))
-  @IsNumber()
+  @IsInt()
+  @Min(1)
   @IsOptional()
   limit?: number;
 }

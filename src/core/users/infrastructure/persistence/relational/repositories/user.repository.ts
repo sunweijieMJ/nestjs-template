@@ -142,7 +142,18 @@ export class UsersRelationalRepository implements UserRepository {
     }
   }
 
+  /**
+   * 软删除用户，同时清空邮箱、手机号与微信标识，使其可被重新注册
+   */
   async remove(id: User['id']): Promise<void> {
-    await this.usersRepository.softDelete(id);
+    await this.usersRepository.manager.transaction(async (manager) => {
+      await manager.update(UserEntity, id, {
+        email: null,
+        phone: null,
+        wechatOpenId: null,
+        wechatUnionId: null,
+      });
+      await manager.softDelete(UserEntity, id);
+    });
   }
 }

@@ -8,6 +8,11 @@ import { QueryOrderDto } from '../../dto/query-order.dto';
 export abstract class OrderRepository {
   abstract create(data: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>): Promise<Order>;
 
+  abstract createWithItems(
+    data: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>,
+    items: Omit<OrderItem, 'id' | 'orderId' | 'createdAt' | 'updatedAt'>[],
+  ): Promise<Order & { items: OrderItem[] }>;
+
   abstract findManyWithPagination({
     userId,
     filterOptions,
@@ -41,6 +46,8 @@ export abstract class OrderRepository {
       paidAt: Date;
     },
   ): Promise<Order | null>;
+
+  abstract closeIfUnpaid(id: Order['id'], userId: Order['userId']): Promise<boolean>;
 
   abstract countByUserId(userId: Order['userId'], filterOptions?: QueryOrderDto | null): Promise<number>;
 

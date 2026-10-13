@@ -20,6 +20,9 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: 3.864.0
         version: 3.864.0
+      '@keyv/redis':
+        specifier: 5.1.5
+        version: 5.1.5(keyv@5.5.5)
       '@nestjs/bullmq':
         specifier: ^11.0.4
         version: 11.0.4(@nestjs/common@11.1.6(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.6)(bullmq@5.65.1)
@@ -77,9 +80,6 @@ importers:
       cache-manager:
         specifier: ^7.2.7
         version: 7.2.7
-      cache-manager-redis-yet:
-        specifier: ^5.1.5
-        version: 5.1.5
       class-transformer:
         specifier: 0.5.1
         version: 0.5.1
@@ -98,6 +98,9 @@ importers:
       ioredis:
         specifier: ^5.8.2
         version: 5.8.2
+      keyv:
+        specifier: ^5.5.5
+        version: 5.5.5
       ms:
         specifier: 2.1.3
         version: 2.1.3
@@ -1662,6 +1665,12 @@ packages:
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
 
+  '@keyv/redis@5.1.5':
+    resolution: {integrity: sha512-8tD98mQoZTHHHFG7bcI2T4gkvAL9YsBI7TqCW4sXbx33WmAaPQ+JofxdN+rCu5LKxiboapfS8swZWJ7Tl/XbQg==}
+    engines: {node: '>= 18'}
+    peerDependencies:
+      keyv: ^5.5.5
+
   '@keyv/serialize@1.1.1':
     resolution: {integrity: sha512-dXn3FZhPv0US+7dtJsIi2R+c7qWYiReoEh5zUntWCf4oSpMNib8FDhSoed6m3QyZdx5hK7iLFkYk3rNxwt8vTA==}
 
@@ -2140,34 +2149,15 @@ packages:
     resolution: {integrity: sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
 
-  '@redis/bloom@1.2.0':
-    resolution: {integrity: sha512-HG2DFjYKbpNmVXsa0keLHp/3leGJz1mjh09f2RLGGLQZzSHpkmZWuwJbAvo3QcRY8p80m5+ZdXZdYOSBLlp7Cg==}
-    peerDependencies:
-      '@redis/client': ^1.0.0
-
   '@redis/bloom@5.10.0':
     resolution: {integrity: sha512-doIF37ob+l47n0rkpRNgU8n4iacBlKM9xLiP1LtTZTvz8TloJB8qx/MgvhMhKdYG+CvCY2aPBnN2706izFn/4A==}
     engines: {node: '>= 18'}
     peerDependencies:
       '@redis/client': ^5.10.0
 
-  '@redis/client@1.6.1':
-    resolution: {integrity: sha512-/KCsg3xSlR+nCK8/8ZYSknYxvXHwubJrU82F3Lm1Fp6789VQ0/3RJKfsmRXjqfaTA++23CvC3hqmqe/2GEt6Kw==}
-    engines: {node: '>=14'}
-
   '@redis/client@5.10.0':
     resolution: {integrity: sha512-JXmM4XCoso6C75Mr3lhKA3eNxSzkYi3nCzxDIKY+YOszYsJjuKbFgVtguVPbLMOttN4iu2fXoc2BGhdnYhIOxA==}
     engines: {node: '>= 18'}
-
-  '@redis/graph@1.1.1':
-    resolution: {integrity: sha512-FEMTcTHZozZciLRl6GiiIB4zGm5z5F3F6a6FZCyrfxdKOhFlGkiAqlexWMBzCi4DcRoyiOsuLfW+cjlGWyExOw==}
-    peerDependencies:
-      '@redis/client': ^1.0.0
-
-  '@redis/json@1.0.7':
-    resolution: {integrity: sha512-6UyXfjVaTBTJtKNG4/9Z8PSpKE6XgSyEb8iwaqDcy+uKrd/DGYHTWkUdnQDyzm727V7p21WUMhsqz5oy65kPcQ==}
-    peerDependencies:
-      '@redis/client': ^1.0.0
 
   '@redis/json@5.10.0':
     resolution: {integrity: sha512-B2G8XlOmTPUuZtD44EMGbtoepQG34RCDXLZbjrtON1Djet0t5Ri7/YPXvL9aomXqP8lLTreaprtyLKF4tmXEEA==}
@@ -2175,21 +2165,11 @@ packages:
     peerDependencies:
       '@redis/client': ^5.10.0
 
-  '@redis/search@1.2.0':
-    resolution: {integrity: sha512-tYoDBbtqOVigEDMAcTGsRlMycIIjwMCgD8eR2t0NANeQmgK/lvxNAvYyb6bZDD4frHRhIHkJu2TBRvB0ERkOmw==}
-    peerDependencies:
-      '@redis/client': ^1.0.0
-
   '@redis/search@5.10.0':
     resolution: {integrity: sha512-3SVcPswoSfp2HnmWbAGUzlbUPn7fOohVu2weUQ0S+EMiQi8jwjL+aN2p6V3TI65eNfVsJ8vyPvqWklm6H6esmg==}
     engines: {node: '>= 18'}
     peerDependencies:
       '@redis/client': ^5.10.0
-
-  '@redis/time-series@1.1.0':
-    resolution: {integrity: sha512-c1Q99M5ljsIuc4YdaCwfUEXsofakb9c8+Zse2qxTadu8TalLXuAESzLvFAvNVbkmSlvlzIQOLpBCmWI9wTOt+g==}
-    peerDependencies:
-      '@redis/client': ^1.0.0
 
   '@redis/time-series@5.10.0':
     resolution: {integrity: sha512-cPkpddXH5kc/SdRhF0YG0qtjL+noqFT0AcHbQ6axhsPsO7iqPi1cjxgdkE9TNeKiBUUdCaU1DbqkR/LzbzPBhg==}
@@ -3325,15 +3305,6 @@ packages:
       magicast:
         optional: true
 
-  cache-manager-redis-yet@5.1.5:
-    resolution: {integrity: sha512-NYDxrWBoLXxxVPw4JuBriJW0f45+BVOAsgLiozRo4GoJQyoKPbueQWYStWqmO73/AeHJeWrV7Hzvk6vhCGHlqA==}
-    engines: {node: '>= 18'}
-    deprecated: With cache-manager v6 we now are using Keyv
-
-  cache-manager@5.7.6:
-    resolution: {integrity: sha512-wBxnBHjDxF1RXpHCBD6HGvKER003Ts7IIm0CHpggliHzN1RZditb7rXoduE1rplc2DEFYKxhLKgFuchXMJje9w==}
-    engines: {node: '>= 18'}
-
   cache-manager@7.2.7:
     resolution: {integrity: sha512-TKeeb9nSybk1e9E5yAiPVJ6YKdX9FYhwqqy8fBfVKAFVTJYZUNmeIvwjURW6+UikNsO6l2ta27thYgo/oumDsw==}
 
@@ -4287,10 +4258,6 @@ packages:
   function-bind@1.1.2:
     resolution: {integrity: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==}
 
-  generic-pool@3.9.0:
-    resolution: {integrity: sha512-hymDOu5B53XvN4QT9dBmZxPX4CWhBPPLguTZ9MMFeFa/Kg0xWVfylOVNlJji/E7yTZWFd/q9GO5TxDLq156D7g==}
-    engines: {node: '>= 4'}
-
   gensequence@8.0.8:
     resolution: {integrity: sha512-omMVniXEXpdx/vKxGnPRoO2394Otlze28TyxECbFVyoSpZ9H3EO7lemjcB12OpQJzRW4e5tt/dL1rOxry6aMHg==}
     engines: {node: '>=20'}
@@ -5044,9 +5011,6 @@ packages:
 
   lodash.capitalize@4.2.1:
     resolution: {integrity: sha512-kZzYOKspf8XVX5AvmQF94gQW0lejFVgb80G85bU4ZWzoJ6C03PQg3coYAUpSTpQWelrZELd3XWgHzw4Ck5kaIw==}
-
-  lodash.clonedeep@4.5.0:
-    resolution: {integrity: sha512-H5ZhCF25riFd9uB5UCkVKo61m3S/xZk1x4wA6yp/L3RFP6Z/eHH1ymQcGLo7J3GMPfm0V/7m1tryHuGVxpqEBQ==}
 
   lodash.defaults@4.2.0:
     resolution: {integrity: sha512-qjxPLHd3r5DnsdGacqOMU6pb/avJzdh9tFX2ymgoZE27BmjXrNy/y4LoaiTeAb+O3gL8AfpJGtqfX/ae2leYYQ==}
@@ -5881,10 +5845,6 @@ packages:
     resolution: {integrity: sha512-6ZiOBfCywsD4k1BN9IX0uZhF+tJkV8q8llP64G5Hajs4JOeVLPCwpPVcpXy3BwYiUGgyJzsJJQeOIv7+hDSq8g==}
     engines: {node: ^16 || ^18 || >=20}
 
-  promise-coalesce@1.5.0:
-    resolution: {integrity: sha512-cTJ30U+ur1LD7pMPyQxiKIwxjtAjLsyU7ivRhVWZrX9BNIXtf78pc37vSMc8Vikx7DVzEKNk2SEJ5KWUpSG2ig==}
-    engines: {node: '>=16'}
-
   prompts@2.4.2:
     resolution: {integrity: sha512-NxNv/kLguCA7p3jE8oL2aEBsrJWgAakBpgmgK6lpPWV+WuOmY6r2/zbAVnP+T8bQlA0nzHXSJSJW0Hq7ylaD2Q==}
     engines: {node: '>= 6'}
@@ -5971,9 +5931,6 @@ packages:
   redis-parser@3.0.0:
     resolution: {integrity: sha512-DJnGAeenTdpMEH6uAJRK/uiyEIH9WVsUmoLwzudwGJUwZPp80PDBWPHXSAGNPwNvIXAbe7MSUB1zQFugFml66A==}
     engines: {node: '>=4'}
-
-  redis@4.7.1:
-    resolution: {integrity: sha512-S1bJDnqLftzHXHP8JsT5II/CtHWQrASX5K96REjWjlmWKrviSOLWmM7QnRLstAWsu1VBBV1ffV6DzCvxNP0UJQ==}
 
   redis@5.10.0:
     resolution: {integrity: sha512-0/Y+7IEiTgVGPrLFKy8oAEArSyEJkU0zvgV5xyi9NzNQ+SLZmyFbUsWIbgPcd4UdUh00opXGKlXJwMmsis5Byw==}
@@ -6883,9 +6840,6 @@ packages:
 
   yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
-
-  yallist@4.0.0:
-    resolution: {integrity: sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A==}
 
   yaml@2.8.2:
     resolution: {integrity: sha512-mplynKqc1C2hTVYxd0PU2xQAc22TI1vShAYGksCCfxbn/dFwnHTNi1bvYsBTkhdUNtGIf5xNOg938rrSSYvS9A==}
@@ -9085,6 +9039,13 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
+  '@keyv/redis@5.1.5(keyv@5.5.5)':
+    dependencies:
+      '@redis/client': 5.10.0
+      cluster-key-slot: 1.1.2
+      hookified: 1.14.0
+      keyv: 5.5.5
+
   '@keyv/serialize@1.1.1': {}
 
   '@lukeed/csprng@1.1.0': {}
@@ -9505,47 +9466,21 @@ snapshots:
 
   '@pkgr/core@0.2.9': {}
 
-  '@redis/bloom@1.2.0(@redis/client@1.6.1)':
-    dependencies:
-      '@redis/client': 1.6.1
-
   '@redis/bloom@5.10.0(@redis/client@5.10.0)':
     dependencies:
       '@redis/client': 5.10.0
-
-  '@redis/client@1.6.1':
-    dependencies:
-      cluster-key-slot: 1.1.2
-      generic-pool: 3.9.0
-      yallist: 4.0.0
 
   '@redis/client@5.10.0':
     dependencies:
       cluster-key-slot: 1.1.2
 
-  '@redis/graph@1.1.1(@redis/client@1.6.1)':
-    dependencies:
-      '@redis/client': 1.6.1
-
-  '@redis/json@1.0.7(@redis/client@1.6.1)':
-    dependencies:
-      '@redis/client': 1.6.1
-
   '@redis/json@5.10.0(@redis/client@5.10.0)':
     dependencies:
       '@redis/client': 5.10.0
 
-  '@redis/search@1.2.0(@redis/client@1.6.1)':
-    dependencies:
-      '@redis/client': 1.6.1
-
   '@redis/search@5.10.0(@redis/client@5.10.0)':
     dependencies:
       '@redis/client': 5.10.0
-
-  '@redis/time-series@1.1.0(@redis/client@1.6.1)':
-    dependencies:
-      '@redis/client': 1.6.1
 
   '@redis/time-series@5.10.0(@redis/client@5.10.0)':
     dependencies:
@@ -10922,24 +10857,6 @@ snapshots:
       pkg-types: 2.3.0
       rc9: 2.1.2
 
-  cache-manager-redis-yet@5.1.5:
-    dependencies:
-      '@redis/bloom': 1.2.0(@redis/client@1.6.1)
-      '@redis/client': 1.6.1
-      '@redis/graph': 1.1.1(@redis/client@1.6.1)
-      '@redis/json': 1.0.7(@redis/client@1.6.1)
-      '@redis/search': 1.2.0(@redis/client@1.6.1)
-      '@redis/time-series': 1.1.0(@redis/client@1.6.1)
-      cache-manager: 5.7.6
-      redis: 4.7.1
-
-  cache-manager@5.7.6:
-    dependencies:
-      eventemitter3: 5.0.1
-      lodash.clonedeep: 4.5.0
-      lru-cache: 10.4.3
-      promise-coalesce: 1.5.0
-
   cache-manager@7.2.7:
     dependencies:
       '@cacheable/utils': 2.3.2
@@ -11989,8 +11906,6 @@ snapshots:
 
   function-bind@1.1.2: {}
 
-  generic-pool@3.9.0: {}
-
   gensequence@8.0.8: {}
 
   gensync@1.0.0-beta.2: {}
@@ -13001,8 +12916,6 @@ snapshots:
 
   lodash.capitalize@4.2.1: {}
 
-  lodash.clonedeep@4.5.0: {}
-
   lodash.defaults@4.2.0: {}
 
   lodash.escaperegexp@4.1.2: {}
@@ -13932,8 +13845,6 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       tdigest: 0.1.2
 
-  promise-coalesce@1.5.0: {}
-
   prompts@2.4.2:
     dependencies:
       kleur: 3.0.3
@@ -14021,15 +13932,6 @@ snapshots:
   redis-parser@3.0.0:
     dependencies:
       redis-errors: 1.2.0
-
-  redis@4.7.1:
-    dependencies:
-      '@redis/bloom': 1.2.0(@redis/client@1.6.1)
-      '@redis/client': 1.6.1
-      '@redis/graph': 1.1.1(@redis/client@1.6.1)
-      '@redis/json': 1.0.7(@redis/client@1.6.1)
-      '@redis/search': 1.2.0(@redis/client@1.6.1)
-      '@redis/time-series': 1.1.0(@redis/client@1.6.1)
 
   redis@5.10.0:
     dependencies:
@@ -14972,8 +14874,6 @@ snapshots:
   y18n@5.0.8: {}
 
   yallist@3.1.1: {}
-
-  yallist@4.0.0: {}
 
   yaml@2.8.2: {}
 

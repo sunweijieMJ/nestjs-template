@@ -67,6 +67,8 @@ REDIS_DB=0
 THROTTLE_ENABLED=false
 THROTTLE_TTL=60
 THROTTLE_LIMIT=100
+# 应用前的反向代理层数（Nginx/SLB 等），限流按 X-Forwarded-For 识别客户端 IP；直连时为 0
+TRUST_PROXY=0
 
 # Prometheus Metrics
 METRICS_ENABLED=true
@@ -96,6 +98,9 @@ WECHAT_PAY_API_V3_KEY=
 WECHAT_PAY_SERIAL_NO=
 WECHAT_PAY_PRIVATE_KEY=
 WECHAT_PAY_NOTIFY_URL=
+# 微信支付公钥模式（新商户默认）填写以下两项；留空则自动下载平台证书
+WECHAT_PAY_PUBLIC_KEY_ID=
+WECHAT_PAY_PUBLIC_KEY=
 
 # Alipay Payment Integration
 ALIPAY_APP_ID=

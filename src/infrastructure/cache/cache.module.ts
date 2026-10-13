@@ -1,9 +1,12 @@
 import { Global, Module, Logger } from '@nestjs/common';
 import { CacheModule as NestCacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { redisStore } from 'cache-manager-redis-yet';
+import KeyvRedis, { Keyv } from '@keyv/redis';
 import { AllConfigType } from '../../config/config.type';
 import { CACHE_TTL_MS } from '../../common/constants/app.constants';
+
+/** 缓存键前缀，与 BullMQ 等共用同一 Redis 时避免冲突 */
+const CACHE_NAMESPACE = 'cache';
 
 @Global()
 @Module({
@@ -23,19 +26,27 @@ import { CACHE_TTL_MS } from '../../common/constants/app.constants';
 
           try {
             logger.log(`Attempting to connect to Redis at ${redisHost}:${redisPort}`);
-            const store = await redisStore({
-              socket: {
-                host: redisHost,
-                port: redisPort,
-                connectTimeout: 5000, // 5 seconds connection timeout
+            const store = new KeyvRedis(
+              {
+                socket: {
+                  host: redisHost,
+                  port: redisPort,
+                },
+                password: redisPassword,
+                database: redisDb,
+                // 断连期间命令立即失败，调用方回退到数据库而不是等待重连
+                disableOfflineQueue: true,
               },
-              password: redisPassword,
-              database: redisDb,
+              { namespace: CACHE_NAMESPACE, connectionTimeout: 5000, throwOnConnectError: true },
+            );
+            store.client.on('error', (error: Error) => {
+              logger.warn(`Redis cache error: ${error.message}`);
             });
+            await store.getClient();
 
             logger.log('Successfully connected to Redis cache');
             return {
-              store,
+              stores: [new Keyv(store, { namespace: CACHE_NAMESPACE, useKeyPrefix: false })],
               ttl: CACHE_TTL_MS,
             };
           } catch (error) {

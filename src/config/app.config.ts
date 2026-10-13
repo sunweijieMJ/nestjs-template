@@ -42,6 +42,12 @@ class EnvironmentVariablesValidator {
   @IsString()
   @IsOptional()
   APP_HEADER_LANGUAGE: string;
+
+  // 应用前的反向代理层数，用于从 X-Forwarded-For 取客户端 IP
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  TRUST_PROXY: number;
 }
 
 export default registerAs<AppConfig>('app', () => {
@@ -61,5 +67,6 @@ export default registerAs<AppConfig>('app', () => {
     apiPrefix: process.env.API_PREFIX ?? 'api',
     fallbackLanguage: process.env.APP_FALLBACK_LANGUAGE ?? 'en',
     headerLanguage: process.env.APP_HEADER_LANGUAGE ?? 'x-custom-lang',
+    trustProxy: process.env.TRUST_PROXY ? parseInt(process.env.TRUST_PROXY, 10) : 0,
   };
 });

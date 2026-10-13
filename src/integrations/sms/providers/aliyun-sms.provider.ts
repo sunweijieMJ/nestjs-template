@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import Dysmsapi20170525, * as $Dysmsapi20170525 from '@alicloud/dysmsapi20170525';
 import * as $OpenApi from '@alicloud/openapi-client';
 import { AllConfigType } from '../../../config/config.type';
+import { maskPhone } from '../../../common/utils/sanitize.utils';
 
 export interface SendSmsResult {
   success: boolean;
@@ -59,7 +60,7 @@ export class AliyunSmsProvider {
 
     // Mock mode - just log the message
     if (mockMode) {
-      this.logger.log(`[MOCK SMS] To: ${phone}, Params: ${JSON.stringify(templateParam)}`);
+      this.logger.log(`[MOCK SMS] To: ${maskPhone(phone)}, Params: ${JSON.stringify(templateParam)}`);
       return {
         success: true,
         requestId: 'mock-request-id',
@@ -108,7 +109,7 @@ export class AliyunSmsProvider {
       }
 
       if (body.code === 'OK') {
-        this.logger.log(`SMS sent successfully to ${phone}, BizId: ${body.bizId}`);
+        this.logger.log(`SMS sent successfully to ${maskPhone(phone)}, BizId: ${body.bizId}`);
         return {
           success: true,
           requestId: body.requestId,

@@ -12,5 +12,7 @@ export type WechatConfig = {
     serialNo: string; // 证书序列号
     privateKey: string; // 商户私钥
     notifyUrl: string; // 支付回调地址
+    publicKeyId: string; // 微信支付公钥 ID（公钥模式，与平台证书二选一）
+    publicKey: string; // 微信支付公钥
   };
 };

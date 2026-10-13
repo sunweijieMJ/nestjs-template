@@ -14,8 +14,7 @@ export class CleanupExpiredSharesTask {
 
   /**
    * Clean up expired shares every day at 2:00 AM
-   * Soft deletes shares where expiresAt < NOW() and deletedAt IS NULL
-   * Also cleans up associated share_log entries
+   * Soft deletes shares where expiresAt < NOW() and deletedAt IS NULL, keeping their share_log entries
    */
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async handleCleanup(): Promise<void> {
@@ -42,17 +41,6 @@ export class CleanupExpiredSharesTask {
 
       const expiredIds = expiredShares.map((s: { id: number }) => s.id);
 
-      // Soft delete associated share_log entries
-      const logsResult = await queryRunner.query(
-        `
-        UPDATE share_log
-        SET "deletedAt" = NOW()
-        WHERE "shareId" = ANY($1)
-          AND "deletedAt" IS NULL
-      `,
-        [expiredIds],
-      );
-
       // Soft delete expired shares
       const sharesResult = await queryRunner.query(
         `
@@ -66,9 +54,7 @@ export class CleanupExpiredSharesTask {
 
       await queryRunner.commitTransaction();
 
-      this.logger.log(
-        `Cleanup completed: ${sharesResult[1] ?? expiredIds.length} shares and ${logsResult[1] ?? 0} share logs soft deleted`,
-      );
+      this.logger.log(`Cleanup completed: ${sharesResult[1] ?? expiredIds.length} shares soft deleted`);
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.logger.error(`Cleanup failed: ${error instanceof Error ? error.message : 'Unknown error'}`);

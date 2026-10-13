@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { ClassSerializerInterceptor, ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost, NestFactory, Reflector } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { useContainer } from 'class-validator';
 import { Logger } from 'nestjs-pino';
@@ -15,14 +16,20 @@ import { MetricsInterceptor } from './infrastructure/metrics/metrics.interceptor
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
+    rawBody: true,
   });
 
   // Use Pino logger
   app.useLogger(app.get(Logger));
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
   const configService = app.get(ConfigService<AllConfigType>);
+
+  const trustProxy = configService.get('app.trustProxy', { infer: true });
+  if (trustProxy) {
+    app.set('trust proxy', trustProxy);
+  }
 
   // CORS configuration
   const frontendDomain = configService.get('app.frontendDomain', { infer: true });

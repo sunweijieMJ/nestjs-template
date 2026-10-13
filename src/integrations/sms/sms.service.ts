@@ -4,6 +4,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { randomInt } from 'crypto';
 import { AllConfigType } from '../../config/config.type';
+import { maskPhone } from '../../common/utils/sanitize.utils';
 import { AliyunSmsProvider } from './providers/aliyun-sms.provider';
 
 interface StoredCode {
@@ -37,6 +38,7 @@ export interface VerifyCodeResult {
 @Injectable()
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
+  private readonly pendingByKey = new Map<string, Promise<void>>();
 
   constructor(
     private readonly configService: ConfigService<AllConfigType>,
@@ -100,7 +102,7 @@ export class SmsService {
     const result = await this.aliyunSmsProvider.sendSms(phone, { code });
 
     if (!result.success) {
-      this.logger.error(`Failed to send SMS to ${phone}: ${result.message}`);
+      this.logger.error(`Failed to send SMS to ${maskPhone(phone)}: ${result.message}`);
       return {
         success: false,
         message: result.message ?? 'Failed to send verification code',
@@ -116,7 +118,7 @@ export class SmsService {
 
     await this.cacheManager.set(cacheKey, storedCode, codeExpires * 1000);
 
-    this.logger.log(`Verification code sent to ${phone} for ${type}`);
+    this.logger.log(`Verification code sent to ${maskPhone(phone)} for ${type}`);
 
     return {
       success: true,
@@ -133,6 +135,34 @@ export class SmsService {
    */
   async verifyCode(phone: string, code: string, type: SmsCodeType): Promise<VerifyCodeResult> {
     const cacheKey = this.getCacheKey(phone, type);
+    return this.runExclusive(cacheKey, () => this.verifyCodeUnlocked(cacheKey, phone, code, type));
+  }
+
+  /**
+   * 同一键的操作在本实例内串行执行，避免并发校验绕过尝试次数限制
+   */
+  private async runExclusive<T>(key: string, task: () => Promise<T>): Promise<T> {
+    const previous = this.pendingByKey.get(key) ?? Promise.resolve();
+    const current = previous.then(task, task);
+    const settled = current.then(
+      () => undefined,
+      () => undefined,
+    );
+    this.pendingByKey.set(key, settled);
+    void settled.then(() => {
+      if (this.pendingByKey.get(key) === settled) {
+        this.pendingByKey.delete(key);
+      }
+    });
+    return current;
+  }
+
+  private async verifyCodeUnlocked(
+    cacheKey: string,
+    phone: string,
+    code: string,
+    type: SmsCodeType,
+  ): Promise<VerifyCodeResult> {
     const stored = await this.cacheManager.get<StoredCode>(cacheKey);
 
     if (!stored) {
@@ -173,7 +203,7 @@ export class SmsService {
     // Code is valid - delete it from cache
     await this.cacheManager.del(cacheKey);
 
-    this.logger.log(`Verification code verified for ${phone} (${type})`);
+    this.logger.log(`Verification code verified for ${maskPhone(phone)} (${type})`);
 
     return {
       success: true,

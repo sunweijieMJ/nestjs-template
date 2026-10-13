@@ -23,7 +23,14 @@ export class UserSeedService {
     private repository: Repository<UserEntity>,
   ) {}
 
+  /**
+   * 生产环境（ENV_MODE=prod）不创建演示账号，仅在设置 SEED_ADMIN_EMAIL 与 SEED_ADMIN_PASSWORD 时创建管理员
+   */
   async run(): Promise<void> {
+    const isProduction = process.env.ENV_MODE === 'prod';
+    const adminEmail = isProduction ? process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase() : 'admin@example.com';
+    const adminPassword = isProduction ? process.env.SEED_ADMIN_PASSWORD : 'Secret00';
+
     const countAdmin = await this.repository.count({
       where: {
         role: {
@@ -32,15 +39,15 @@ export class UserSeedService {
       },
     });
 
-    if (!countAdmin) {
+    if (!countAdmin && adminEmail && adminPassword) {
       // Hash the MD5 of the password (frontend sends MD5, backend stores bcrypt of MD5)
-      const password = await hashPassword(md5('Secret00'));
+      const password = await hashPassword(md5(adminPassword));
 
       await this.repository.save(
         this.repository.create({
           firstName: 'Super',
           lastName: 'Admin',
-          email: 'admin@example.com',
+          email: adminEmail,
           password,
           role: {
             id: RoleEnum.admin,
@@ -62,7 +69,7 @@ export class UserSeedService {
       },
     });
 
-    if (!countUser) {
+    if (!countUser && !isProduction) {
       // Hash the MD5 of the password (frontend sends MD5, backend stores bcrypt of MD5)
       const password = await hashPassword(md5('Secret00'));
 

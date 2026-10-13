@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere } from 'typeorm';
+import { Repository, FindOptionsWhere, In, IsNull } from 'typeorm';
 import { OrderEntity } from '../entities/order.entity';
+import { OrderItemEntity } from '../entities/order-item.entity';
 import { OrderMapper } from '../mappers/order.mapper';
 import { OrderItemMapper } from '../mappers/order-item.mapper';
 import { Order, OrderStatus, PaymentChannel } from '../../../../domain/order';
+import { OrderItem } from '../../../../domain/order-item';
 import { OrderRepository } from '../../order.repository';
 import { NullableType } from '../../../../../../common/types/nullable.type';
 import { IPaginationOptions } from '../../../../../../common/types/pagination-options';
@@ -22,6 +24,25 @@ export class OrderRelationalRepository implements OrderRepository {
     const persistenceModel = OrderMapper.toPersistence(data);
     const newEntity = await this.orderRepository.save(this.orderRepository.create(persistenceModel));
     return OrderMapper.toDomain(newEntity);
+  }
+
+  async createWithItems(
+    data: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>,
+    items: Omit<OrderItem, 'id' | 'orderId' | 'createdAt' | 'updatedAt'>[],
+  ): Promise<Order & { items: OrderItem[] }> {
+    return this.orderRepository.manager.transaction(async (manager) => {
+      const orderEntity = await manager.save(manager.create(OrderEntity, OrderMapper.toPersistence(data)));
+      const itemEntities = await manager.save(
+        items.map((item) =>
+          manager.create(OrderItemEntity, OrderItemMapper.toPersistence({ ...item, orderId: orderEntity.id })),
+        ),
+      );
+
+      return {
+        ...OrderMapper.toDomain(orderEntity),
+        items: itemEntities.map((entity) => OrderItemMapper.toDomain(entity)),
+      };
+    });
   }
 
   async findManyWithPagination({
@@ -124,6 +145,9 @@ export class OrderRelationalRepository implements OrderRepository {
     return OrderMapper.toDomain(updatedEntity);
   }
 
+  /**
+   * 待支付或已关闭的订单原子更新为支付结果，其余状态保持不变
+   */
   async updatePaymentStatus(
     orderNo: string,
     status: OrderStatus,
@@ -134,30 +158,32 @@ export class OrderRelationalRepository implements OrderRepository {
       paidAt: Date;
     },
   ): Promise<Order | null> {
-    const entity = await this.orderRepository.findOne({
-      where: { orderNo },
-    });
-
-    if (!entity) {
-      return null;
-    }
-
-    // Only update if status is UNPAID
-    if (entity.status !== OrderStatus.UNPAID) {
-      return OrderMapper.toDomain(entity);
-    }
-
-    const updatedEntity = await this.orderRepository.save(
-      this.orderRepository.merge(entity, {
+    await this.orderRepository.update(
+      { orderNo, status: In([OrderStatus.UNPAID, OrderStatus.CLOSED]), deletedAt: IsNull() },
+      {
         status,
         paymentChannel: paymentData.paymentChannel,
         transactionId: paymentData.transactionId,
         paidAmount: paymentData.paidAmount,
         paidAt: paymentData.paidAt,
-      }),
+        closedAt: null,
+      },
     );
 
-    return OrderMapper.toDomain(updatedEntity);
+    const entity = await this.orderRepository.findOne({
+      where: { orderNo },
+    });
+
+    return entity ? OrderMapper.toDomain(entity) : null;
+  }
+
+  async closeIfUnpaid(id: Order['id'], userId: Order['userId']): Promise<boolean> {
+    const result = await this.orderRepository.update(
+      { id: Number(id), userId: Number(userId), status: OrderStatus.UNPAID, deletedAt: IsNull() },
+      { status: OrderStatus.CLOSED, closedAt: new Date() },
+    );
+
+    return (result.affected ?? 0) > 0;
   }
 
   async countByUserId(userId: Order['userId'], filterOptions?: QueryOrderDto | null): Promise<number> {

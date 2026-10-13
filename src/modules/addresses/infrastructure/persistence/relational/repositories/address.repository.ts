@@ -34,25 +34,7 @@ export class AddressRelationalRepository implements AddressRepository {
     sortOptions?: SortAddressDto[] | null;
     paginationOptions: IPaginationOptions;
   }): Promise<Address[]> {
-    const where: FindOptionsWhere<AddressEntity> = {
-      userId: Number(userId),
-    };
-
-    if (filterOptions?.province) {
-      where.province = filterOptions.province;
-    }
-    if (filterOptions?.city) {
-      where.city = filterOptions.city;
-    }
-    if (filterOptions?.provinceCode) {
-      where.provinceCode = filterOptions.provinceCode;
-    }
-    if (filterOptions?.cityCode) {
-      where.cityCode = filterOptions.cityCode;
-    }
-    if (filterOptions?.districtCode) {
-      where.districtCode = filterOptions.districtCode;
-    }
+    const where = this.buildWhere(userId, filterOptions);
 
     const { skip, take, order } = buildFindOptions({
       paginationOptions,
@@ -111,17 +93,48 @@ export class AddressRelationalRepository implements AddressRepository {
     return AddressMapper.toDomain(updatedEntity);
   }
 
-  async clearDefaultByUserId(userId: Address['userId']): Promise<void> {
-    await this.addressRepository.update({ userId: Number(userId), isDefault: true }, { isDefault: false });
+  async markDefault(id: Address['id'], userId: Address['userId']): Promise<void> {
+    // 单条语句同时设置与清除，并发设置默认地址时也只会留下一条
+    await this.addressRepository.query(
+      `UPDATE "address" SET "isDefault" = ("id" = $1) WHERE "userId" = $2 AND "deletedAt" IS NULL`,
+      [Number(id), Number(userId)],
+    );
   }
 
   async remove(id: Address['id']): Promise<void> {
     await this.addressRepository.softDelete(id);
   }
 
-  async countByUserId(userId: Address['userId']): Promise<number> {
+  async countByUserId(userId: Address['userId'], filterOptions?: FilterAddressDto | null): Promise<number> {
     return this.addressRepository.count({
-      where: { userId: Number(userId) },
+      where: this.buildWhere(userId, filterOptions),
     });
+  }
+
+  private buildWhere(
+    userId: Address['userId'],
+    filterOptions?: FilterAddressDto | null,
+  ): FindOptionsWhere<AddressEntity> {
+    const where: FindOptionsWhere<AddressEntity> = {
+      userId: Number(userId),
+    };
+
+    if (filterOptions?.province) {
+      where.province = filterOptions.province;
+    }
+    if (filterOptions?.city) {
+      where.city = filterOptions.city;
+    }
+    if (filterOptions?.provinceCode) {
+      where.provinceCode = filterOptions.provinceCode;
+    }
+    if (filterOptions?.cityCode) {
+      where.cityCode = filterOptions.cityCode;
+    }
+    if (filterOptions?.districtCode) {
+      where.districtCode = filterOptions.districtCode;
+    }
+
+    return where;
   }
 }

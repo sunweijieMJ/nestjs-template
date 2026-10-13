@@ -63,9 +63,21 @@ export class FeedbackRelationalRepository implements FeedbackRepository {
     return entities.map(FeedbackMapper.toDomain);
   }
 
-  async countByUserId(userId: Feedback['userId']): Promise<number> {
-    return this.feedbackRepository.count({
-      where: { userId: Number(userId) },
-    });
+  async countByUserId(
+    userId: Feedback['userId'],
+    filters: { type?: FeedbackType; status?: FeedbackStatus } = {},
+  ): Promise<number> {
+    const where: FindOptionsWhere<FeedbackEntity> = {
+      userId: Number(userId),
+    };
+
+    if (filters.type) {
+      where.type = filters.type;
+    }
+    if (filters.status) {
+      where.status = filters.status;
+    }
+
+    return this.feedbackRepository.count({ where });
   }
 }

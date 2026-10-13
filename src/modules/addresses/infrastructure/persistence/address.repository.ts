@@ -27,9 +27,10 @@ export abstract class AddressRepository {
 
   abstract update(id: Address['id'], payload: DeepPartial<Address>): Promise<Address | null>;
 
-  abstract clearDefaultByUserId(userId: Address['userId']): Promise<void>;
+  /** 将指定地址设为该用户唯一的默认地址 */
+  abstract markDefault(id: Address['id'], userId: Address['userId']): Promise<void>;
 
   abstract remove(id: Address['id']): Promise<void>;
 
-  abstract countByUserId(userId: Address['userId']): Promise<number>;
+  abstract countByUserId(userId: Address['userId'], filterOptions?: FilterAddressDto | null): Promise<number>;
 }

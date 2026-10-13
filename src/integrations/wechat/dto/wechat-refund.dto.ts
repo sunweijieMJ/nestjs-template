@@ -27,14 +27,6 @@ export class WechatRefundDto {
   refundAmount: number;
 
   @ApiProperty({
-    description: '订单总金额（分）',
-    example: 9900,
-  })
-  @IsNumber()
-  @Min(1)
-  totalAmount: number;
-
-  @ApiProperty({
     description: '退款原因',
     example: '用户申请退款',
     required: false,

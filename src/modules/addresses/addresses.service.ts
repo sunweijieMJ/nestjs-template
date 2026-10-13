@@ -119,11 +119,8 @@ export class AddressesService {
       district: createAddressDto.district,
     });
 
-    // If this is the first address or marked as default, clear other defaults
+    // 第一个地址或标记为默认时，创建后设为唯一默认地址
     const isDefault = createAddressDto.isDefault ?? count === 0;
-    if (isDefault) {
-      await this.addressRepository.clearDefaultByUserId(userId);
-    }
 
     const address = await this.addressRepository.create({
       userId,
@@ -136,8 +133,12 @@ export class AddressesService {
       city: regionData.city,
       district: regionData.district,
       address: createAddressDto.address,
-      isDefault,
+      isDefault: false,
     });
+    if (isDefault) {
+      await this.addressRepository.markDefault(address.id, userId);
+      address.isDefault = true;
+    }
 
     this.logger.log(`Address created successfully: ${address.id}`);
     return address;
@@ -180,7 +181,7 @@ export class AddressesService {
         sortOptions,
         paginationOptions,
       }),
-      this.addressRepository.countByUserId(userId),
+      this.addressRepository.countByUserId(userId, filterOptions),
     ]);
     return { data, total };
   }
@@ -244,16 +245,14 @@ export class AddressesService {
       }
     }
 
-    // If setting as default, clear other defaults
-    if (updateAddressDto.isDefault) {
-      await this.addressRepository.clearDefaultByUserId(userId);
-    }
-
     const updatedAddress = await this.addressRepository.update(id, updateData);
     if (!updatedAddress) {
       throw new NotFoundException({
         error: 'addressNotFound',
       });
+    }
+    if (updateAddressDto.isDefault) {
+      await this.addressRepository.markDefault(id, userId);
     }
 
     this.logger.log(`Address updated successfully: ${id}`);
@@ -272,11 +271,9 @@ export class AddressesService {
       });
     }
 
-    // Clear other defaults
-    await this.addressRepository.clearDefaultByUserId(userId);
+    await this.addressRepository.markDefault(id, userId);
 
-    // Set this as default
-    const updatedAddress = await this.addressRepository.update(id, { isDefault: true });
+    const updatedAddress = await this.addressRepository.findByIdAndUserId(id, userId);
     if (!updatedAddress) {
       throw new NotFoundException({
         error: 'addressNotFound',

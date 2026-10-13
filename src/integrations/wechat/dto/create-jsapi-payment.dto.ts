@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber, Min } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
 
 export class CreateWechatJsapiPaymentDto {
   @ApiProperty({
@@ -11,7 +11,7 @@ export class CreateWechatJsapiPaymentDto {
   openid: string;
 
   @ApiProperty({
-    description: '商户订单号',
+    description: '商户订单号（即订单的 orderNo），支付金额取订单金额',
     example: 'ORDER_20260107_123456',
   })
   @IsString()
@@ -25,12 +25,4 @@ export class CreateWechatJsapiPaymentDto {
   @IsString()
   @IsNotEmpty()
   description: string;
-
-  @ApiProperty({
-    description: '订单金额（分）',
-    example: 9900,
-  })
-  @IsNumber()
-  @Min(1)
-  amount: number;
 }

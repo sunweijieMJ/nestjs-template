@@ -13,12 +13,12 @@
 FROM node:22.21.1-alpine AS base
 
 RUN apk add --no-cache bash
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.23.0 --activate
 
 WORKDIR /app
 
 # Copy package files for dependency installation
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # ============================================================
 # Stage 2: Dependencies - Install all dependencies
@@ -55,7 +55,7 @@ RUN pnpm run build
 # ============================================================
 FROM base AS prod-deps
 
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Install only production dependencies (ignore scripts to skip husky)
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts

@@ -8,9 +8,10 @@ import { OrNeverType } from '../../../common/types/or-never.type';
 import { JwtPayloadType } from './types/jwt-payload.type';
 import { AllConfigType } from '../../../config/config.type';
 import { UsersService } from '../../users/users.service';
+import { SessionService } from '../../session/session.service';
 import { isUserStatusAllowedForAuth } from '../../../common/utils/status.util';
 
-/** JWT 用户校验缓存 TTL：30 秒（平衡安全性与性能） */
+/** JWT 会话与用户校验缓存 TTL：30 秒（平衡安全性与性能） */
 const JWT_USER_CACHE_TTL_MS = 30_000;
 
 @Injectable()
@@ -18,6 +19,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     configService: ConfigService<AllConfigType>,
     private readonly usersService: UsersService,
+    private readonly sessionService: SessionService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {
     super({
@@ -27,12 +29,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   public async validate(payload: JwtPayloadType): Promise<OrNeverType<JwtPayloadType>> {
-    if (!payload.id) {
+    if (!payload.id || !payload.sessionId) {
       throw new UnauthorizedException();
     }
 
-    // 先查缓存，避免每次请求都查库
-    const cacheKey = `jwt:user:${payload.id}`;
+    // 先查缓存，避免每次请求都查库；会话被删除后最多 30 秒内失效
+    const cacheKey = `jwt:session:${payload.sessionId}`;
     const cached = await this.cacheManager.get<{ statusId?: number }>(cacheKey);
 
     if (cached) {
@@ -42,7 +44,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       return payload;
     }
 
-    // 缓存未命中，查库
+    // 缓存未命中，查库：会话需存在且属于该用户
+    const session = await this.sessionService.findById(payload.sessionId);
+    if (!session || String(session.user?.id) !== String(payload.id)) {
+      throw new UnauthorizedException('Session expired');
+    }
+
     const user = await this.usersService.findById(payload.id);
 
     if (!user) {

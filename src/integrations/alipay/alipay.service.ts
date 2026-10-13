@@ -1,4 +1,4 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Injectable, Inject, Logger, HttpStatus, UnprocessableEntityException } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import alipayConfig from './config/alipay.config';
 import * as crypto from 'crypto';
@@ -155,7 +155,7 @@ export class AlipayService {
       } & AlipayCommonResponse;
     }>(params);
 
-    return response.alipay_trade_query_response;
+    return this.assertSuccess(response.alipay_trade_query_response);
   }
 
   /**
@@ -180,13 +180,18 @@ export class AlipayService {
       } & AlipayCommonResponse;
     }>(params);
 
-    return response.alipay_trade_close_response;
+    return this.assertSuccess(response.alipay_trade_close_response);
   }
 
   /**
    * 退款
    */
-  async refund(params: { outTradeNo: string; refundAmount: string; refundReason?: string }): Promise<{
+  async refund(params: {
+    outTradeNo: string;
+    refundAmount: string;
+    refundReason?: string;
+    outRequestNo: string;
+  }): Promise<{
     trade_no: string;
     out_trade_no: string;
     refund_fee: string;
@@ -195,6 +200,7 @@ export class AlipayService {
       out_trade_no: params.outTradeNo,
       refund_amount: params.refundAmount,
       refund_reason: params.refundReason,
+      out_request_no: params.outRequestNo,
     };
 
     const requestParams = this.buildCommonParams('alipay.trade.refund', bizContent);
@@ -209,7 +215,7 @@ export class AlipayService {
       } & AlipayCommonResponse;
     }>(requestParams);
 
-    return response.alipay_trade_refund_response;
+    return this.assertSuccess(response.alipay_trade_refund_response);
   }
 
   /**
@@ -299,6 +305,22 @@ export class AlipayService {
   /**
    * 发送 HTTP 请求到支付宝网关
    */
+  /**
+   * 业务返回码不是 10000 时抛出 422
+   */
+  private assertSuccess<T extends AlipayCommonResponse>(response: T): T {
+    if (response.code !== '10000') {
+      this.logger.error(`Alipay business error: ${response.code} ${response.sub_code ?? ''} ${response.sub_msg ?? ''}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          alipay: response.sub_msg ?? response.msg,
+        },
+      });
+    }
+    return response;
+  }
+
   private async sendRequest<T>(params: Record<string, string>): Promise<T> {
     const queryString = new URLSearchParams(params).toString();
     const url = `${this.config.gateway}?${queryString}`;

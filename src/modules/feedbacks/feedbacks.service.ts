@@ -62,7 +62,7 @@ export class FeedbacksService {
         status,
         paginationOptions,
       }),
-      this.feedbackRepository.countByUserId(userId),
+      this.feedbackRepository.countByUserId(userId, { type, status }),
     ]);
     return { data, total };
   }

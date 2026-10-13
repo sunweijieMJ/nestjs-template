@@ -4,6 +4,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { AppConfigService } from './config.service';
 import { UpsertConfigDto } from './dto/upsert-config.dto';
 import { Config } from './domain/config';
+import { Roles } from '../../common/enums/roles/roles.decorator';
+import { RoleEnum } from '../../common/enums/roles/roles.enum';
+import { RolesGuard } from '../../common/enums/roles/roles.guard';
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
@@ -24,7 +27,9 @@ export class AppConfigController {
     return this.appConfigService.findByKey(key);
   }
 
-  @ApiOperation({ operationId: 'upsertConfig', summary: '写入配置' })
+  @ApiOperation({ operationId: 'upsertConfig', summary: '写入配置（管理员）' })
+  @Roles(RoleEnum.admin)
+  @UseGuards(RolesGuard)
   @ApiOkResponse({ type: Config })
   @ApiParam({ name: 'key', type: String, example: 'app.theme' })
   @Put(':key')

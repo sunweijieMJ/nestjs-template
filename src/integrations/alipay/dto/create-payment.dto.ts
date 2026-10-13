@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, Matches } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreatePaymentDto {
   @ApiProperty({
-    description: '商户订单号（唯一）',
+    description: '商户订单号（即订单的 orderNo），支付金额取订单金额',
     example: 'ORDER_20260107_123456',
   })
   @IsString()
@@ -17,17 +17,6 @@ export class CreatePaymentDto {
   @IsString()
   @IsNotEmpty()
   subject: string;
-
-  @ApiProperty({
-    description: '订单金额（元）',
-    example: '99.00',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @Matches(/^\d+(\.\d{1,2})?$/, {
-    message: '金额格式不正确，应为数字，最多两位小数',
-  })
-  totalAmount: string;
 
   @ApiProperty({
     description: '订单描述',

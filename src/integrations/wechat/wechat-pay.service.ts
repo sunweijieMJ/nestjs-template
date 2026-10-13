@@ -1,8 +1,8 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Injectable, Inject, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import wechatConfig from './config/wechat.config';
 import * as crypto from 'crypto';
-import { formatPrivateKey, generateNonceStr } from '../../common/utils/crypto.utils';
+import { formatPrivateKey, formatPublicKey, generateNonceStr } from '../../common/utils/crypto.utils';
 import { fetchWithRetry } from '../../common/utils/http.utils';
 
 interface WechatPaymentParams {
@@ -19,6 +19,28 @@ interface WechatRefundParams {
   totalAmount: number;
   reason?: string;
 }
+
+/** 回调与平台证书中的加密数据（AES-256-GCM） */
+export interface WechatEncryptedResource {
+  ciphertext: string;
+  nonce: string;
+  associated_data?: string;
+}
+
+/** 支付成功回调解密后的交易信息 */
+export interface WechatTransactionResource {
+  mchid: string;
+  out_trade_no: string;
+  transaction_id: string;
+  trade_state: string;
+  amount: { total: number; payer_total: number };
+}
+
+/** 微信支付公钥 ID 的前缀，回调序列号以此开头时使用公钥验签 */
+const PUBLIC_KEY_ID_PREFIX = 'PUB_KEY_ID_';
+
+/** 平台证书刷新的最小间隔，避免伪造的证书序列号触发频繁下载 */
+const CERTIFICATE_REFRESH_INTERVAL_MS = 60_000;
 
 interface WechatPayResponse {
   prepay_id: string;
@@ -40,14 +62,80 @@ interface WechatOrderResponse {
  * 微信支付服务 (API V3)
  */
 @Injectable()
-export class WechatPayService {
+export class WechatPayService implements OnModuleInit {
   private readonly logger = new Logger(WechatPayService.name);
   private platformCertificates: Map<string, string> = new Map();
+  private lastCertificateRefresh = 0;
 
   constructor(
     @Inject(wechatConfig.KEY)
     private readonly config: ConfigType<typeof wechatConfig>,
   ) {}
+
+  /**
+   * 加载微信支付公钥，并在后台下载平台证书，两种验签方式并存
+   */
+  onModuleInit(): void {
+    const { publicKeyId, publicKey } = this.config.pay;
+    if (publicKeyId && publicKey) {
+      this.platformCertificates.set(publicKeyId, formatPublicKey(publicKey));
+    }
+
+    if (this.canDownloadCertificates()) {
+      void this.refreshPlatformCertificates();
+    }
+  }
+
+  /**
+   * 下载平台证书并缓存其公钥，失败时只记录日志
+   */
+  async refreshPlatformCertificates(): Promise<void> {
+    this.lastCertificateRefresh = Date.now();
+    try {
+      const result = await this.request<{
+        data: { serial_no: string; encrypt_certificate: WechatEncryptedResource }[];
+      }>('GET', 'https://api.mch.weixin.qq.com/v3/certificates');
+
+      for (const item of result.data) {
+        const certificate = this.decryptResource(item.encrypt_certificate);
+        const publicKey = new crypto.X509Certificate(certificate).publicKey.export({ type: 'spki', format: 'pem' });
+        this.platformCertificates.set(item.serial_no, publicKey.toString());
+      }
+      this.logger.log(`Loaded ${result.data.length} WeChat Pay platform certificates`);
+    } catch (error) {
+      this.logger.warn(`Failed to download WeChat Pay platform certificates: ${error}`);
+    }
+  }
+
+  /**
+   * 解密回调或平台证书中的加密数据
+   */
+  decryptResource(resource: WechatEncryptedResource): string {
+    const data = Buffer.from(resource.ciphertext, 'base64');
+    const authTag = data.subarray(data.length - 16);
+    const encrypted = data.subarray(0, data.length - 16);
+
+    const decipher = crypto.createDecipheriv(
+      'aes-256-gcm',
+      Buffer.from(this.config.pay.apiV3Key, 'utf8'),
+      resource.nonce,
+    );
+    decipher.setAuthTag(authTag);
+    decipher.setAAD(Buffer.from(resource.associated_data ?? '', 'utf8'));
+
+    return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8');
+  }
+
+  /**
+   * 解密支付回调的交易信息，商户号不匹配时抛错
+   */
+  parseTransactionResource(resource: WechatEncryptedResource): WechatTransactionResource {
+    const transaction = JSON.parse(this.decryptResource(resource)) as WechatTransactionResource;
+    if (transaction.mchid !== this.config.pay.mchId) {
+      throw new Error(`Unexpected mchid in notification: ${transaction.mchid}`);
+    }
+    return transaction;
+  }
 
   /**
    * JSAPI 支付（小程序/公众号）
@@ -118,7 +206,7 @@ export class WechatPayService {
    * 查询订单
    */
   async queryOrder(outTradeNo: string): Promise<WechatOrderResponse> {
-    const url = `https://api.mch.weixin.qq.com/v3/pay/transactions/out-trade-no/${outTradeNo}?mchid=${this.config.pay.mchId}`;
+    const url = `https://api.mch.weixin.qq.com/v3/pay/transactions/out-trade-no/${encodeURIComponent(outTradeNo)}?mchid=${encodeURIComponent(this.config.pay.mchId)}`;
     return this.request('GET', url);
   }
 
@@ -151,7 +239,10 @@ export class WechatPayService {
   /**
    * 验证支付回调签名
    */
-  verifyNotify(headers: Record<string, string>, body: string): { isValid: boolean; data?: Record<string, unknown> } {
+  async verifyNotify(
+    headers: Record<string, string>,
+    body: string,
+  ): Promise<{ isValid: boolean; data?: Record<string, unknown> }> {
     const signature = headers['wechatpay-signature'];
     const timestamp = headers['wechatpay-timestamp'];
     const nonce = headers['wechatpay-nonce'];
@@ -170,21 +261,22 @@ export class WechatPayService {
       return { isValid: false };
     }
 
-    // 获取平台证书公钥
-    const publicKey = this.platformCertificates.get(serial);
+    // 获取平台证书公钥，未命中时按间隔重新下载平台证书
+    let publicKey = this.platformCertificates.get(serial);
+    if (
+      !publicKey &&
+      !serial.startsWith(PUBLIC_KEY_ID_PREFIX) &&
+      this.canDownloadCertificates() &&
+      Date.now() - this.lastCertificateRefresh > CERTIFICATE_REFRESH_INTERVAL_MS
+    ) {
+      await this.refreshPlatformCertificates();
+      publicKey = this.platformCertificates.get(serial);
+    }
     if (!publicKey) {
       this.logger.error(
         `Platform certificate not found for serial: ${serial}. Please download and cache platform certificates first.`,
       );
-      // 在生产环境中，这里应该返回 false
-      // 但为了开发调试，我们记录警告并继续
-      this.logger.warn('Skipping signature verification - certificate not configured');
-      try {
-        const data = JSON.parse(body);
-        return { isValid: true, data };
-      } catch {
-        return { isValid: false };
-      }
+      return { isValid: false };
     }
 
     // 构建验签字符串
@@ -211,11 +303,15 @@ export class WechatPayService {
   }
 
   /**
-   * 设置平台证书（用于验签）
-   * 实际项目中应该定期从微信支付 API 下载并更新证书
+   * 设置平台证书公钥（用于验签）
    */
   setPlatformCertificate(serialNo: string, publicKey: string): void {
     this.platformCertificates.set(serialNo, publicKey);
+  }
+
+  private canDownloadCertificates(): boolean {
+    const { mchId, apiV3Key, privateKey, serialNo } = this.config.pay;
+    return Boolean(mchId && apiV3Key && privateKey && serialNo);
   }
 
   /**

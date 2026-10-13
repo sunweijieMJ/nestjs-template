@@ -9,6 +9,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import ms from 'ms';
+import { createHash } from 'crypto';
 import { JwtService, TokenExpiredError, JsonWebTokenError } from '@nestjs/jwt';
 import { DataSource } from 'typeorm';
 import { hashPassword, comparePassword } from '../../common/utils/crypto.utils';
@@ -40,6 +41,14 @@ import { NotificationsService } from '../../modules/notifications/notifications.
 import { verifySmsCode, validateUserStatusForAuth } from './helpers/auth-validation.helper';
 import { SessionEntity } from '../session/infrastructure/persistence/relational/entities/session.entity';
 import { UserEntity } from '../users/infrastructure/persistence/relational/entities/user.entity';
+
+/** 密码哈希的指纹，写入重置密码令牌，密码变更后令牌失效 */
+function passwordFingerprint(password?: string | null): string {
+  return createHash('sha256')
+    .update(password ?? '')
+    .digest('hex')
+    .slice(0, 16);
+}
 
 @Injectable()
 export class AuthService {
@@ -336,6 +345,7 @@ export class AuthService {
     const hash = await this.jwtService.signAsync(
       {
         forgotUserId: user.id,
+        pwd: passwordFingerprint(user.password),
       },
       {
         secret: this.configService.getOrThrow('auth.forgotSecret', {
@@ -365,10 +375,12 @@ export class AuthService {
   async resetPassword(hash: string, password: string): Promise<void> {
     this.logger.log('Password reset attempt');
     let userId: User['id'];
+    let tokenPasswordFingerprint: string | undefined;
 
     try {
       const jwtData = await this.jwtService.verifyAsync<{
         forgotUserId: User['id'];
+        pwd?: string;
       }>(hash, {
         secret: this.configService.getOrThrow('auth.forgotSecret', {
           infer: true,
@@ -376,6 +388,7 @@ export class AuthService {
       });
 
       userId = jwtData.forgotUserId;
+      tokenPasswordFingerprint = jwtData.pwd;
     } catch (error) {
       if (error instanceof TokenExpiredError) {
         this.logger.warn('Password reset failed - token expired');
@@ -410,6 +423,17 @@ export class AuthService {
       });
     }
 
+    // 密码已变更（链接已使用过）时令牌失效
+    if (tokenPasswordFingerprint !== passwordFingerprint(user.password)) {
+      this.logger.warn(`Password reset failed - token already used: ${userId}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          hash: 'invalidHash',
+        },
+      });
+    }
+
     // Encrypt password before updating
     const hashedPassword = await hashPassword(password);
 
@@ -438,8 +462,8 @@ export class AuthService {
     this.logger.log(`Phone password reset attempt for: ${maskPhone(phone)}`);
 
     // 验证短信验证码
-    const isValidCode = await this.smsService.verifyCode(phone, code, SmsCodeType.RESET_PASSWORD);
-    if (!isValidCode) {
+    const verifyResult = await this.smsService.verifyCode(phone, code, SmsCodeType.RESET_PASSWORD);
+    if (!verifyResult.success) {
       this.logger.warn(`Phone password reset failed - invalid code for: ${maskPhone(phone)}`);
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
@@ -600,7 +624,8 @@ export class AuthService {
     this.logger.debug(`Token refresh attempt for session: ${data.sessionId}`);
     const session = await this.sessionService.findById(data.sessionId);
 
-    if (!session) {
+    // 用户已注销时会话关联的 user 为空
+    if (!session?.user) {
       this.logger.warn(`Token refresh failed - session not found: ${data.sessionId}`);
       throw new UnauthorizedException();
     }
@@ -650,6 +675,7 @@ export class AuthService {
   async softDelete(user: Pick<User, 'id'>): Promise<void> {
     this.logger.log(`User account deletion requested: ${user.id}`);
     await this.usersService.remove(user.id);
+    await this.sessionService.deleteByUserId({ userId: user.id });
     this.logger.log(`User account deleted: ${user.id}`);
   }
 
@@ -670,6 +696,16 @@ export class AuthService {
    */
   async sendCode(phone: string, type: SmsCodeType = SmsCodeType.LOGIN): Promise<void> {
     this.logger.log(`Send SMS code request for phone: ${maskPhone(phone)}, type: ${type}`);
+
+    // 尚无校验 change_phone 验证码的业务，不对外发送
+    if (type === SmsCodeType.CHANGE_PHONE) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          type: 'unsupportedCodeType',
+        },
+      });
+    }
 
     // For register type, check if phone already exists
     if (type === SmsCodeType.REGISTER) {

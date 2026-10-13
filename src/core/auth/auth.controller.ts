@@ -145,6 +145,7 @@ export class AuthController {
   })
   @Put('me')
   @UseGuards(AuthGuard('jwt'))
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ operationId: 'updateCurrentUser', summary: '更新当前用户信息' })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
