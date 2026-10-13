@@ -39,7 +39,9 @@ import { maskEmail, maskPhone } from '../../common/utils/sanitize.utils';
 import { TokenService } from './services/token.service';
 import { NotificationsService } from '../../modules/notifications/notifications.service';
 import { verifySmsCode, validateUserStatusForAuth } from './helpers/auth-validation.helper';
+// eslint-disable-next-line local/no-cross-module-persistence -- 事务内通过 EntityManager 操作实体
 import { SessionEntity } from '../session/infrastructure/persistence/relational/entities/session.entity';
+// eslint-disable-next-line local/no-cross-module-persistence -- 事务内通过 EntityManager 操作实体
 import { UserEntity } from '../users/infrastructure/persistence/relational/entities/user.entity';
 
 /** 密码哈希的指纹，写入重置密码令牌，密码变更后令牌失效 */

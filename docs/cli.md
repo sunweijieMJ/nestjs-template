@@ -15,18 +15,18 @@
 
 ## Generate resource
 
-Generate resource with the following commands:
+Generate resource with the following commands. The resource is created in `src/modules/<resource-names>/` (pluralized and kebab-cased, e.g. `Category` → `src/modules/categories/`) and registered in `src/app.module.ts`.
 
 ### For relational database (PostgreSQL + TypeORM)
 
 ```bash
-npm run generate:resource:relational -- --name ResourceName
+pnpm generate:resource:relational --name ResourceName
 ```
 
 Example:
 
 ```bash
-npm run generate:resource:relational -- --name Category
+pnpm generate:resource:relational --name Category
 ```
 
 #### Video guideline for relational database (PostgreSQL + TypeORM)
@@ -38,7 +38,7 @@ npm run generate:resource:relational -- --name Category
 ### Property for relational database (PostgreSQL + TypeORM)
 
 ```bash
-npm run add:property:to-relational
+pnpm add:property:to-relational
 ```
 
 #### Video guideline how to add property for relational database (PostgreSQL + TypeORM)

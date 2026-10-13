@@ -3,6 +3,7 @@ import tseslint from 'typescript-eslint';
 import eslintConfigPrettier from 'eslint-config-prettier/flat';
 import checkFile from 'eslint-plugin-check-file';
 import globals from 'globals';
+import noCrossModulePersistence from './scripts/eslint-rules/no-cross-module-persistence.mjs';
 
 const persistenceImpl = {
   group: [
@@ -151,6 +152,14 @@ export default defineConfig(
     files: ['src/core/**/*.service.ts', 'src/modules/**/*.service.ts'],
     rules: {
       'no-restricted-imports': ['error', { patterns: [persistenceImpl] }],
+    },
+  },
+  {
+    files: ['src/**/*.ts'],
+    ignores: ['src/infrastructure/database/**'],
+    plugins: { local: { rules: { 'no-cross-module-persistence': noCrossModulePersistence } } },
+    rules: {
+      'local/no-cross-module-persistence': 'error',
     },
   },
 

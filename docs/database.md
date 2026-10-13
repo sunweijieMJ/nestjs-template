@@ -30,10 +30,10 @@ This boilerplate uses PostgreSQL with TypeORM as the database solution. TypeORM 
 1. Create entity file with extension `.entity.ts`. For example `post.entity.ts`:
 
    ```ts
-   // /src/posts/infrastructure/persistence/relational/entities/post.entity.ts
+   // /src/modules/posts/infrastructure/persistence/relational/entities/post.entity.ts
 
    import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
-   import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
+   import { EntityRelationalHelper } from '../../../../../../common/relational-entity-helper';
 
    @Entity()
    export class Post extends EntityRelationalHelper {
@@ -53,27 +53,27 @@ This boilerplate uses PostgreSQL with TypeORM as the database solution. TypeORM 
 1. Next, generate migration file:
 
    ```bash
-   npm run migration:generate -- src/database/migrations/CreatePostTable
+   pnpm migration:generate src/infrastructure/database/migrations/CreatePostTable
    ```
 
-1. Apply this migration to database via [npm run migration:run](#run-migration).
+1. Apply this migration to database via [pnpm migration:run](#run-migration).
 
 ### Run migration
 
 ```bash
-npm run migration:run
+pnpm migration:run
 ```
 
 ### Revert migration
 
 ```bash
-npm run migration:revert
+pnpm migration:revert
 ```
 
 ### Drop all tables in database
 
 ```bash
-npm run schema:drop
+pnpm schema:drop
 ```
 
 ---
@@ -82,15 +82,15 @@ npm run schema:drop
 
 ### Creating seeds (TypeORM)
 
-1. Create seed file with `npm run seed:create:relational -- --name Post`. Where `Post` is name of entity.
-1. Go to `src/database/seeds/relational/post/post-seed.service.ts`.
+1. Create seed file with `pnpm seed:create:relational --name Post`. Where `Post` is name of entity.
+1. Go to `src/infrastructure/database/seeds/relational/post/post-seed.service.ts`.
 1. In `run` method extend your logic.
-1. Run [npm run seed:run:relational](#run-seed-typeorm)
+1. Run [pnpm seed:run:relational](#run-seed-typeorm)
 
 ### Run seed (TypeORM)
 
 ```bash
-npm run seed:run:relational
+pnpm seed:run:relational
 ```
 
 ### Factory and Faker (TypeORM)
@@ -98,21 +98,21 @@ npm run seed:run:relational
 1. Install faker:
 
    ```bash
-   npm i --save-dev @faker-js/faker
+   pnpm add -D @faker-js/faker
    ```
 
-1. Create `src/database/seeds/relational/user/user.factory.ts`:
+1. Create `src/infrastructure/database/seeds/relational/user/user.factory.ts`:
 
    ```ts
    import { faker } from '@faker-js/faker';
-   import { RoleEnum } from '../../../../roles/roles.enum';
-   import { StatusEnum } from '../../../../statuses/statuses.enum';
+   import { RoleEnum } from '../../../../../common/enums/roles/roles.enum';
+   import { StatusEnum } from '../../../../../common/enums/statuses/statuses.enum';
    import { Injectable } from '@nestjs/common';
    import { InjectRepository } from '@nestjs/typeorm';
    import { Repository } from 'typeorm';
-   import { RoleEntity } from '../../../../roles/infrastructure/persistence/relational/entities/role.entity';
-   import { UserEntity } from '../../../../users/infrastructure/persistence/relational/entities/user.entity';
-   import { StatusEntity } from '../../../../statuses/infrastructure/persistence/relational/entities/status.entity';
+   import { RoleEntity } from '../../../../../common/enums/roles/role.entity';
+   import { UserEntity } from '../../../../../core/users/infrastructure/persistence/relational/entities/user.entity';
+   import { StatusEntity } from '../../../../../common/enums/statuses/status.entity';
 
    @Injectable()
    export class UserFactory {
@@ -147,7 +147,7 @@ npm run seed:run:relational
    }
    ```
 
-1. Make changes in `src/database/seeds/relational/user/user-seed.service.ts`:
+1. Make changes in `src/infrastructure/database/seeds/relational/user/user-seed.service.ts`:
 
    ```ts
    // Some code here...
@@ -173,7 +173,7 @@ npm run seed:run:relational
    }
    ```
 
-1. Make changes in `src/database/seeds/relational/user/user-seed.module.ts`:
+1. Make changes in `src/infrastructure/database/seeds/relational/user/user-seed.module.ts`:
 
    ```ts
    import { Module } from '@nestjs/common';
@@ -182,9 +182,9 @@ npm run seed:run:relational
    import { UserSeedService } from './user-seed.service';
    import { UserFactory } from './user.factory';
 
-   import { UserEntity } from '../../../../users/infrastructure/persistence/relational/entities/user.entity';
-   import { RoleEntity } from '../../../../roles/infrastructure/persistence/relational/entities/role.entity';
-   import { StatusEntity } from '../../../../statuses/infrastructure/persistence/relational/entities/status.entity';
+   import { UserEntity } from '../../../../../core/users/infrastructure/persistence/relational/entities/user.entity';
+   import { RoleEntity } from '../../../../../common/enums/roles/role.entity';
+   import { StatusEntity } from '../../../../../common/enums/statuses/status.entity';
 
    @Module({
      imports: [TypeOrmModule.forFeature([UserEntity, Role, Status])],
@@ -197,7 +197,7 @@ npm run seed:run:relational
 1. Run seed:
 
    ```bash
-   npm run seed:run
+   pnpm seed:run:relational
    ```
 
 ---
@@ -278,31 +278,31 @@ Once your services are up and running, you're almost halfway through.
 Now install the MySQL client:
 
 ```bash
-npm i mysql2 --save
+pnpm add mysql2
 ```
 
 **Delete the existing migration file and generate a new one with the following script:**
 
 ```bash
-npm run migration:generate -- src/database/migrations/newMigration --pretty=true
+pnpm migration:generate src/infrastructure/database/migrations/newMigration --pretty=true
 ```
 
 Run migrations:
 
 ```bash
-npm run migration:run
+pnpm migration:run
 ```
 
 Run seeds:
 
 ```bash
-npm run seed:run:relational
+pnpm seed:run:relational
 ```
 
 Run the app in dev mode:
 
 ```bash
-npm run start:dev
+pnpm start:dev
 ```
 
 Open <http://localhost:3000>

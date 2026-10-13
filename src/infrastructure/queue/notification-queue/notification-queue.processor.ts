@@ -6,7 +6,9 @@ import { MailerService } from '../../../integrations/mail/mailer.service';
 import { AliyunSmsProvider } from '../../../integrations/sms/providers/aliyun-sms.provider';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+// eslint-disable-next-line local/no-cross-module-persistence -- 队列处理器直接注入实体仓储
 import { NotificationEntity } from '../../../modules/notifications/infrastructure/persistence/relational/entities/notification.entity';
+// eslint-disable-next-line local/no-cross-module-persistence -- 队列处理器直接注入实体仓储
 import { UserEntity } from '../../../core/users/infrastructure/persistence/relational/entities/user.entity';
 
 interface EmailJobData {

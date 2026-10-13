@@ -14,37 +14,37 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @Transform(lowerCaseTransformer)
   @IsOptional()
   @IsEmail()
-  email?: string | null;
+  override email?: string | null;
 
   @ApiPropertyOptional()
   @IsOptional()
   @MinLength(8)
   @MaxLength(128)
-  password?: string;
+  override password?: string;
 
-  provider?: string;
+  override provider?: string;
 
   @ApiPropertyOptional({ example: 'John', type: String })
   @Transform(sanitizeTransformer)
   @IsOptional()
-  firstName?: string | null;
+  override firstName?: string | null;
 
   @ApiPropertyOptional({ example: 'Doe', type: String })
   @Transform(sanitizeTransformer)
   @IsOptional()
-  lastName?: string | null;
+  override lastName?: string | null;
 
   @ApiPropertyOptional({ type: () => FileDto })
   @IsOptional()
-  photo?: FileDto | null;
+  override photo?: FileDto | null;
 
   @ApiPropertyOptional({ type: () => RoleDto })
   @IsOptional()
   @Type(() => RoleDto)
-  role?: RoleDto | null;
+  override role?: RoleDto | null;
 
   @ApiPropertyOptional({ type: () => StatusDto })
   @IsOptional()
   @Type(() => StatusDto)
-  status?: StatusDto;
+  override status?: StatusDto;
 }
