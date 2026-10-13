@@ -1,5 +1,5 @@
 ---
-to: src/<%= h.inflection.transform(name, ['pluralize', 'underscore', 'dasherize']) %>/<%= h.inflection.transform(name, ['pluralize', 'underscore', 'dasherize']) %>.service.ts
+to: src/modules/<%= h.inflection.transform(name, ['pluralize', 'underscore', 'dasherize']) %>/<%= h.inflection.transform(name, ['pluralize', 'underscore', 'dasherize']) %>.service.ts
 ---
 import { 
   // common
@@ -8,7 +8,7 @@ import {
 import { Create<%= name %>Dto } from './dto/create-<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>.dto';
 import { Update<%= name %>Dto } from './dto/update-<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>.dto';
 import { <%= name %>Repository } from './infrastructure/persistence/<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>.repository';
-import { IPaginationOptions } from '../utils/types/pagination-options';
+import { IPaginationOptions } from '../../common/types/pagination-options';
 import { <%= name %> } from './domain/<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>';
 
 @Injectable()
@@ -18,10 +18,8 @@ export class <%= h.inflection.transform(name, ['pluralize']) %>Service {
     private readonly <%= h.inflection.camelize(name, true) %>Repository: <%= name %>Repository,
   ) {}
 
-  async create(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    create<%= name %>Dto: Create<%= name %>Dto
-  ) {
+  async create(create<%= name %>Dto: Create<%= name %>Dto) {
+    void create<%= name %>Dto;
     // Do not remove comment below.
     // <creating-property />
 
@@ -52,11 +50,8 @@ export class <%= h.inflection.transform(name, ['pluralize']) %>Service {
     return this.<%= h.inflection.camelize(name, true) %>Repository.findByIds(ids);
   }
 
-  async update(
-    id: <%= name %>['id'],
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    update<%= name %>Dto: Update<%= name %>Dto,
-  ) {
+  async update(id: <%= name %>['id'], update<%= name %>Dto: Update<%= name %>Dto) {
+    void update<%= name %>Dto;
     // Do not remove comment below.
     // <updating-property />
 

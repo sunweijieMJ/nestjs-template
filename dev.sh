@@ -118,7 +118,7 @@ start_services() {
   # 4. 检查是否需要运行迁移
   echo ""
   echo "[3/4] 检查数据库状态..."
-  npm run migration:run || echo "迁移已是最新状态"
+  pnpm migration:run || echo "迁移已是最新状态"
 
   # 5. 启动开发服务器
   echo ""
@@ -140,7 +140,7 @@ start_services() {
   trap 'echo ""; echo "正在停止..."; rm -f "$PID_FILE"; exit 0' INT TERM
 
   # 启动应用并保存 PID
-  npm run start:dev &
+  pnpm start:dev &
   echo $! > "$PID_FILE"
 
   # 等待进程启动

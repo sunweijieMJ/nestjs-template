@@ -1,7 +1,9 @@
 node_modules
 dist
 coverage
+files
 *.min.js
 .nyc_output
-package-lock.json
+pnpm-lock.yaml
 CHANGELOG.md
+src/integrations/mail/mail-templates

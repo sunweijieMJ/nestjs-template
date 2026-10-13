@@ -44,16 +44,6 @@ NestJS Boilerplate uses [TypeORM](https://www.npmjs.com/package/typeorm) with [P
    npm install
    ```
 
-1. Run app configuration
-
-   > You should run this command only the first time on initialization of your project, all next time skip it.
-
-   > If you want to contribute to the boilerplate, you should NOT run this command.
-
-   ```bash
-   npm run app:config
-   ```
-
 1. Run migrations
 
    ```bash

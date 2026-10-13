@@ -106,7 +106,6 @@ jobs:
           push: true
           platforms: linux/amd64
           target: production
-          build-args: DB_TYPE=relational
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -167,7 +166,7 @@ jobs:
           port: ${{ secrets.ALIYUN_PORT || 22 }}
           username: ${{ secrets.ALIYUN_USER }}
           key: ${{ secrets.ALIYUN_SSH_KEY }}
-          source: "docker/docker-compose.ecs.yaml,deploy/manage.sh"
+          source: 'docker/docker-compose.ecs.yaml,deploy/manage.sh'
           target: ${{ secrets.ALIYUN_DEPLOY_PATH }}
           strip_components: 0
 

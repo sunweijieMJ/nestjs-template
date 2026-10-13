@@ -1,1 +1,1 @@
-npx tsx scripts/husky/pre-commit.ts
+pnpm exec tsx scripts/husky/pre-commit.ts

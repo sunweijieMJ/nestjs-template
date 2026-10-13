@@ -21,4 +21,4 @@ services:
         condition: service_started
       redis:
         condition: service_healthy
-    command: ["/opt/startup.sh"]
+    command: ['/opt/startup.sh']

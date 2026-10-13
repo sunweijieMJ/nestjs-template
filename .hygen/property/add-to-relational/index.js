@@ -1,4 +1,13 @@
 const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const inflection = require(require.resolve('inflection', { paths: [require.resolve('hygen')] }));
+
+const resolveTypeRoot = (type) => {
+  if (!type) return 'modules';
+  const dir = inflection.transform(type, ['pluralize', 'underscore', 'dasherize']);
+  return fs.existsSync(path.join(process.cwd(), 'src', 'core', dir)) ? 'core' : 'modules';
+};
 
 const collectPromisesResults = (callback) => async (prevValues) => {
   const results = await callback(prevValues);
@@ -19,6 +28,7 @@ module.exports = {
         isAddToDto: args.isAddToDto === 'true',
         isOptional: args.isOptional === 'true',
         isNullable: args.isNullable === 'true',
+        typeRoot: resolveTypeRoot(args.type),
       });
     }
 
@@ -78,10 +88,7 @@ module.exports = {
             })
             .then(
               collectPromisesResults((values) => {
-                if (
-                  values.kind === 'reference' ||
-                  values.kind === 'duplication'
-                ) {
+                if (values.kind === 'reference' || values.kind === 'duplication') {
                   return prompter
                     .prompt({
                       type: 'input',
@@ -126,10 +133,7 @@ module.exports = {
                           })
                           .then(
                             collectPromisesResults((referenceTypeValues) => {
-                              if (
-                                referenceTypeValues.referenceType ===
-                                'oneToMany'
-                              ) {
+                              if (referenceTypeValues.referenceType === 'oneToMany') {
                                 return prompter.prompt({
                                   type: 'input',
                                   name: 'propertyInReference',
@@ -199,16 +203,15 @@ module.exports = {
         }),
       );
 
+    result.typeRoot = resolveTypeRoot(result.type);
+
     if (!result.propertyInReference) {
       result.propertyInReference = '';
     }
 
-    if (
-      (result.kind === 'reference' || result.kind === 'duplication') &&
-      result.referenceType === 'oneToMany'
-    ) {
+    if ((result.kind === 'reference' || result.kind === 'duplication') && result.referenceType === 'oneToMany') {
       execSync(
-        `npm run add:property:to-relational -- --name ${result.type} --property ${result.propertyInReference} --propertyInReference ${result.property} --kind ${result.kind} --type ${result.name} --referenceType manyToOne --isAddToDto ${result.isAddToDto} --isOptional false --isNullable false`,
+        `pnpm exec hygen property add-to-relational --name ${result.type} --property ${result.propertyInReference} --propertyInReference ${result.property} --kind ${result.kind} --type ${result.name} --referenceType manyToOne --isAddToDto ${result.isAddToDto} --isOptional false --isNullable false`,
         {
           stdio: 'inherit',
         },

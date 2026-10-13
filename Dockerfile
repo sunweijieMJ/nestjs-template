@@ -1,11 +1,10 @@
-# Unified Dockerfile for all database types and environments
+# Unified Dockerfile for all environments
 # Build args:
-#   DB_TYPE: relational | document
 #   ENV_MODE: dev | test | ci | prod
 #
 # Example usage:
-#   docker build --build-arg DB_TYPE=relational --build-arg ENV_MODE=dev -t app:dev .
-#   docker build --build-arg DB_TYPE=document --build-arg ENV_MODE=prod -t app:prod .
+#   docker build --build-arg ENV_MODE=dev --target development -t app:dev .
+#   docker build --target production -t app:prod .
 
 # ============================================================
 # Stage 1: Base - Install dependencies
@@ -33,19 +32,10 @@ RUN pnpm install --frozen-lockfile
 # ============================================================
 FROM base AS builder
 
-ARG DB_TYPE=relational
-
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Setup environment file based on DB_TYPE
-RUN if [ ! -f .env ]; then \
-      if [ "$DB_TYPE" = "document" ]; then \
-        cp env-example-document .env; \
-      else \
-        cp env-example-relational .env; \
-      fi; \
-    fi
+RUN cp env-example-relational .env
 
 # Build the application
 RUN pnpm run build
@@ -65,9 +55,8 @@ RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 # ============================================================
 FROM node:22.21.1-alpine AS production
 
-ARG DB_TYPE=relational
 ENV NODE_ENV=production
-ENV DB_TYPE=${DB_TYPE}
+ENV ENV_MODE=prod
 
 RUN apk add --no-cache bash
 
@@ -104,10 +93,8 @@ CMD ["/opt/startup.sh"]
 # ============================================================
 FROM base AS development
 
-ARG DB_TYPE=relational
 ARG ENV_MODE=dev
 
-ENV DB_TYPE=${DB_TYPE}
 ENV ENV_MODE=${ENV_MODE}
 ENV NODE_ENV=development
 
@@ -119,14 +106,7 @@ RUN pnpm add -g @nestjs/cli typescript ts-node
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Setup environment file based on DB_TYPE
-RUN if [ ! -f .env ]; then \
-      if [ "$DB_TYPE" = "document" ]; then \
-        cp env-example-document .env; \
-      else \
-        cp env-example-relational .env; \
-      fi; \
-    fi
+RUN cp env-example-relational .env
 
 # Copy utility scripts
 COPY scripts/wait-for-it.sh /opt/wait-for-it.sh

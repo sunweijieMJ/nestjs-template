@@ -1,49 +1,35 @@
-import tsEslintPlugin from '@typescript-eslint/eslint-plugin';
+import { defineConfig } from 'eslint/config';
+import tseslint from 'typescript-eslint';
+import eslintConfigPrettier from 'eslint-config-prettier/flat';
+import checkFile from 'eslint-plugin-check-file';
 import globals from 'globals';
-import tsParser from '@typescript-eslint/parser';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import js from '@eslint/js';
-import { FlatCompat } from '@eslint/eslintrc';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
-});
+const persistenceImpl = {
+  group: [
+    '**/infrastructure/persistence/relational/repositories/**',
+    '**/infrastructure/persistence/relational/mappers/**',
+  ],
+  message:
+    'Service 只能依赖抽象 Repository Port（infrastructure/persistence/*.repository.ts），不得引用具体 Repository 或 Mapper 实现。',
+};
 
-export default [
+export default defineConfig(
   {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**', '.install-scripts/**'],
+    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'files/**', '.hygen/**'],
   },
-  ...compat.extends(
-    'plugin:@typescript-eslint/recommended',
-    'plugin:@typescript-eslint/recommended-requiring-type-checking',
-    'plugin:prettier/recommended',
-  ),
+  ...tseslint.configs.recommendedTypeChecked,
   {
-    plugins: {
-      '@typescript-eslint': tsEslintPlugin,
-    },
     languageOptions: {
       globals: {
         ...globals.node,
         ...globals.jest,
       },
-      parser: tsParser,
-      ecmaVersion: 2021,
-      sourceType: 'module',
       parserOptions: {
-        project: 'tsconfig.json',
-        tsconfigRootDir: __dirname,
+        project: ['./tsconfig.json', './tsconfig.test.json', './tsconfig.node.json'],
+        tsconfigRootDir: import.meta.dirname,
       },
     },
     rules: {
-      // Naming conventions
-      '@typescript-eslint/interface-name-prefix': 'off',
-
       // Type safety rules - disabled as NestJS decorators handle type info
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
@@ -83,7 +69,6 @@ export default [
       ],
 
       // Safety rules - disabled due to third-party library type definitions
-      // These can be re-enabled gradually as type definitions improve
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
@@ -96,8 +81,6 @@ export default [
       '@typescript-eslint/prefer-optional-chain': 'warn',
       '@typescript-eslint/no-unnecessary-condition': 'off',
       '@typescript-eslint/strict-boolean-expressions': 'off',
-
-      // Rules that need gradual adoption (warn instead of error)
       '@typescript-eslint/await-thenable': 'warn',
 
       // Safe to ignore - specific library usage patterns or intentional design
@@ -115,34 +98,75 @@ export default [
             'Add "{ infer: true }" to configService.get() for correct typechecking. Example: configService.get("database.port", { infer: true })',
         },
         {
-          selector:
-            'CallExpression[callee.name=it][arguments.0.value!=/^should/]',
+          selector: 'CallExpression[callee.name=it][arguments.0.value!=/^should/]',
           message: '"it" should start with "should"',
         },
       ],
 
-      // Console usage - off for backend project
       'no-console': 'off',
     },
   },
-  // Override for test files - less strict
   {
     files: ['**/*.spec.ts', '**/*.e2e-spec.ts', 'test/**/*.ts'],
-    languageOptions: {
-      parserOptions: {
-        project: 'tsconfig.test.json',
-        tsconfigRootDir: __dirname,
-      },
-    },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/unbound-method': 'off',
       '@typescript-eslint/require-await': 'off',
     },
   },
-];
+
+  // ==================== 架构护栏 ====================
+  {
+    files: ['src/**/domain/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'typeorm',
+              message: 'Domain 实体不得依赖 TypeORM，持久化映射放在 infrastructure/persistence/relational。',
+            },
+            { name: '@nestjs/typeorm', message: 'Domain 实体不得依赖 TypeORM。' },
+          ],
+          patterns: [{ group: ['**/infrastructure/**'], message: 'Domain 层不得依赖 infrastructure 层。' }],
+        },
+      ],
+    },
+  },
+  {
+    files: ['src/**/*.service.ts', 'src/**/*.controller.ts'],
+    ignores: ['src/infrastructure/database/seeds/**'],
+    rules: {
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'process',
+          property: 'env',
+          message: '通过 ConfigService 读取配置：configService.get("xxx", { infer: true })。',
+        },
+      ],
+    },
+  },
+  {
+    files: ['src/core/**/*.service.ts', 'src/modules/**/*.service.ts'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: [persistenceImpl] }],
+    },
+  },
+
+  // ==================== 文件命名 ====================
+  {
+    files: ['src/**/*.ts', 'test/**/*.ts', 'scripts/**/*.ts'],
+    ignores: ['src/infrastructure/database/migrations/**'],
+    plugins: { 'check-file': checkFile },
+    rules: {
+      'check-file/filename-naming-convention': ['error', { '**/*.ts': 'KEBAB_CASE' }, { ignoreMiddleExtensions: true }],
+    },
+  },
+
+  {
+    files: ['**/*.{js,mjs,cjs}'],
+    extends: [tseslint.configs.disableTypeChecked],
+  },
+  eslintConfigPrettier,
+);

@@ -1,1 +1,1 @@
-npx tsx scripts/husky/pre-push.ts
+pnpm exec tsx scripts/husky/pre-push.ts

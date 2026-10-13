@@ -3,7 +3,6 @@ import { defineConfig } from 'cz-git';
 
 const config = defineConfig({
   extends: ['@commitlint/config-conventional'],
-  parserPreset: 'conventional-changelog-conventionalcommits',
   formatter: '@commitlint/format',
   rules: {
     'type-enum': [

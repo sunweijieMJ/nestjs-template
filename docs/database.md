@@ -220,7 +220,7 @@ You can think of this parameter as how many concurrent database connections your
 
 ## Switch PostgreSQL to MySQL
 
-If you want to use `MySQL` instead of `PostgreSQL`, you can make the changes after following the complete guide given [here](installing-and-running.md).
+If you want to use `MySQL` instead of `PostgreSQL`, you can make the changes after following the [installation guide](installing-and-running.md).
 
 Once you have completed all the steps, you should have a running app.
 ![image](https://github.com/user-attachments/assets/ec60b61a-65e6-43e2-9bcf-72dad4c8a9fa)

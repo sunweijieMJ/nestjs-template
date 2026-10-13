@@ -6,7 +6,7 @@ const config = {
   globs: ['**/*.md'],
 
   // 忽略模式 - 不检查的文件或目录
-  ignores: ['node_modules', '**/node_modules/**', 'dist', 'docs', 'coverage', '.git', 'CHANGELOG.md'],
+  ignores: ['node_modules', '**/node_modules/**', 'dist', 'coverage', '.git', 'CHANGELOG.md'],
 
   // Markdownlint 规则配置
   config: {

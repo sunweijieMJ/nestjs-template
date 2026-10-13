@@ -1,6 +1,6 @@
 ---
 inject: true
-to: src/database/seeds/relational/seed.module.ts
+to: src/infrastructure/database/seeds/relational/seed.module.ts
 after: imports
 ---
     <%= name %>SeedModule,

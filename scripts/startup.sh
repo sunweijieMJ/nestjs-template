@@ -31,13 +31,13 @@ fi
 # Install dependencies for test mode (source is mounted)
 if [ "$ENV_MODE" = "test" ]; then
   echo "Installing dependencies..."
-  npm install
+  pnpm install --frozen-lockfile
 fi
 
 # Build for CI mode if not already built
 if [ "$ENV_MODE" = "ci" ] && [ ! -d "dist" ]; then
   echo "Building application..."
-  npm run build
+  pnpm build
 fi
 
 # Run migrations
@@ -45,7 +45,7 @@ echo "Running database migrations..."
 if [ "$ENV_MODE" = "prod" ]; then
   npm run migration:run:prod
 else
-  npm run migration:run
+  pnpm migration:run
 fi
 
 # Run seed data
@@ -60,22 +60,22 @@ if [ "$ENV_MODE" = "prod" ]; then
   fi
 else
   echo "Running seed data..."
-  npm run seed:run:relational
+  pnpm seed:run:relational
 fi
 
 # Start application based on environment
 case $ENV_MODE in
   dev)
     echo "Starting in development mode..."
-    npm run start:dev
+    pnpm start:dev
     ;;
   test)
     echo "Starting in test mode..."
-    npm run start:dev
+    pnpm start:dev
     ;;
   ci)
     echo "Starting in CI mode..."
-    npm run start:prod > /tmp/app.log 2>&1 &
+    pnpm start:prod > /tmp/app.log 2>&1 &
     APP_PID=$!
 
     echo "Waiting for application to be ready..."
@@ -88,7 +88,7 @@ case $ENV_MODE in
     fi
 
     echo "Running E2E tests..."
-    npm run test:e2e -- --runInBand
+    pnpm test:e2e --runInBand
 
     # Cleanup
     kill $APP_PID 2>/dev/null || true

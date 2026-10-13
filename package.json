@@ -4,36 +4,41 @@
   "description": "",
   "author": "",
   "private": true,
+  "packageManager": "pnpm@11.23.0",
   "license": "MIT",
   "scripts": {
     "typeorm": "env-cmd ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
-    "migration:generate": "npm run typeorm -- --dataSource=src/infrastructure/database/data-source.ts migration:generate",
-    "postmigration:generate": "npm run lint -- --fix",
-    "migration:create": "npm run typeorm -- migration:create",
-    "migration:run": "npm run typeorm -- --dataSource=src/infrastructure/database/data-source.ts migration:run",
+    "migration:generate": "pnpm typeorm --dataSource=src/infrastructure/database/data-source.ts migration:generate",
+    "postmigration:generate": "eslint src --fix && prettier src --write --log-level warn",
+    "migration:create": "pnpm typeorm migration:create",
+    "migration:run": "pnpm typeorm --dataSource=src/infrastructure/database/data-source.ts migration:run",
     "migration:run:prod": "node ./node_modules/typeorm/cli.js --dataSource=dist/infrastructure/database/data-source.js migration:run",
-    "migration:revert": "npm run typeorm -- --dataSource=src/infrastructure/database/data-source.ts migration:revert",
-    "schema:drop": "npm run typeorm -- --dataSource=src/infrastructure/database/data-source.ts schema:drop",
+    "migration:revert": "pnpm typeorm --dataSource=src/infrastructure/database/data-source.ts migration:revert",
+    "schema:drop": "pnpm typeorm --dataSource=src/infrastructure/database/data-source.ts schema:drop",
     "seed:create:relational": "hygen seeds create-relational",
     "generate:resource:relational": "hygen generate relational-resource",
-    "postgenerate:resource:relational": "npm run lint -- --fix",
+    "postgenerate:resource:relational": "eslint src --fix && prettier src --write --log-level warn",
     "add:property:to-relational": "hygen property add-to-relational",
-    "postadd:property:to-relational": "npm run lint -- --fix",
-    "app:config": "ts-node -r tsconfig-paths/register ./.install-scripts/index.ts && npm install && npm run lint -- --fix",
+    "postadd:property:to-relational": "eslint src --fix && prettier src --write --log-level warn",
     "seed:run:relational": "ts-node -r tsconfig-paths/register ./src/infrastructure/database/seeds/relational/run-seed.ts",
     "seed:run:prod": "node ./dist/infrastructure/database/seeds/relational/run-seed.js",
     "prebuild": "rimraf dist",
     "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:swc": "nest start -b swc -w",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
-    "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:check": "eslint . && prettier . --check && markdownlint-cli2",
     "lint:md": "markdownlint-cli2",
-    "type-check": "tsc --noEmit -p tsconfig.json",
+    "type-check": "pnpm type-check:app && pnpm type-check:test && pnpm type-check:node",
+    "type-check:app": "tsc --noEmit -p tsconfig.json",
+    "type-check:test": "tsc --noEmit -p tsconfig.test.json",
+    "type-check:node": "tsc --noEmit -p tsconfig.node.json",
     "cspell": "cspell",
     "commit": "czg",
     "test": "jest --passWithNoTests",
@@ -44,18 +49,18 @@
     "docker:dev": "docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.redis.yaml -f docker/docker-compose.postgres.yaml -f docker/docker-compose.dev.yaml up --build",
     "docker:test": "docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.redis.yaml -f docker/docker-compose.postgres.yaml -f docker/docker-compose.test.yaml up --build",
     "docker:ci": "docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.redis.yaml -f docker/docker-compose.postgres.yaml -f docker/docker-compose.ci.yaml up --build --abort-on-container-exit",
-    "docker:prod": "docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.redis.yaml -f docker/docker-compose.postgres.yaml -f docker/docker-compose.prod.yaml up -d --build",
     "docker:down": "docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.redis.yaml -f docker/docker-compose.postgres.yaml down",
     "docker:clean": "docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.redis.yaml -f docker/docker-compose.postgres.yaml down -v --remove-orphans",
     "prepare": "is-ci || husky",
     "release": "release-it"
   },
   "lint-staged": {
-    "{src,test}/**/*.{ts,js}": [
-      "eslint --fix"
-    ],
-    "*.{ts,js,json,md}": [
+    "*.{ts,js,mjs,cjs}": [
+      "eslint --fix --no-warn-ignored",
       "prettier --write"
+    ],
+    "!(*.ts|*.js|*.mjs|*.cjs)": [
+      "prettier --write --ignore-unknown"
     ]
   },
   "config": {
@@ -83,7 +88,6 @@
     "@nestjs/throttler": "^6.5.0",
     "@nestjs/typeorm": "11.0.0",
     "@types/multer-s3": "3.0.3",
-    "@types/prompts": "2.4.9",
     "@willsoto/nestjs-prometheus": "^6.0.2",
     "bcryptjs": "3.0.2",
     "bullmq": "^5.65.1",
@@ -120,8 +124,6 @@
     "@commitlint/config-conventional": "20.0.0",
     "@commitlint/format": "^20.0.0",
     "@commitlint/types": "^20.0.0",
-    "@eslint/eslintrc": "^3.2.0",
-    "@eslint/js": "^9.20.0",
     "@nestjs/cli": "11.0.10",
     "@nestjs/schematics": "11.0.9",
     "@nestjs/testing": "11.1.6",
@@ -137,8 +139,6 @@
     "@types/nodemailer": "^7.0.4",
     "@types/passport-jwt": "4.0.1",
     "@types/supertest": "6.0.3",
-    "@typescript-eslint/eslint-plugin": "8.47.0",
-    "@typescript-eslint/parser": "8.47.0",
     "chalk": "^5.6.2",
     "conventional-changelog-conventionalcommits": "^9.1.0",
     "cspell": "^9.4.0",
@@ -147,7 +147,7 @@
     "env-cmd": "10.1.0",
     "eslint": "9.39.1",
     "eslint-config-prettier": "10.1.8",
-    "eslint-plugin-prettier": "5.5.4",
+    "eslint-plugin-check-file": "3.3.2",
     "globals": "^16.0.0",
     "husky": "9.1.7",
     "hygen": "6.2.11",
@@ -156,7 +156,6 @@
     "lint-staged": "^16.2.7",
     "markdownlint-cli2": "^0.20.0",
     "prettier": "3.6.2",
-    "prompts": "2.4.2",
     "release-it": "19.0.5",
     "supertest": "7.1.4",
     "ts-jest": "29.4.5",
@@ -165,7 +164,8 @@
     "tsconfig-paths": "4.2.0",
     "tslib": "2.8.1",
     "tsx": "^4.21.0",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.47.0"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -218,7 +218,7 @@
     "forceExit": true
   },
   "engines": {
-    "node": ">=22.0.0",
+    "node": ">=22.21.1",
     "pnpm": ">=11"
   },
   "release-it": {
