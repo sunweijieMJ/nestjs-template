@@ -111,6 +111,7 @@ pnpm start:swc             # 开发服务器（SWC 快速编译）
 pnpm build                 # 生产构建
 pnpm lint                  # ESLint 检查
 pnpm lint:fix              # ESLint 自动修复
+pnpm lint:check            # CI 同款检查（ESLint + Prettier + markdownlint）
 pnpm type-check            # TypeScript 类型检查
 pnpm format                # Prettier 格式化
 pnpm test                  # 单元测试

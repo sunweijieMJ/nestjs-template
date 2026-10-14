@@ -6,7 +6,7 @@
 
 ```bash
 # Migration
-pnpm migration:generate -- src/infrastructure/database/migrations/描述名称
+pnpm migration:generate src/infrastructure/database/migrations/描述名称
 pnpm migration:create -- src/infrastructure/database/migrations/描述名称
 pnpm migration:run
 pnpm migration:revert

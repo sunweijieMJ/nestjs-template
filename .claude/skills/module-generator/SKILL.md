@@ -56,6 +56,6 @@ src/modules/{name}/
 生成后需要手动完成：
 
 1. 在 `AppModule` 中注册新模块
-2. 生成 Migration：`pnpm migration:generate -- src/infrastructure/database/migrations/{Name}`
+2. 生成 Migration：`pnpm migration:generate src/infrastructure/database/migrations/{Name}`
 3. 执行 Migration：`pnpm migration:run`
 4. 如需权限控制，在 `Permission` 枚举中添加权限

@@ -8,7 +8,7 @@
 
 ```
 1. Base     — Node 22-alpine 基础镜像
-2. Deps     — ppnpm install 依赖
+2. Deps     — pnpm install 依赖
 3. Builder  — nest build 编译
 4. Prod     — 仅生产依赖 + 编译产物
 ```
@@ -95,7 +95,7 @@ DOCKERHUB_TOKEN      # Docker Hub Token
 ### 开发环境
 
 ```bash
-pnpm migration:generate -- src/infrastructure/database/migrations/FeatureName
+pnpm migration:generate src/infrastructure/database/migrations/FeatureName
 pnpm migration:run
 ```
 

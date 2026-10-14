@@ -104,7 +104,7 @@ export class Feature {
 
 ```bash
 # 修改 Entity 后，自动生成迁移文件
-pnpm migration:generate -- src/infrastructure/database/migrations/FeatureName
+pnpm migration:generate src/infrastructure/database/migrations/FeatureName
 
 # 创建空迁移（手写 SQL）
 pnpm migration:create -- src/infrastructure/database/migrations/ManualMigration

@@ -9,19 +9,19 @@
 ## Unit Tests
 
 ```bash
-npm run test
+pnpm test
 ```
 
 ## E2E Tests
 
 ```bash
-npm run test:e2e
+pnpm test:e2e
 ```
 
 ## Tests in Docker
 
 ```bash
-npm run test:e2e:relational:docker
+make -C docker ci
 ```
 
 ---

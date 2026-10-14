@@ -52,6 +52,6 @@ triggers:
 生成后执行：
 
 ```bash
-pnpm migration:generate -- src/infrastructure/database/migrations/AddXxxTable
+pnpm migration:generate src/infrastructure/database/migrations/AddXxxTable
 pnpm migration:run
 ```

@@ -14,10 +14,11 @@ DEV = -f docker-compose.dev.yaml
 TEST = -f docker-compose.test.yaml
 CI = -f docker-compose.ci.yaml
 
-.PHONY: help dev test ci down clean logs
+.PHONY: help infra dev test ci down clean logs
 
 help:
 	@echo "Available targets:"
+	@echo "  infra   - Start postgres/redis/adminer/maildev for local pnpm start:dev (reads ../.env)"
 	@echo "  dev     - Start PostgreSQL development environment"
 	@echo "  test    - Start PostgreSQL test environment"
 	@echo "  ci      - Run CI with PostgreSQL"
@@ -26,6 +27,9 @@ help:
 	@echo "  logs    - Show logs"
 
 # PostgreSQL environments
+infra:
+	$(COMPOSE) --env-file ../.env $(BASE) $(REDIS) $(PG) up -d postgres redis adminer maildev
+
 dev:
 	$(COMPOSE) $(BASE) $(REDIS) $(PG) $(DEV) up --build
 
@@ -33,8 +37,8 @@ test:
 	$(COMPOSE) $(BASE) $(REDIS) $(PG) $(TEST) up --build
 
 ci:
-	$(COMPOSE) $(BASE) $(REDIS) $(PG) $(CI) up --build --abort-on-container-exit
-	$(COMPOSE) $(BASE) $(REDIS) $(PG) $(CI) down
+	$(COMPOSE) $(BASE) $(REDIS) $(PG) $(CI) up --build --exit-code-from api; \
+	code=$$?; $(COMPOSE) $(BASE) $(REDIS) $(PG) $(CI) down; exit $$code
 
 # Utilities
 down:

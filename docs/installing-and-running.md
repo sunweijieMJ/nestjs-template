@@ -32,34 +32,36 @@ NestJS Boilerplate uses [TypeORM](https://www.npmjs.com/package/typeorm) with [P
 
    Change `MAIL_HOST=maildev` to `MAIL_HOST=localhost`
 
+   Change `REDIS_HOST=redis` to `REDIS_HOST=localhost`
+
 1. Run additional container:
 
    ```bash
-   docker compose up -d postgres adminer maildev
+   make -C docker infra
    ```
 
 1. Install dependency
 
    ```bash
-   npm install
+   pnpm install
    ```
 
 1. Run migrations
 
    ```bash
-   npm run migration:run
+   pnpm migration:run
    ```
 
 1. Run seeds
 
    ```bash
-   npm run seed:run:relational
+   pnpm seed:run:relational
    ```
 
 1. Run app in dev mode
 
    ```bash
-   npm run start:dev
+   pnpm start:dev
    ```
 
 1. Open <http://localhost:3000>
@@ -80,23 +82,16 @@ If you want quick run your app, you can use following commands:
    git clone --depth 1 https://github.com/brocoders/nestjs-boilerplate.git my-app
    ```
 
-1. Go to folder, and copy `env-example-relational` as `.env`.
+1. Go to folder. The containers read configuration from `env-example-relational`, edit it if you need to change settings.
 
    ```bash
    cd my-app/
-   cp env-example-relational .env
    ```
 
-1. Run containers
+1. Run containers. Logs are streamed to the terminal; press `Ctrl+C` and run `make -C docker down` to stop.
 
    ```bash
-   npm run docker:pg:dev
-   ```
-
-1. For check status run
-
-   ```bash
-   docker compose -f docker/docker-compose.base.yaml -f docker/docker-compose.postgres.yaml logs
+   make -C docker dev
    ```
 
 1. Open <http://localhost:3000>
