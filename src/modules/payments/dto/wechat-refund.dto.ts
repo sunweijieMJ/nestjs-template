@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, Matches } from 'class-validator';
+import { IsString, IsNotEmpty, IsInt, Min, IsOptional } from 'class-validator';
 
-export class RefundDto {
+export class WechatRefundDto {
   @ApiProperty({
     description: '商户订单号',
     example: 'ORDER_20260107_123456',
@@ -11,15 +11,20 @@ export class RefundDto {
   outTradeNo: string;
 
   @ApiProperty({
-    description: '退款金额（元）',
-    example: '99.00',
+    description: '商户退款单号',
+    example: 'REFUND_20260107_123456',
   })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^\d+(\.\d{1,2})?$/, {
-    message: '金额格式不正确，应为数字，最多两位小数',
+  outRefundNo: string;
+
+  @ApiProperty({
+    description: '退款金额（分）',
+    example: 9900,
   })
-  refundAmount: string;
+  @IsInt()
+  @Min(1)
+  refundAmount: number;
 
   @ApiProperty({
     description: '退款原因',
@@ -28,5 +33,5 @@ export class RefundDto {
   })
   @IsString()
   @IsOptional()
-  refundReason?: string;
+  reason?: string;
 }

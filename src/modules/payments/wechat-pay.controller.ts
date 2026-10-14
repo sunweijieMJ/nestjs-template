@@ -18,12 +18,17 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { WechatPayService, WechatEncryptedResource, WechatTransactionResource } from './wechat-pay.service';
+import {
+  WechatPayService,
+  WechatEncryptedResource,
+  WechatTransactionResource,
+} from '../../integrations/wechat/wechat-pay.service';
 import { CreateWechatJsapiPaymentDto } from './dto/create-jsapi-payment.dto';
 import { CreateWechatAppPaymentDto } from './dto/create-app-payment.dto';
 import { WechatRefundDto } from './dto/wechat-refund.dto';
-import { OrdersService } from '../../modules/orders/orders.service';
-import { OrderStatus, PaymentChannel } from '../../modules/orders/domain/order';
+import { OrdersService } from '../orders/orders.service';
+import { PaymentChannel } from '../orders/domain/order';
+import { PaymentsService } from './payments.service';
 import { RequestWithUser } from '../../common/types/request-with-user.type';
 import { Roles } from '../../common/enums/roles/roles.decorator';
 import { RoleEnum } from '../../common/enums/roles/roles.enum';
@@ -41,6 +46,7 @@ export class WechatPayController {
   constructor(
     private readonly wechatPayService: WechatPayService,
     private readonly ordersService: OrdersService,
+    private readonly paymentsService: PaymentsService,
   ) {}
 
   @ApiBearerAuth()
@@ -68,6 +74,7 @@ export class WechatPayController {
       outTradeNo: order.orderNo,
       description: dto.description,
       amount: order.totalAmount,
+      timeExpire: order.expiresAt,
     });
   }
 
@@ -97,6 +104,7 @@ export class WechatPayController {
       outTradeNo: order.orderNo,
       description: dto.description,
       amount: order.totalAmount,
+      timeExpire: order.expiresAt,
     });
   }
 
@@ -136,25 +144,14 @@ export class WechatPayController {
     status: HttpStatus.OK,
     description: '返回退款结果',
   })
-  async refund(@Body() dto: WechatRefundDto): Promise<{
-    refund_id: string;
-    out_refund_no: string;
-    transaction_id: string;
-    out_trade_no: string;
-    status: string;
-  }> {
-    const order = await this.ordersService.findRefundableOrder(dto.outTradeNo, dto.refundAmount);
-    const result = await this.wechatPayService.refund({
-      outTradeNo: order.orderNo,
-      outRefundNo: dto.outRefundNo,
+  async refund(@Body() dto: WechatRefundDto): Promise<Record<string, unknown>> {
+    const result = await this.paymentsService.refund(PaymentChannel.WECHAT, {
+      orderNo: dto.outTradeNo,
+      refundNo: dto.outRefundNo,
       refundAmount: dto.refundAmount,
-      totalAmount: order.totalAmount,
       reason: dto.reason,
     });
-    if (result.status === 'SUCCESS' && dto.refundAmount === (order.paidAmount ?? order.totalAmount)) {
-      await this.ordersService.markRefunded(order);
-    }
-    return result;
+    return result.raw;
   }
 
   @Post('notify')
@@ -195,12 +192,12 @@ export class WechatPayController {
     const { out_trade_no, trade_state, transaction_id, amount } = transaction;
     if (trade_state === 'SUCCESS' && out_trade_no) {
       try {
-        await this.ordersService.updatePaymentStatus(out_trade_no, OrderStatus.PAID, {
-          paymentChannel: PaymentChannel.WECHAT,
+        await this.paymentsService.confirmPaid({
+          channel: PaymentChannel.WECHAT,
+          orderNo: out_trade_no,
           transactionId: transaction_id ?? '',
           paidAmount: amount?.total ?? 0,
         });
-        this.logger.log(`Order ${out_trade_no} payment status updated to PAID`);
       } catch (error) {
         this.logger.error(`Failed to update order ${out_trade_no}: ${error}`);
         throw new InternalServerErrorException({ code: 'FAIL', message: '订单更新失败' });

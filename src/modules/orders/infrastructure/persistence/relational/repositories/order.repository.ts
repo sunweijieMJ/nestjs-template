@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, In, IsNull } from 'typeorm';
+import { Repository, FindOptionsWhere, In, IsNull, LessThan } from 'typeorm';
 import { OrderEntity } from '../entities/order.entity';
 import { OrderItemEntity } from '../entities/order-item.entity';
 import { OrderMapper } from '../mappers/order.mapper';
@@ -157,8 +157,8 @@ export class OrderRelationalRepository implements OrderRepository {
       paidAmount: number;
       paidAt: Date;
     },
-  ): Promise<Order | null> {
-    await this.orderRepository.update(
+  ): Promise<{ updated: boolean; order: NullableType<Order> }> {
+    const result = await this.orderRepository.update(
       { orderNo, status: In([OrderStatus.UNPAID, OrderStatus.CLOSED]), deletedAt: IsNull() },
       {
         status,
@@ -174,7 +174,19 @@ export class OrderRelationalRepository implements OrderRepository {
       where: { orderNo },
     });
 
-    return entity ? OrderMapper.toDomain(entity) : null;
+    return {
+      updated: (result.affected ?? 0) > 0,
+      order: entity ? OrderMapper.toDomain(entity) : null,
+    };
+  }
+
+  async closeExpiredUnpaid(now: Date): Promise<number> {
+    const result = await this.orderRepository.update(
+      { status: OrderStatus.UNPAID, expiresAt: LessThan(now), deletedAt: IsNull() },
+      { status: OrderStatus.CLOSED, closedAt: new Date() },
+    );
+
+    return result.affected ?? 0;
   }
 
   async closeIfUnpaid(id: Order['id'], userId: Order['userId']): Promise<boolean> {

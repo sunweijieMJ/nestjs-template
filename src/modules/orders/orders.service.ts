@@ -1,23 +1,74 @@
 import { Injectable, Logger, NotFoundException, UnprocessableEntityException, HttpStatus } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { OrderRepository } from './infrastructure/persistence/order.repository';
-import { Order, OrderStatus, PaymentChannel } from './domain/order';
+import { ProductCatalog } from './infrastructure/catalog/product-catalog';
+import { PaymentTradeCloser } from './payment-trade-closer';
+import { Order, OrderStatus, PaymentChannel, ORDER_PAYMENT_TIMEOUT_MS } from './domain/order';
 import { OrderItem } from './domain/order-item';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { QueryOrderDto } from './dto/query-order.dto';
 import { IPaginationOptions } from '../../common/types/pagination-options';
 
+/** 金额列为 int4，单位分 */
+const MAX_ORDER_AMOUNT = 2_147_483_647;
+
+/**
+ * paid：本次回调把订单置为已支付；duplicate：同一笔交易的重复通知；
+ * conflict：订单已由另一笔交易支付，本次是重复支付
+ */
+export type PaymentOutcome = 'paid' | 'duplicate' | 'conflict';
+
 @Injectable()
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
-  constructor(private readonly orderRepository: OrderRepository) {}
+  constructor(
+    private readonly orderRepository: OrderRepository,
+    private readonly productCatalog: ProductCatalog,
+    private readonly paymentTradeCloser: PaymentTradeCloser,
+  ) {}
 
   async create(userId: number | string, createOrderDto: CreateOrderDto): Promise<Order & { items: OrderItem[] }> {
     this.logger.log(`Creating order for user: ${userId}`);
 
-    // Calculate total amount
-    const totalAmount = createOrderDto.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+    const productIds = [...new Set(createOrderDto.items.map((item) => item.productId))];
+    const products = new Map(
+      (await this.productCatalog.findByIds(productIds))
+        .filter((p) => Number.isSafeInteger(p.unitPrice) && p.unitPrice > 0)
+        .map((p) => [p.id, p]),
+    );
+    const missing = productIds.filter((id) => !products.has(id));
+    if (missing.length > 0) {
+      this.logger.warn(`Products unavailable for order: ${missing.join(', ')}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          items: 'productNotFound',
+        },
+      });
+    }
+
+    const items = createOrderDto.items.map((item) => {
+      const product = products.get(item.productId)!;
+      return {
+        productId: product.id,
+        productName: product.name,
+        productImage: product.image,
+        unitPrice: product.unitPrice,
+        quantity: item.quantity,
+        subtotal: product.unitPrice * item.quantity,
+        metadata: item.metadata,
+      };
+    });
+    const totalAmount = items.reduce((sum, item) => sum + item.subtotal, 0);
+    if (totalAmount > MAX_ORDER_AMOUNT) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          items: 'orderAmountTooLarge',
+        },
+      });
+    }
 
     // Generate order number
     const orderNo = this.generateOrderNo();
@@ -29,17 +80,10 @@ export class OrdersService {
         orderNo,
         status: OrderStatus.UNPAID,
         totalAmount,
+        expiresAt: new Date(Date.now() + ORDER_PAYMENT_TIMEOUT_MS),
         metadata: createOrderDto.metadata,
       },
-      createOrderDto.items.map((item) => ({
-        productId: item.productId,
-        productName: item.productName,
-        productImage: item.productImage,
-        unitPrice: item.unitPrice,
-        quantity: item.quantity,
-        subtotal: item.unitPrice * item.quantity,
-        metadata: item.metadata,
-      })),
+      items,
     );
 
     this.logger.log(`Order created: ${orderNo}`);
@@ -93,12 +137,12 @@ export class OrdersService {
   }
 
   /**
-   * 查询当前用户待支付的订单，非待支付状态时抛出 422
+   * 查询当前用户待支付且未过支付截止时间的订单，否则抛出 422
    */
   async findPayableOrder(orderNo: string, userId: number | string): Promise<Order> {
     const order = await this.findOwnedByOrderNo(orderNo, userId);
 
-    if (order.status !== OrderStatus.UNPAID) {
+    if (order.status !== OrderStatus.UNPAID || (order.expiresAt && order.expiresAt <= new Date())) {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
@@ -163,7 +207,7 @@ export class OrdersService {
       transactionId: string;
       paidAmount: number;
     },
-  ): Promise<Order> {
+  ): Promise<{ order: Order; outcome: PaymentOutcome }> {
     this.logger.log(`Updating payment status for order: ${orderNo} to ${status}`);
 
     const existing = await this.orderRepository.findByOrderNo(orderNo);
@@ -182,7 +226,7 @@ export class OrdersService {
       });
     }
 
-    const order = await this.orderRepository.updatePaymentStatus(orderNo, status, {
+    const { updated, order } = await this.orderRepository.updatePaymentStatus(orderNo, status, {
       ...paymentData,
       paidAt: new Date(),
     });
@@ -195,8 +239,20 @@ export class OrdersService {
       });
     }
 
-    this.logger.log(`Order ${orderNo} payment status updated to ${status}`);
-    return order;
+    if (updated) {
+      this.logger.log(`Order ${orderNo} payment status updated to ${status}`);
+      return { order, outcome: 'paid' };
+    }
+
+    if (order.paymentChannel === paymentData.paymentChannel && order.transactionId === paymentData.transactionId) {
+      return { order, outcome: 'duplicate' };
+    }
+
+    this.logger.error(
+      `Order ${orderNo} already settled by ${order.paymentChannel}/${order.transactionId}, ` +
+        `received another payment ${paymentData.paymentChannel}/${paymentData.transactionId}`,
+    );
+    return { order, outcome: 'conflict' };
   }
 
   async cancelOrder(id: number | string, userId: number | string): Promise<void> {
@@ -229,6 +285,15 @@ export class OrdersService {
     }
 
     this.logger.log(`Order ${order.orderNo} cancelled by user ${userId}`);
+    void this.paymentTradeCloser.closeTrades(order.orderNo);
+  }
+
+  async closeExpiredOrders(): Promise<number> {
+    const closed = await this.orderRepository.closeExpiredUnpaid(new Date());
+    if (closed > 0) {
+      this.logger.log(`Closed ${closed} expired unpaid orders`);
+    }
+    return closed;
   }
 
   async count(userId: number | string, queryOrderDto?: QueryOrderDto): Promise<number> {

@@ -10,6 +10,8 @@ interface WechatPaymentParams {
   outTradeNo: string;
   description: string;
   amount: number;
+  /** 交易截止时间，过期后不可支付 */
+  timeExpire?: Date;
 }
 
 interface WechatRefundParams {
@@ -38,6 +40,10 @@ export interface WechatTransactionResource {
 
 /** 微信支付公钥 ID 的前缀，回调序列号以此开头时使用公钥验签 */
 const PUBLIC_KEY_ID_PREFIX = 'PUB_KEY_ID_';
+
+function toRfc3339(date: Date): string {
+  return date.toISOString().replace(/\.\d{3}Z$/, '+00:00');
+}
 
 /** 平台证书刷新的最小间隔，避免伪造的证书序列号触发频繁下载 */
 const CERTIFICATE_REFRESH_INTERVAL_MS = 60_000;
@@ -154,6 +160,7 @@ export class WechatPayService implements OnModuleInit {
       mchid: this.config.pay.mchId,
       description: params.description,
       out_trade_no: params.outTradeNo,
+      time_expire: params.timeExpire ? toRfc3339(params.timeExpire) : undefined,
       notify_url: this.config.pay.notifyUrl,
       amount: {
         total: params.amount,
@@ -190,6 +197,7 @@ export class WechatPayService implements OnModuleInit {
       mchid: this.config.pay.mchId,
       description: params.description,
       out_trade_no: params.outTradeNo,
+      time_expire: params.timeExpire ? toRfc3339(params.timeExpire) : undefined,
       notify_url: this.config.pay.notifyUrl,
       amount: {
         total: params.amount,
@@ -208,6 +216,14 @@ export class WechatPayService implements OnModuleInit {
   async queryOrder(outTradeNo: string): Promise<WechatOrderResponse> {
     const url = `https://api.mch.weixin.qq.com/v3/pay/transactions/out-trade-no/${encodeURIComponent(outTradeNo)}?mchid=${encodeURIComponent(this.config.pay.mchId)}`;
     return this.request('GET', url);
+  }
+
+  /**
+   * 关闭订单
+   */
+  async closeOrder(outTradeNo: string): Promise<void> {
+    const url = `https://api.mch.weixin.qq.com/v3/pay/transactions/out-trade-no/${encodeURIComponent(outTradeNo)}/close`;
+    await this.request('POST', url, { mchid: this.config.pay.mchId });
   }
 
   /**
@@ -416,6 +432,10 @@ export class WechatPayService implements OnModuleInit {
       retryDelay: 1000,
       timeout: 30000,
     });
+
+    if (response.status === 204) {
+      return {} as T;
+    }
 
     const result = (await response.json()) as { message?: string; [key: string]: unknown };
 

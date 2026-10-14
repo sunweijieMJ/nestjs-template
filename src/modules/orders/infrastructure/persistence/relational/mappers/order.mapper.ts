@@ -15,6 +15,7 @@ export class OrderMapper {
     domainEntity.paidAt = raw.paidAt ?? undefined;
     domainEntity.refundedAt = raw.refundedAt ?? undefined;
     domainEntity.closedAt = raw.closedAt ?? undefined;
+    domainEntity.expiresAt = raw.expiresAt ?? undefined;
     domainEntity.metadata = raw.metadata ?? undefined;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
@@ -34,6 +35,7 @@ export class OrderMapper {
     persistenceEntity.paidAt = domainEntity.paidAt ?? null;
     persistenceEntity.refundedAt = domainEntity.refundedAt ?? null;
     persistenceEntity.closedAt = domainEntity.closedAt ?? null;
+    persistenceEntity.expiresAt = domainEntity.expiresAt ?? null;
     persistenceEntity.metadata = domainEntity.metadata ?? null;
     return persistenceEntity;
   }

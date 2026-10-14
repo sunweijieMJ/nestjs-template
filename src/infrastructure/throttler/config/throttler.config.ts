@@ -20,7 +20,7 @@ export default registerAs<ThrottlerConfig>('throttler', () => {
   const env = {
     THROTTLE_TTL: process.env.THROTTLE_TTL ? parseInt(process.env.THROTTLE_TTL, 10) : 60,
     THROTTLE_LIMIT: process.env.THROTTLE_LIMIT ? parseInt(process.env.THROTTLE_LIMIT, 10) : 100,
-    THROTTLE_ENABLED: process.env.THROTTLE_ENABLED === 'true',
+    THROTTLE_ENABLED: process.env.THROTTLE_ENABLED ?? 'true',
   };
 
   validateConfig(env, EnvironmentVariablesValidator);
@@ -28,6 +28,6 @@ export default registerAs<ThrottlerConfig>('throttler', () => {
   return {
     ttl: env.THROTTLE_TTL * 1000, // Convert to milliseconds
     limit: env.THROTTLE_LIMIT,
-    enabled: env.THROTTLE_ENABLED,
+    enabled: env.THROTTLE_ENABLED !== 'false',
   };
 });

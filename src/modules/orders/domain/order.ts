@@ -7,6 +7,9 @@ export enum OrderStatus {
   CLOSED = 'CLOSED',
 }
 
+/** 下单后可支付的时长 */
+export const ORDER_PAYMENT_TIMEOUT_MS = 30 * 60 * 1000;
+
 export enum PaymentChannel {
   WECHAT = 'WECHAT',
   ALIPAY = 'ALIPAY',
@@ -45,6 +48,9 @@ export class Order {
 
   @ApiPropertyOptional()
   closedAt?: Date;
+
+  @ApiPropertyOptional({ description: '支付截止时间，过期后不可支付' })
+  expiresAt?: Date;
 
   @ApiPropertyOptional({ type: Object })
   metadata?: Record<string, unknown>;

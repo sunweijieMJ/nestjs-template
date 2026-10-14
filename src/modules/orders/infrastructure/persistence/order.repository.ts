@@ -45,9 +45,12 @@ export abstract class OrderRepository {
       paidAmount: number;
       paidAt: Date;
     },
-  ): Promise<Order | null>;
+  ): Promise<{ updated: boolean; order: NullableType<Order> }>;
 
   abstract closeIfUnpaid(id: Order['id'], userId: Order['userId']): Promise<boolean>;
+
+  /** 关闭支付截止时间早于 now 的待支付订单，返回关闭数量 */
+  abstract closeExpiredUnpaid(now: Date): Promise<number>;
 
   abstract countByUserId(userId: Order['userId'], filterOptions?: QueryOrderDto | null): Promise<number>;
 

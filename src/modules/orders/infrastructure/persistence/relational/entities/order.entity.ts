@@ -15,6 +15,7 @@ import { UserEntity } from '../../../../../../core/users/infrastructure/persiste
 import { OrderItemEntity } from './order-item.entity';
 
 @Entity({ name: 'order' })
+@Index('IDX_order_status_expiresAt', ['status', 'expiresAt'])
 export class OrderEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn()
   id: number;
@@ -55,6 +56,9 @@ export class OrderEntity extends EntityRelationalHelper {
 
   @Column({ type: 'timestamp', nullable: true })
   closedAt: Date | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  expiresAt: Date | null;
 
   @Column({ type: 'jsonb', nullable: true })
   metadata: Record<string, unknown> | null;

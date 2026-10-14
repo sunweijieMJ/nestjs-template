@@ -12,6 +12,23 @@ interface AlipayCommonResponse {
   sub_msg?: string;
 }
 
+export interface AlipayPaymentParams {
+  outTradeNo: string;
+  subject: string;
+  /** 金额（元） */
+  totalAmount: string;
+  body?: string;
+  /** 交易截止时间，过期后不可支付 */
+  timeExpire?: Date;
+}
+
+const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
+
+/** 支付宝要求的 yyyy-MM-dd HH:mm:ss（北京时间） */
+function toBeijingTime(date: Date): string {
+  return new Date(date.getTime() + BEIJING_OFFSET_MS).toISOString().slice(0, 19).replace('T', ' ');
+}
+
 /**
  * 支付宝服务（支付 + 登录）
  */
@@ -102,13 +119,14 @@ export class AlipayService {
   /**
    * 创建手机网站支付订单
    */
-  createMobilePayment(params: { outTradeNo: string; subject: string; totalAmount: string; body?: string }): string {
+  createMobilePayment(params: AlipayPaymentParams): string {
     const bizContent = {
       out_trade_no: params.outTradeNo,
       product_code: 'QUICK_WAP_WAY',
       total_amount: params.totalAmount,
       subject: params.subject,
       body: params.body,
+      time_expire: params.timeExpire ? toBeijingTime(params.timeExpire) : undefined,
     };
 
     return this.buildRequestForm('alipay.trade.wap.pay', bizContent);
@@ -117,13 +135,14 @@ export class AlipayService {
   /**
    * 创建电脑网站支付订单
    */
-  createWebPayment(params: { outTradeNo: string; subject: string; totalAmount: string; body?: string }): string {
+  createWebPayment(params: AlipayPaymentParams): string {
     const bizContent = {
       out_trade_no: params.outTradeNo,
       product_code: 'FAST_INSTANT_TRADE_PAY',
       total_amount: params.totalAmount,
       subject: params.subject,
       body: params.body,
+      time_expire: params.timeExpire ? toBeijingTime(params.timeExpire) : undefined,
     };
 
     return this.buildRequestForm('alipay.trade.page.pay', bizContent);

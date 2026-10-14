@@ -45,6 +45,7 @@ import { WechatModule } from './integrations/wechat/wechat.module';
 import { AlipayModule } from './integrations/alipay/alipay.module';
 import { SharesModule } from './modules/shares/shares.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 import { SchedulerModule } from './infrastructure/scheduler/scheduler.module';
 import { AppConfigModule } from './modules/config/config.module';
 
@@ -176,6 +177,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     TransactionModule,
     AuditModule,
     OrdersModule,
+    PaymentsModule,
     SchedulerModule,
     NotificationsModule,
     NotificationQueueModule,

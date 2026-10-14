@@ -13,21 +13,18 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { AlipayService } from './alipay.service';
-import { CreatePaymentDto } from './dto/create-payment.dto';
-import { RefundDto } from './dto/refund.dto';
-import { OrdersService } from '../../modules/orders/orders.service';
-import { Order, OrderStatus, PaymentChannel } from '../../modules/orders/domain/order';
+import { AlipayService, AlipayPaymentParams } from '../../integrations/alipay/alipay.service';
+import { CreatePaymentDto } from './dto/alipay-create-payment.dto';
+import { RefundDto } from './dto/alipay-refund.dto';
+import { OrdersService } from '../orders/orders.service';
+import { Order, PaymentChannel } from '../orders/domain/order';
+import { PaymentsService } from './payments.service';
+import { fenToYuan, yuanToFen } from './money.utils';
 import { RequestWithUser } from '../../common/types/request-with-user.type';
 import { Roles } from '../../common/enums/roles/roles.decorator';
 import { RoleEnum } from '../../common/enums/roles/roles.enum';
 import { RolesGuard } from '../../common/enums/roles/roles.guard';
 import { SkipResponseTransform } from '../../common/decorators/skip-response-transform.decorator';
-
-/** 分转元，保留两位小数 */
-function fenToYuan(fen: number): string {
-  return (fen / 100).toFixed(2);
-}
 
 @ApiTags('Alipay')
 @Controller({
@@ -40,6 +37,7 @@ export class AlipayController {
   constructor(
     private readonly alipayService: AlipayService,
     private readonly ordersService: OrdersService,
+    private readonly paymentsService: PaymentsService,
   ) {}
 
   @ApiBearerAuth()
@@ -109,21 +107,14 @@ export class AlipayController {
     status: HttpStatus.OK,
     description: '返回退款结果',
   })
-  async refund(@Body() refundDto: RefundDto): Promise<{
-    trade_no: string;
-    out_trade_no: string;
-    refund_fee: string;
-  }> {
-    const refundAmount = Math.round(parseFloat(refundDto.refundAmount) * 100);
-    const order = await this.ordersService.findRefundableOrder(refundDto.outTradeNo, refundAmount);
-    const result = await this.alipayService.refund({
-      ...refundDto,
-      outRequestNo: `${order.orderNo}_R${Date.now()}`,
+  async refund(@Body() refundDto: RefundDto): Promise<Record<string, unknown>> {
+    const result = await this.paymentsService.refund(PaymentChannel.ALIPAY, {
+      orderNo: refundDto.outTradeNo,
+      refundNo: refundDto.outRequestNo,
+      refundAmount: yuanToFen(refundDto.refundAmount),
+      reason: refundDto.refundReason,
     });
-    if (refundAmount === (order.paidAmount ?? order.totalAmount)) {
-      await this.ordersService.markRefunded(order);
-    }
-    return result;
+    return result.raw;
   }
 
   @ApiBearerAuth()
@@ -171,12 +162,12 @@ export class AlipayController {
     // 更新订单支付状态
     if (trade_status === 'TRADE_SUCCESS' || trade_status === 'TRADE_FINISHED') {
       try {
-        await this.ordersService.updatePaymentStatus(out_trade_no, OrderStatus.PAID, {
-          paymentChannel: PaymentChannel.ALIPAY,
+        await this.paymentsService.confirmPaid({
+          channel: PaymentChannel.ALIPAY,
+          orderNo: out_trade_no,
           transactionId: trade_no,
-          paidAmount: Math.round(parseFloat(total_amount) * 100), // 转为分
+          paidAmount: yuanToFen(total_amount),
         });
-        this.logger.log(`Order ${out_trade_no} payment status updated to PAID`);
       } catch (error) {
         this.logger.error(`Failed to update order ${out_trade_no}: ${error}`);
         // 返回 fail 让支付宝重试
@@ -187,15 +178,13 @@ export class AlipayController {
     return 'success';
   }
 
-  private toPaymentParams(
-    dto: CreatePaymentDto,
-    order: Order,
-  ): { outTradeNo: string; subject: string; totalAmount: string; body?: string } {
+  private toPaymentParams(dto: CreatePaymentDto, order: Order): AlipayPaymentParams {
     return {
       outTradeNo: order.orderNo,
       subject: dto.subject,
       totalAmount: fenToYuan(order.totalAmount),
       body: dto.body,
+      timeExpire: order.expiresAt,
     };
   }
 }

@@ -27,5 +27,7 @@
   "codeExpired": "Verification code has expired",
   "roleNotExists": "Role does not exist",
   "statusNotExists": "Status does not exist",
-  "imageNotExists": "Image does not exist"
+  "imageNotExists": "Image does not exist",
+  "productNotFound": "Product does not exist or is unavailable",
+  "orderAmountTooLarge": "Order amount exceeds the limit"
 }
