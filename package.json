@@ -139,7 +139,7 @@
     "cz-git": "1.12.0",
     "czg": "1.12.0",
     "env-cmd": "10.1.0",
-    "eslint": "9.39.1",
+    "eslint": "10.12.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-check-file": "3.3.2",
     "globals": "16.5.0",
@@ -156,7 +156,7 @@
     "ts-node": "10.9.2",
     "tsx": "4.21.0",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.47.0"
+    "typescript-eslint": "8.71.1"
   },
   "jest": {
     "moduleFileExtensions": [
