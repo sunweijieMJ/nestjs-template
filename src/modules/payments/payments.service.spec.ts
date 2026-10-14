@@ -39,7 +39,7 @@ describe('PaymentsService', () => {
       channel: PaymentChannel.ALIPAY,
       closeTrade: jest.fn(),
       refund: jest.fn(),
-    } as unknown as jest.Mocked<PaymentGateway>;
+    };
     const registry = { get: jest.fn().mockReturnValue(gateway) } as unknown as PaymentGatewayRegistry;
     service = new PaymentsService(ordersService as unknown as OrdersService, registry);
   });

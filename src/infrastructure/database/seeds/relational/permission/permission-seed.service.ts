@@ -5,7 +5,6 @@ import { PermissionEntity } from '../../../../../core/permissions/infrastructure
 import { RolePermissionEntity } from '../../../../../core/permissions/infrastructure/persistence/role-permission.entity';
 import { Permission } from '../../../../../core/permissions/permission.enum';
 import { RolePermissions } from '../../../../../core/permissions/role-permissions';
-import { RoleEnum } from '../../../../../common/enums/roles/roles.enum';
 
 interface PermissionData {
   id: string;
@@ -211,7 +210,7 @@ export class PermissionSeedService {
 
   private async seedRolePermissions(): Promise<void> {
     for (const [roleIdStr, permissions] of Object.entries(RolePermissions)) {
-      const roleId = Number(roleIdStr) as RoleEnum;
+      const roleId = Number(roleIdStr);
 
       for (const permissionId of permissions) {
         const exists = await this.rolePermissionRepository.count({

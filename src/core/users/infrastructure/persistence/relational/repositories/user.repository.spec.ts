@@ -11,7 +11,7 @@ describe('UsersRelationalRepository', () => {
     beforeEach(() => {
       typeormRepository = {
         update: jest.fn().mockResolvedValue({ affected: 1 }),
-        findOne: jest.fn().mockResolvedValue({ id: 1, email: 'a@b.c' } as UserEntity),
+        findOne: jest.fn().mockResolvedValue({ id: 1, email: 'a@b.c' }),
       };
       repository = new UsersRelationalRepository(typeormRepository as unknown as Repository<UserEntity>);
     });

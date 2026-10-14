@@ -67,12 +67,6 @@ COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./
 
-# Copy mail templates if they exist
-COPY --from=builder /app/src/integrations/mail/mail-templates ./src/integrations/mail/mail-templates
-
-# Copy i18n files if they exist
-COPY --from=builder /app/src/i18n ./src/i18n
-
 # Copy utility scripts
 COPY scripts/wait-for-it.sh /opt/wait-for-it.sh
 COPY scripts/startup.sh /opt/startup.sh

@@ -1,5 +1,6 @@
 # 允许执行构建脚本的依赖（pnpm 11 默认全部拒绝，未列出会报 ERR_PNPM_IGNORED_BUILDS）
 allowBuilds:
+  '@parcel/watcher': true
   '@swc/core': true
   esbuild: true
   msgpackr-extract: true
