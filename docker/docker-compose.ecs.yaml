@@ -66,7 +66,7 @@ services:
       - app-network
 
   redis:
-    image: redis:7.4-alpine
+    image: redis:7-alpine
     container_name: nestjs-redis
     volumes:
       - redis-data:/data
