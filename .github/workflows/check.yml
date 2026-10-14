@@ -15,6 +15,9 @@ on:
     branches: [main, master, 'release/**']
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: check-${{ github.ref }}
   cancel-in-progress: true
@@ -27,21 +30,21 @@ jobs:
     name: Setup
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: pnpm
 
       - name: Cache node_modules
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('pnpm-lock.yaml', 'pnpm-workspace.yaml', '.nvmrc') }}
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
@@ -55,19 +58,19 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
 
       - name: Restore node_modules
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('pnpm-lock.yaml', 'pnpm-workspace.yaml', '.nvmrc') }}
           fail-on-cache-miss: true
 
       - run: pnpm lint:check
@@ -80,19 +83,19 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
 
       - name: Restore node_modules
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('pnpm-lock.yaml', 'pnpm-workspace.yaml', '.nvmrc') }}
           fail-on-cache-miss: true
 
       - run: pnpm type-check
@@ -105,19 +108,19 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
 
       - name: Restore node_modules
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('pnpm-lock.yaml', 'pnpm-workspace.yaml', '.nvmrc') }}
           fail-on-cache-miss: true
 
       - run: pnpm test
@@ -130,19 +133,19 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
 
       - name: Restore node_modules
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('pnpm-lock.yaml', 'pnpm-workspace.yaml', '.nvmrc') }}
           fail-on-cache-miss: true
 
       - run: pnpm build
@@ -169,19 +172,19 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
 
       - name: Restore node_modules
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('pnpm-lock.yaml', 'pnpm-workspace.yaml', '.nvmrc') }}
           fail-on-cache-miss: true
 
       - name: Prepare .env
@@ -202,7 +205,7 @@ jobs:
     needs: [lint, type-check, test, build, migrations]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Run e2e tests with TypeORM
         id: e2e
@@ -214,7 +217,7 @@ jobs:
 
       - name: Upload logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-logs
           path: e2e.log

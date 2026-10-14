@@ -12,7 +12,7 @@
 services:
   api:
     # CI/CD 通过 IMAGE_FULL_NAME 环境变量传入实际镜像地址
-    image: ${IMAGE_FULL_NAME:-sunweijiemj/nestjs-template:latest}
+    image: ${IMAGE_FULL_NAME:-ghcr.io/sunweijiemj/nestjs-template:latest}
     container_name: nestjs-api
     ports:
       - '${APP_PORT:-3000}:3000'
@@ -46,7 +46,7 @@ services:
       - app-network
 
   postgres:
-    image: postgres:17-alpine
+    image: postgres:17.6-alpine
     container_name: nestjs-postgres
     volumes:
       - postgres-data:/var/lib/postgresql/data
@@ -66,7 +66,7 @@ services:
       - app-network
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.4-alpine
     container_name: nestjs-redis
     volumes:
       - redis-data:/data
