@@ -13,6 +13,7 @@
     "migration:create": "pnpm typeorm migration:create",
     "migration:run": "pnpm typeorm --dataSource=src/infrastructure/database/data-source.ts migration:run",
     "migration:run:prod": "node ./node_modules/typeorm/cli.js --dataSource=dist/infrastructure/database/data-source.js migration:run",
+    "migration:check": "pnpm typeorm --dataSource=src/infrastructure/database/data-source.ts migration:generate src/infrastructure/database/migrations/Check --check",
     "migration:revert": "pnpm typeorm --dataSource=src/infrastructure/database/data-source.ts migration:revert",
     "schema:drop": "pnpm typeorm --dataSource=src/infrastructure/database/data-source.ts schema:drop",
     "seed:create:relational": "hygen seeds create-relational",

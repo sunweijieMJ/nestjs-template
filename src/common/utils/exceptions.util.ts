@@ -76,36 +76,36 @@ export function isUniqueViolation(error: unknown): boolean {
   return !!error && typeof error === 'object' && 'code' in error && error.code === PG_UNIQUE_VIOLATION;
 }
 
+/** 是否为指定唯一约束的冲突 */
+export function isUniqueViolationOf(error: unknown, constraint: string): boolean {
+  return isUniqueViolation(error) && (error as { constraint?: string }).constraint === constraint;
+}
+
+export interface UniqueViolationResponse {
+  status: HttpStatus;
+  /** 字段级错误码，状态为 422 时返回 */
+  errors?: Record<string, string>;
+  /** 业务错误码，用作 message 的翻译 key */
+  error?: string;
+}
+
 /**
- * Mapping of database column names to field names and error codes
+ * 按约束名把唯一约束冲突映射为与事前检查一致的响应；未登记的约束返回 409，
+ * 服务端生成值的约束返回 500
  */
-const UNIQUE_CONSTRAINT_MAP: Record<string, { field: string; error: string }> = {
-  email: { field: 'email', error: 'emailAlreadyExists' },
-  phone: { field: 'phone', error: 'phoneAlreadyExists' },
-  wechatopenid: { field: 'wechatOpenId', error: 'wechatOpenIdAlreadyExists' },
+export const UNIQUE_CONSTRAINT_RESPONSES: Partial<Record<string, UniqueViolationResponse>> = {
+  UQ_e12875dfb3b1d92d7d7c5377e22: { status: HttpStatus.UNPROCESSABLE_ENTITY, errors: { email: 'emailAlreadyExists' } },
+  user_phone_key: { status: HttpStatus.UNPROCESSABLE_ENTITY, errors: { phone: 'phoneAlreadyExists' } },
+  user_wechatOpenId_key: {
+    status: HttpStatus.UNPROCESSABLE_ENTITY,
+    errors: { wechatOpenId: 'wechatOpenIdAlreadyExists' },
+  },
+  REL_75e2be4ce11d447ef43be0e374: { status: HttpStatus.UNPROCESSABLE_ENTITY, errors: { photo: 'alreadyExists' } },
+  UQ_favorite_user_target: { status: HttpStatus.CONFLICT, error: 'alreadyFavorited' },
+  UQ_order_orderNo: { status: HttpStatus.INTERNAL_SERVER_ERROR },
+  UQ_share_shareCode: { status: HttpStatus.INTERNAL_SERVER_ERROR },
 };
 
-/**
- * Check if an error is a unique constraint violation and throw appropriate validation error
- * @param error - The error to check
- * @throws UnprocessableEntityException if it's a unique constraint violation
- */
-export function handleUniqueConstraintError(error: unknown): void {
-  if (isUniqueViolation(error)) {
-    const detail = 'detail' in (error as object) ? String((error as { detail?: unknown }).detail) : '';
-
-    // Extract column name from PostgreSQL error detail
-    // Format: "Key (column_name)=(value) already exists."
-    const match = detail.match(/Key \((\w+)\)/i);
-    if (match) {
-      const columnName = match[1].toLowerCase();
-      const mapping = UNIQUE_CONSTRAINT_MAP[columnName];
-      if (mapping) {
-        throwValidationError(mapping.field, mapping.error);
-      }
-    }
-
-    // Default fallback for unknown unique constraint violations
-    throwValidationError('unknown', 'uniqueConstraintViolation');
-  }
+export function uniqueViolationResponse(constraint: string | undefined): UniqueViolationResponse {
+  return (constraint ? UNIQUE_CONSTRAINT_RESPONSES[constraint] : undefined) ?? { status: HttpStatus.CONFLICT };
 }

@@ -33,5 +33,7 @@
   "conflict": "资源冲突",
   "gone": "资源已失效",
   "metadataTooLarge": "附加数据过大",
-  "invalidId": "ID 格式不正确"
+  "invalidId": "ID 格式不正确",
+  "alreadyExists": "已存在",
+  "wechatOpenIdAlreadyExists": "微信账号已被绑定"
 }

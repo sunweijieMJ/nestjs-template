@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
   JoinColumn,
   OneToOne,
+  Unique,
 } from 'typeorm';
 import { RoleEntity } from '../../../../../../common/enums/roles/role.entity';
 import { StatusEntity } from '../../../../../../common/enums/statuses/status.entity';
@@ -21,13 +22,16 @@ import { EntityRelationalHelper } from '../../../../../../common/relational-enti
   name: 'user',
 })
 @Index('IDX_user_deletedAt', ['deletedAt'], { where: '"deletedAt" IS NULL' })
+@Unique('UQ_e12875dfb3b1d92d7d7c5377e22', ['email'])
+@Unique('user_phone_key', ['phone'])
+@Unique('user_wechatOpenId_key', ['wechatOpenId'])
 export class UserEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn()
   id: number;
 
   // For "string | null" we need to use String type.
   // More info: https://github.com/typeorm/typeorm/issues/2567
-  @Column({ type: String, unique: true, nullable: true })
+  @Column({ type: String, nullable: true })
   email: string | null;
 
   @Column({ nullable: true })
@@ -45,7 +49,7 @@ export class UserEntity extends EntityRelationalHelper {
   lastName: string | null;
 
   @Index('IDX_user_phone')
-  @Column({ type: String, unique: true, nullable: true })
+  @Column({ type: String, nullable: true })
   phone: string | null;
 
   @Column({ type: String, nullable: true })
@@ -77,7 +81,7 @@ export class UserEntity extends EntityRelationalHelper {
   deletedAt: Date;
 
   @Index('IDX_user_wechatOpenId')
-  @Column({ type: String, unique: true, nullable: true })
+  @Column({ type: String, nullable: true })
   wechatOpenId: string | null;
 
   @Index('IDX_user_wechatUnionId')

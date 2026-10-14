@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, GoneException, ConflictException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, GoneException } from '@nestjs/common';
 import { CreateShareDto } from './dto/create-share.dto';
 import { QueryShareDto } from './dto/query-share.dto';
 import { ShareRepository } from './infrastructure/persistence/share.repository';
@@ -7,6 +7,7 @@ import { Share } from './domain/share';
 import { ShareLogAction } from './domain/share-log';
 import { IPaginationOptions } from '../../common/types/pagination-options';
 import { generateShareCode } from './utils/share-code.util';
+import { isUniqueViolationOf } from '../../common/utils/exceptions.util';
 import { ShareStatsDto } from './dto/share-stats.dto';
 
 @Injectable()
@@ -22,15 +23,14 @@ export class SharesService {
     this.logger.log(`Creating share for user: ${userId}`);
 
     // Generate unique share code with retry mechanism
-    const maxRetries = 5;
-    let share: Share | null = null;
+    const maxAttempts = 5;
 
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
+    for (let attempt = 1; ; attempt++) {
       const shareCode = generateShareCode();
 
       try {
         // Create share in database
-        share = await this.shareRepository.create({
+        const share = await this.shareRepository.create({
           userId,
           shareCode,
           targetType: createShareDto.targetType,
@@ -50,17 +50,13 @@ export class SharesService {
         this.logger.log(`Share created with code: ${shareCode}`);
         return share;
       } catch (error: unknown) {
-        // Check if it's a unique constraint violation (PostgreSQL error code)
-        const pgError = error as { code?: string };
-        if (pgError.code === '23505' && attempt < maxRetries - 1) {
-          this.logger.warn(`ShareCode collision detected, retrying... (attempt ${attempt + 1}/${maxRetries})`);
+        if (attempt < maxAttempts && isUniqueViolationOf(error, 'UQ_share_shareCode')) {
+          this.logger.warn(`ShareCode collision detected, retrying... (attempt ${attempt}/${maxAttempts})`);
           continue;
         }
         throw error;
       }
     }
-
-    throw new ConflictException('Failed to generate unique share code after multiple attempts');
   }
 
   async findManyWithPagination(

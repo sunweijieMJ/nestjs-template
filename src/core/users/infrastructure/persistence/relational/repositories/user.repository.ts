@@ -10,7 +10,6 @@ import { User } from '../../../../domain/user';
 import { UserRepository } from '../../user.repository';
 import { UserMapper } from '../mappers/user.mapper';
 import { IPaginationOptions } from '../../../../../../common/types/pagination-options';
-import { handleUniqueConstraintError } from '../../../../../../common/utils/exceptions.util';
 
 function toPartialEntity(payload: Partial<User>): QueryDeepPartialEntity<UserEntity> {
   const { photo, role, status, ...columns } = payload;
@@ -53,14 +52,8 @@ export class UsersRelationalRepository implements UserRepository {
 
   async create(data: User): Promise<User> {
     const persistenceModel = UserMapper.toPersistence(data);
-    try {
-      const newEntity = await this.usersRepository.save(this.usersRepository.create(persistenceModel));
-      return UserMapper.toDomain(newEntity);
-    } catch (error) {
-      // 处理数据库唯一约束异常（竞态条件下的并发创建）
-      handleUniqueConstraintError(error);
-      throw error;
-    }
+    const newEntity = await this.usersRepository.save(this.usersRepository.create(persistenceModel));
+    return UserMapper.toDomain(newEntity);
   }
 
   async findManyWithPagination({
@@ -152,15 +145,9 @@ export class UsersRelationalRepository implements UserRepository {
     const changes = toPartialEntity(payload);
 
     if (Object.keys(changes).length > 0) {
-      try {
-        const result = await this.usersRepository.update({ id: Number(id), deletedAt: IsNull() }, changes);
-        if (!result.affected) {
-          throw new NotFoundException('User not found');
-        }
-      } catch (error) {
-        // 处理数据库唯一约束异常
-        handleUniqueConstraintError(error);
-        throw error;
+      const result = await this.usersRepository.update({ id: Number(id), deletedAt: IsNull() }, changes);
+      if (!result.affected) {
+        throw new NotFoundException('User not found');
       }
     }
 

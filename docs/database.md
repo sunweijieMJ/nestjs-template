@@ -70,6 +70,14 @@ pnpm migration:run
 pnpm migration:revert
 ```
 
+### Check entities against the database
+
+Fails when the entities differ from the current database schema. CI runs it on an empty database after applying all migrations, so every entity change must come with a migration.
+
+```bash
+pnpm migration:check
+```
+
 ### Drop all tables in database
 
 ```bash

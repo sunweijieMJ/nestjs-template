@@ -8,6 +8,9 @@ import { OrderItem } from './domain/order-item';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { QueryOrderDto } from './dto/query-order.dto';
 import { IPaginationOptions } from '../../common/types/pagination-options';
+import { isUniqueViolationOf } from '../../common/utils/exceptions.util';
+
+const ORDER_NO_MAX_ATTEMPTS = 3;
 
 /** 金额列为 int4，单位分 */
 const MAX_ORDER_AMOUNT = 2_147_483_647;
@@ -70,25 +73,31 @@ export class OrdersService {
       });
     }
 
-    // Generate order number
-    const orderNo = this.generateOrderNo();
-
-    // 订单与明细在同一事务内写入
-    const order = await this.orderRepository.createWithItems(
-      {
-        userId,
-        orderNo,
-        status: OrderStatus.UNPAID,
-        totalAmount,
-        expiresAt: new Date(Date.now() + ORDER_PAYMENT_TIMEOUT_MS),
-        metadata: createOrderDto.metadata,
-      },
-      items,
-    );
-
-    this.logger.log(`Order created: ${orderNo}`);
-
-    return order;
+    for (let attempt = 1; ; attempt++) {
+      const orderNo = this.generateOrderNo();
+      try {
+        // 订单与明细在同一事务内写入
+        const order = await this.orderRepository.createWithItems(
+          {
+            userId,
+            orderNo,
+            status: OrderStatus.UNPAID,
+            totalAmount,
+            expiresAt: new Date(Date.now() + ORDER_PAYMENT_TIMEOUT_MS),
+            metadata: createOrderDto.metadata,
+          },
+          items,
+        );
+        this.logger.log(`Order created: ${orderNo}`);
+        return order;
+      } catch (error) {
+        if (attempt < ORDER_NO_MAX_ATTEMPTS && isUniqueViolationOf(error, 'UQ_order_orderNo')) {
+          this.logger.warn(`Order number collision, retrying (attempt ${attempt}/${ORDER_NO_MAX_ATTEMPTS})`);
+          continue;
+        }
+        throw error;
+      }
+    }
   }
 
   async findManyWithPagination(

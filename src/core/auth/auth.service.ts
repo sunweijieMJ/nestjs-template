@@ -35,6 +35,7 @@ import { WechatService } from '../../integrations/wechat/wechat.service';
 import { maskEmail, maskPhone } from '../../common/utils/sanitize.utils';
 import { TokenService } from './services/token.service';
 import { CredentialRepository } from './infrastructure/persistence/credential.repository';
+import { isUniqueViolationOf } from '../../common/utils/exceptions.util';
 import { NotificationsService } from '../../modules/notifications/notifications.service';
 import { verifySmsCode, validateUserStatusForAuth } from './helpers/auth-validation.helper';
 
@@ -965,19 +966,33 @@ export class AuthService {
       // Create new user for first-time WeChat login
       this.logger.log(`Creating new user for WeChat openId: ${wechatUserInfo.openId}`);
 
-      user = await this.usersService.create({
-        wechatOpenId: wechatUserInfo.openId,
-        wechatUnionId: wechatUserInfo.unionId,
-        nickname: dto.nickname ?? wechatUserInfo.nickname ?? '微信用户',
-        gender: wechatUserInfo.gender ?? 0,
-        provider: AuthProvidersEnum.wechat,
-        role: {
-          id: RoleEnum.user,
-        },
-        status: {
-          id: StatusEnum.active,
-        },
-      });
+      try {
+        user = await this.usersService.create({
+          wechatOpenId: wechatUserInfo.openId,
+          wechatUnionId: wechatUserInfo.unionId,
+          nickname: dto.nickname ?? wechatUserInfo.nickname ?? '微信用户',
+          gender: wechatUserInfo.gender ?? 0,
+          provider: AuthProvidersEnum.wechat,
+          role: {
+            id: RoleEnum.user,
+          },
+          status: {
+            id: StatusEnum.active,
+          },
+        });
+      } catch (error) {
+        if (!isUniqueViolationOf(error, 'user_wechatOpenId_key')) {
+          throw error;
+        }
+        // 并发首次登录时另一请求已创建该用户
+        const existing = await this.usersService.findByWechatOpenId(wechatUserInfo.openId);
+        if (!existing) {
+          throw error;
+        }
+        this.logger.log(`Concurrent WeChat registration resolved to user: ${existing.id}`);
+        validateUserStatusForAuth(existing, 'wechat', this.logger);
+        return this.createSessionAndTokens(existing);
+      }
 
       this.logger.log(`New WeChat user created: ${user.id}`);
 

@@ -97,7 +97,7 @@ export class AlipayService {
       format: 'JSON',
       charset: this.config.charset,
       sign_type: this.config.signType,
-      timestamp: this.getTimestamp(),
+      timestamp: toBeijingTime(new Date()),
       version: '1.0',
       auth_token: accessToken,
     };
@@ -271,7 +271,7 @@ export class AlipayService {
       format: 'JSON',
       charset: this.config.charset,
       sign_type: this.config.signType,
-      timestamp: this.getTimestamp(),
+      timestamp: toBeijingTime(new Date()),
       version: '1.0',
       notify_url: this.config.notifyUrl,
       biz_content: JSON.stringify(bizContent),
@@ -366,20 +366,6 @@ export class AlipayService {
 
     const result = (await response.json()) as T;
     return result;
-  }
-
-  /**
-   * 获取时间戳
-   */
-  private getTimestamp(): string {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   }
 
   /**

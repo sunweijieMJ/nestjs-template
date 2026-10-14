@@ -27,7 +27,6 @@ export class FavoritesService {
       this.logger.warn(`Already favorited: ${createFavoriteDto.targetType}:${createFavoriteDto.targetId}`);
       throw new ConflictException({
         error: 'alreadyFavorited',
-        message: 'This item is already in your favorites',
       });
     }
 

@@ -121,6 +121,28 @@ describe('OrdersService', () => {
       expect(orderRepository.createWithItems).not.toHaveBeenCalled();
     });
 
+    it('should retry with a new order number when the generated one already exists', async () => {
+      productCatalog.findByIds.mockResolvedValue([{ id: 'P1', name: 'A', unitPrice: 100 }]);
+      const collision = Object.assign(new Error('duplicate'), { code: '23505', constraint: 'UQ_order_orderNo' });
+      orderRepository.createWithItems
+        .mockRejectedValueOnce(collision)
+        .mockResolvedValueOnce({ ...buildOrder(), items: [] });
+
+      await service.create(10, { items: [{ productId: 'P1', quantity: 1 }] });
+
+      const [first, second] = orderRepository.createWithItems.mock.calls.map(([data]) => data.orderNo);
+      expect(second).not.toBe(first);
+    });
+
+    it('should not retry other unique violations', async () => {
+      productCatalog.findByIds.mockResolvedValue([{ id: 'P1', name: 'A', unitPrice: 100 }]);
+      const other = Object.assign(new Error('duplicate'), { code: '23505', constraint: 'PK_order_id' });
+      orderRepository.createWithItems.mockRejectedValue(other);
+
+      await expect(service.create(10, { items: [{ productId: 'P1', quantity: 1 }] })).rejects.toBe(other);
+      expect(orderRepository.createWithItems).toHaveBeenCalledTimes(1);
+    });
+
     it('should throw 422 without writing when a product is not in the catalog', async () => {
       productCatalog.findByIds.mockResolvedValue([{ id: 'P1', name: 'A', unitPrice: 100 }]);
 

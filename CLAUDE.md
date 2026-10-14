@@ -118,6 +118,7 @@ pnpm test                  # 单元测试
 pnpm test:e2e              # E2E 测试
 pnpm migration:generate    # 生成数据库迁移
 pnpm migration:run         # 执行迁移
+pnpm migration:check       # 检查实体与库结构是否一致（CI 在空库执行全部迁移后运行）
 pnpm seed:run:relational   # 执行数据库种子
 pnpm commit                # 交互式提交（commitizen）
 make -C docker dev         # Docker 开发环境（Makefile 在 docker/ 目录）

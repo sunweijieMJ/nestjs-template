@@ -33,5 +33,7 @@
   "conflict": "Conflict",
   "gone": "Resource is no longer available",
   "metadataTooLarge": "Metadata is too large",
-  "invalidId": "Invalid id"
+  "invalidId": "Invalid id",
+  "alreadyExists": "Already exists",
+  "wechatOpenIdAlreadyExists": "WeChat account is already bound"
 }

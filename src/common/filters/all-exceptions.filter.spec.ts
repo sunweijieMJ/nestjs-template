@@ -15,6 +15,8 @@ const TRANSLATIONS: Record<string, string> = {
   'common.unauthorized': '未授权',
   'common.forbidden': '禁止访问',
   'common.conflict': '资源冲突',
+  'common.emailAlreadyExists': '邮箱已被注册',
+  'common.alreadyFavorited': '已收藏',
   'common.internalServerError': '服务器内部错误',
 };
 
@@ -61,9 +63,27 @@ describe('AllExceptionsFilter', () => {
     expect(run(new ConflictException()).body.message).toBe('资源冲突');
   });
 
-  it('should map a unique constraint violation to 409', () => {
-    const exception = new QueryFailedError('INSERT', [], Object.assign(new Error('duplicate'), { code: '23505' }));
-    const { body, status } = run(exception);
+  const uniqueViolation = (constraint: string): QueryFailedError =>
+    new QueryFailedError('INSERT', [], Object.assign(new Error('duplicate'), { code: '23505', constraint }));
+
+  it('should answer a duplicate email like the registration pre-check', () => {
+    const { body, status } = run(uniqueViolation('UQ_e12875dfb3b1d92d7d7c5377e22'));
+    expect(status).toBe(422);
+    expect(body.data).toEqual({ email: '邮箱已被注册' });
+  });
+
+  it('should answer a duplicate favorite like the favorite pre-check', () => {
+    const { body, status } = run(uniqueViolation('UQ_favorite_user_target'));
+    expect(status).toBe(409);
+    expect(body.message).toBe('已收藏');
+  });
+
+  it('should treat a collision on a server-generated value as a server error', () => {
+    expect(run(uniqueViolation('UQ_order_orderNo')).status).toBe(500);
+  });
+
+  it('should answer an unregistered unique constraint with 409', () => {
+    const { body, status } = run(uniqueViolation('UQ_notification_setting_userId_category'));
     expect(status).toBe(409);
     expect(body.message).toBe('资源冲突');
   });
