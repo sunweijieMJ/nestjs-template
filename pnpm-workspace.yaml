@@ -9,3 +9,7 @@ allowBuilds:
   '@alicloud/openapi-core': false
   '@nestjs/core': false
   '@scarf/scarf': false
+# typeorm 的 ioredis 仅用于其 Redis 查询缓存（未启用）
+peerDependencyRules:
+  allowedVersions:
+    typeorm>ioredis: '6'
