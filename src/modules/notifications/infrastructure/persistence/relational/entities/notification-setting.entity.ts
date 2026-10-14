@@ -15,17 +15,17 @@ import { UserEntity } from '../../../../../../core/users/infrastructure/persiste
 @Entity({
   name: 'notification_setting',
 })
-@Unique(['userId', 'category'])
+@Unique('UQ_notification_setting_userId_category', ['userId', 'category'])
 export class NotificationSettingEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Index()
+  @Index('IDX_notification_setting_userId')
   @Column({ type: 'int' })
   userId: number;
 
   @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: 'userId', foreignKeyConstraintName: 'FK_notification_setting_user' })
   user: UserEntity;
 
   @Column({ type: 'varchar', length: 20 })

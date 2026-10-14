@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Column, Entity, PrimaryColumn, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
 import { EntityRelationalHelper } from '../../../../common/relational-entity-helper';
 
 @Entity({
@@ -14,6 +14,7 @@ export class PermissionEntity extends EntityRelationalHelper {
   @Column({ type: 'varchar', length: 255, nullable: true })
   description?: string;
 
+  @Index('IDX_PERMISSION_RESOURCE')
   @Column({ type: 'varchar', length: 50 })
   resource: string;
 

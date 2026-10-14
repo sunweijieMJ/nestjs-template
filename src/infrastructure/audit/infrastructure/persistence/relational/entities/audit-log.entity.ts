@@ -8,19 +8,19 @@ export class AuditLogEntity extends EntityRelationalHelper {
   id: number;
 
   @Column({ type: 'varchar', nullable: true })
-  @Index()
+  @Index('IDX_audit_logs_userId')
   userId: string | null;
 
   @Column({ type: 'varchar', length: 50 })
-  @Index()
+  @Index('IDX_audit_logs_action')
   action: AuditAction;
 
   @Column({ type: 'varchar', length: 100 })
-  @Index()
+  @Index('IDX_audit_logs_entityType')
   entityType: string;
 
   @Column({ type: 'varchar' })
-  @Index()
+  @Index('IDX_audit_logs_entityId')
   entityId: string;
 
   @Column({ type: 'jsonb', nullable: true })
@@ -36,10 +36,10 @@ export class AuditLogEntity extends EntityRelationalHelper {
   userAgent: string | null;
 
   @Column({ type: 'varchar', nullable: true })
-  @Index()
+  @Index('IDX_audit_logs_requestId')
   requestId: string | null;
 
   @CreateDateColumn()
-  @Index()
+  @Index('IDX_audit_logs_createdAt')
   createdAt: Date;
 }

@@ -13,24 +13,25 @@ import { UserEntity } from '../../../../../../core/users/infrastructure/persiste
 import { FavoriteTargetType } from '../../../../domain/favorite';
 
 @Entity({ name: 'favorite' })
-@Unique(['userId', 'targetType', 'targetId'])
+@Unique('UQ_favorite_user_target', ['userId', 'targetType', 'targetId'])
+@Index('IDX_favorite_userId_targetType', ['userId', 'targetType'])
 export class FavoriteEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Index()
+  @Index('IDX_favorite_userId')
   @Column({ type: 'int' })
   userId: number;
 
   @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: 'userId', foreignKeyConstraintName: 'FK_favorite_user' })
   user: UserEntity;
 
-  @Index()
+  @Index('IDX_favorite_targetType')
   @Column({ type: 'varchar', length: 20 })
   targetType: FavoriteTargetType;
 
-  @Index()
+  @Index('IDX_favorite_targetId')
   @Column({ type: 'varchar', length: 100 })
   targetId: string;
 

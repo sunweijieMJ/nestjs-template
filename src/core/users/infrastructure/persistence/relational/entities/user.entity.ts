@@ -20,6 +20,7 @@ import { EntityRelationalHelper } from '../../../../../../common/relational-enti
 @Entity({
   name: 'user',
 })
+@Index('IDX_user_deletedAt', ['deletedAt'], { where: '"deletedAt" IS NULL' })
 export class UserEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn()
   id: number;
@@ -43,7 +44,7 @@ export class UserEntity extends EntityRelationalHelper {
   @Column({ type: String, nullable: true })
   lastName: string | null;
 
-  @Index()
+  @Index('IDX_user_phone')
   @Column({ type: String, unique: true, nullable: true })
   phone: string | null;
 
@@ -75,11 +76,11 @@ export class UserEntity extends EntityRelationalHelper {
   @DeleteDateColumn()
   deletedAt: Date;
 
-  @Index()
+  @Index('IDX_user_wechatOpenId')
   @Column({ type: String, unique: true, nullable: true })
   wechatOpenId: string | null;
 
-  @Index()
+  @Index('IDX_user_wechatUnionId')
   @Column({ type: String, nullable: true })
   wechatUnionId: string | null;
 }

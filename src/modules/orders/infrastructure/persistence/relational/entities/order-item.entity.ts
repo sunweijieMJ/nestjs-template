@@ -16,14 +16,15 @@ export class OrderItemEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Index()
+  @Index('IDX_order_item_orderId')
   @Column({ type: 'int' })
   orderId: number;
 
   @ManyToOne(() => OrderEntity, (order) => order.items, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'orderId' })
+  @JoinColumn({ name: 'orderId', foreignKeyConstraintName: 'FK_order_item_order' })
   order: OrderEntity;
 
+  @Index('IDX_order_item_productId')
   @Column({ type: 'varchar', length: 100 })
   productId: string;
 

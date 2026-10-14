@@ -19,18 +19,18 @@ export class NotificationEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Index()
+  @Index('IDX_notification_userId')
   @Column({ type: 'int' })
   userId: number;
 
   @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: 'userId', foreignKeyConstraintName: 'FK_notification_user' })
   user: UserEntity;
 
   @Column({ type: 'varchar', length: 20 })
   type: string;
 
-  @Index()
+  @Index('IDX_notification_category')
   @Column({ type: 'varchar', length: 20 })
   category: string;
 
@@ -49,14 +49,14 @@ export class NotificationEntity extends EntityRelationalHelper {
   @Column({ type: 'jsonb', default: {} })
   sentChannels: Record<string, { sent: boolean; sentAt?: Date; error?: string }>;
 
-  @Index()
+  @Index('IDX_notification_isRead')
   @Column({ type: 'boolean', default: false })
   isRead: boolean;
 
   @Column({ type: 'timestamp', nullable: true })
   readAt: Date | null;
 
-  @Index()
+  @Index('IDX_notification_createdAt')
   @CreateDateColumn()
   createdAt: Date;
 

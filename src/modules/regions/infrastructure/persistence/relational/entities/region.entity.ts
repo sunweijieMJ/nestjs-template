@@ -3,24 +3,25 @@ import { EntityRelationalHelper } from '../../../../../../common/relational-enti
 
 @Entity({
   name: 'region',
+  comment: 'Administrative division data (Province/City/District)',
 })
-@Index(['level', 'parentCode'])
+@Index('IDX_region_level_parentCode', ['level', 'parentCode'])
 export class RegionEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Index()
+  @Index('IDX_region_code')
   @Column({ type: 'varchar', length: 12, unique: true })
   code: string;
 
   @Column({ type: 'varchar', length: 50 })
   name: string;
 
-  @Index()
+  @Index('IDX_region_level')
   @Column({ type: 'int' })
   level: number;
 
-  @Index()
+  @Index('IDX_region_parentCode')
   @Column({ type: 'varchar', length: 12, nullable: true })
   parentCode: string | null;
 

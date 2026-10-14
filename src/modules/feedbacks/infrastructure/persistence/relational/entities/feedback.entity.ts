@@ -18,15 +18,15 @@ export class FeedbackEntity extends EntityRelationalHelper {
   id: number;
 
   @Column({ type: 'int' })
-  @Index()
+  @Index('IDX_feedback_userId')
   userId: number;
 
   @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: 'userId', foreignKeyConstraintName: 'FK_feedback_user' })
   user: UserEntity;
 
   @Column({ type: 'varchar', length: 20 })
-  @Index()
+  @Index('IDX_feedback_type')
   type: FeedbackType;
 
   @Column({ type: 'text' })
@@ -39,7 +39,7 @@ export class FeedbackEntity extends EntityRelationalHelper {
   contact?: string;
 
   @Column({ type: 'varchar', length: 20, default: FeedbackStatus.PENDING })
-  @Index()
+  @Index('IDX_feedback_status')
   status: FeedbackStatus;
 
   @Column({ type: 'text', nullable: true })

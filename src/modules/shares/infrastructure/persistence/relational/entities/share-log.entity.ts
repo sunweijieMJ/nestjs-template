@@ -9,15 +9,15 @@ export class ShareLogEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Index()
+  @Index('IDX_share_log_shareId')
   @Column({ type: 'int' })
   shareId: number;
 
   @ManyToOne(() => ShareEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'shareId' })
+  @JoinColumn({ name: 'shareId', foreignKeyConstraintName: 'FK_share_log_share' })
   share: ShareEntity;
 
-  @Index()
+  @Index('IDX_share_log_action')
   @Column({ type: 'varchar', length: 20 })
   action: string;
 
@@ -33,7 +33,7 @@ export class ShareLogEntity extends EntityRelationalHelper {
   @Column({ type: 'jsonb', nullable: true })
   metadata: Record<string, unknown> | null;
 
-  @Index()
+  @Index('IDX_share_log_createdAt')
   @CreateDateColumn()
   createdAt: Date;
 }

@@ -19,23 +19,23 @@ export class ShareEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Index()
+  @Index('IDX_share_userId')
   @Column({ type: 'int' })
   userId: number;
 
   @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: 'userId', foreignKeyConstraintName: 'FK_share_user' })
   user: UserEntity;
 
-  @Index()
+  @Index('IDX_share_shareCode')
   @Column({ type: 'varchar', length: 8, unique: true })
   shareCode: string;
 
-  @Index()
+  @Index('IDX_share_targetType')
   @Column({ type: 'varchar', length: 20 })
   targetType: string;
 
-  @Index()
+  @Index('IDX_share_targetId')
   @Column({ type: 'varchar', length: 100 })
   targetId: string;
 
@@ -69,7 +69,7 @@ export class ShareEntity extends EntityRelationalHelper {
   @Column({ type: 'timestamp', nullable: true })
   expiresAt: Date | null;
 
-  @Index()
+  @Index('IDX_share_createdAt')
   @CreateDateColumn()
   createdAt: Date;
 

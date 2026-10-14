@@ -20,19 +20,19 @@ export class OrderEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Index()
+  @Index('IDX_order_userId')
   @Column({ type: 'int' })
   userId: number;
 
   @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: 'userId', foreignKeyConstraintName: 'FK_order_user' })
   user: UserEntity;
 
-  @Index()
+  @Index('IDX_order_orderNo')
   @Column({ type: 'varchar', length: 32, unique: true })
   orderNo: string;
 
-  @Index()
+  @Index('IDX_order_status')
   @Column({ type: 'varchar', length: 20, default: 'UNPAID' })
   status: string;
 
@@ -66,7 +66,7 @@ export class OrderEntity extends EntityRelationalHelper {
   @OneToMany(() => OrderItemEntity, (item) => item.order)
   items: OrderItemEntity[];
 
-  @Index()
+  @Index('IDX_order_createdAt')
   @CreateDateColumn()
   createdAt: Date;
 

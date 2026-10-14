@@ -15,6 +15,7 @@ import { EntityRelationalHelper } from '../../../../../../common/relational-enti
 @Entity({
   name: 'session',
 })
+@Index('IDX_session_deletedAt', ['deletedAt'], { where: '"deletedAt" IS NULL' })
 export class SessionEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn()
   id: number;
