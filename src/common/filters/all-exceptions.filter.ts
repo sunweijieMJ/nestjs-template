@@ -13,10 +13,25 @@ const STATUS_TO_I18N_KEY: Record<number, string> = {
   [HttpStatus.UNAUTHORIZED]: 'unauthorized',
   [HttpStatus.FORBIDDEN]: 'forbidden',
   [HttpStatus.NOT_FOUND]: 'notFound',
+  [HttpStatus.CONFLICT]: 'conflict',
+  [HttpStatus.GONE]: 'gone',
   [HttpStatus.UNPROCESSABLE_ENTITY]: 'unprocessableEntity',
   [HttpStatus.TOO_MANY_REQUESTS]: 'tooManyRequests',
   [HttpStatus.INTERNAL_SERVER_ERROR]: 'internalServerError',
 };
+
+/** Nest 内置异常未传参时使用的默认 message */
+const DEFAULT_DESCRIPTIONS = [
+  'Bad Request',
+  'Unauthorized',
+  'Forbidden',
+  'Not Found',
+  'Conflict',
+  'Gone',
+  'Unprocessable Entity',
+  'Too Many Requests',
+  'Internal Server Error',
+];
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -55,9 +70,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
         // Get message from response or use status-based default
         const rawMessage = responseObj.message as string | string[] | undefined;
-        message = this.getTranslatedMessage(rawMessage, statusCode, i18n);
+        const rawError = typeof responseObj.error === 'string' ? responseObj.error : undefined;
+        const errorCode = rawError && !DEFAULT_DESCRIPTIONS.includes(rawError) ? rawError : undefined;
+        message = this.getTranslatedMessage(rawMessage, statusCode, i18n, errorCode);
 
-        error = (responseObj.error as string) || exception.name;
+        error = rawError ?? exception.name;
 
         // Translate error codes in errors object
         if (errors && i18n) {
@@ -127,9 +144,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
     rawMessage: string | string[] | undefined,
     statusCode: number,
     i18n: I18nContext | undefined,
+    errorCode?: string,
   ): string | string[] {
-    // If no message or it's the default NestJS exception message, use status-based default
+    // If no message or it's the default NestJS exception message, use the error code or status-based default
     if (!rawMessage || this.isDefaultExceptionMessage(rawMessage)) {
+      if (errorCode) {
+        return this.translateMessage(errorCode, i18n) ?? errorCode;
+      }
       return this.getDefaultMessage(statusCode, i18n);
     }
 
@@ -163,7 +184,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       'Unprocessable Entity Exception',
       'Internal Server Error Exception',
     ];
-    return defaultMessages.some((m) => message.includes(m));
+    return DEFAULT_DESCRIPTIONS.includes(message) || defaultMessages.some((m) => message.includes(m));
   }
 
   /**

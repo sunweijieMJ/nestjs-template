@@ -29,5 +29,8 @@
   "statusNotExists": "状态不存在",
   "imageNotExists": "图片不存在",
   "productNotFound": "商品不存在或已下架",
-  "orderAmountTooLarge": "订单金额超出上限"
+  "orderAmountTooLarge": "订单金额超出上限",
+  "conflict": "资源冲突",
+  "gone": "资源已失效",
+  "metadataTooLarge": "附加数据过大"
 }

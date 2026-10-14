@@ -86,21 +86,7 @@ export class SharesService {
   }
 
   async findByShareCode(shareCode: string, visitorIp?: string, userAgent?: string): Promise<Share> {
-    const share = await this.shareRepository.findByShareCode(shareCode);
-
-    if (!share) {
-      throw new NotFoundException('Share not found');
-    }
-
-    // Check if share is deleted
-    if (share.deletedAt) {
-      throw new NotFoundException('Share not found');
-    }
-
-    // Check if share is expired
-    if (share.expiresAt && new Date() > share.expiresAt) {
-      throw new GoneException('Share has expired');
-    }
+    const share = await this.findActiveByShareCode(shareCode);
 
     // Increment view count and log the view
     await this.shareRepository.incrementViewCount(share.id);
@@ -117,28 +103,24 @@ export class SharesService {
   }
 
   async trackShare(
-    id: number,
+    shareCode: string,
     action: ShareLogAction,
     visitorIp?: string,
     userAgent?: string,
     metadata?: Record<string, unknown>,
   ): Promise<void> {
-    const share = await this.shareRepository.findById(id);
-
-    if (!share) {
-      throw new NotFoundException('Share not found');
-    }
+    const share = await this.findActiveByShareCode(shareCode);
 
     // Increment corresponding count
     if (action === ShareLogAction.CLICK) {
-      await this.shareRepository.incrementClickCount(id);
+      await this.shareRepository.incrementClickCount(share.id);
     } else if (action === ShareLogAction.CONVERSION) {
-      await this.shareRepository.incrementConversionCount(id);
+      await this.shareRepository.incrementConversionCount(share.id);
     }
 
     // Log the action
     await this.shareLogRepository.create({
-      shareId: id,
+      shareId: share.id,
       action,
       visitorIp,
       userAgent,
@@ -146,7 +128,21 @@ export class SharesService {
       metadata,
     });
 
-    this.logger.log(`Share tracked: ${id}, action: ${action}`);
+    this.logger.log(`Share tracked: ${share.id}, action: ${action}`);
+  }
+
+  private async findActiveByShareCode(shareCode: string): Promise<Share> {
+    const share = await this.shareRepository.findByShareCode(shareCode);
+
+    if (!share || share.deletedAt) {
+      throw new NotFoundException('Share not found');
+    }
+
+    if (share.expiresAt && new Date() > share.expiresAt) {
+      throw new GoneException('Share has expired');
+    }
+
+    return share;
   }
 
   async getStats(id: number, userId: number): Promise<ShareStatsDto> {

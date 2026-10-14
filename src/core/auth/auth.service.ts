@@ -633,7 +633,12 @@ export class AuthService {
     }
 
     if (session.hash !== data.hash) {
-      this.logger.warn(`Token refresh failed - hash mismatch for session: ${data.sessionId}`);
+      if (await this.sessionService.wasRecentlyRotatedFrom(session.id, data.hash)) {
+        this.logger.warn(`Token refresh failed - stale refresh token within grace period: ${data.sessionId}`);
+      } else {
+        this.logger.warn(`Refresh token reused, revoking session: ${data.sessionId}`);
+        await this.sessionService.revoke(session.id);
+      }
       throw new UnauthorizedException();
     }
 
@@ -648,10 +653,6 @@ export class AuthService {
 
     validateUserStatusForAuth(user, 'refresh', this.logger);
 
-    await this.sessionService.update(session.id, {
-      hash,
-    });
-
     const { token, refreshToken, tokenExpires } = await this.tokenService.getTokensData({
       id: session.user.id,
       role: {
@@ -660,6 +661,12 @@ export class AuthService {
       sessionId: session.id,
       hash,
     });
+
+    const rotated = await this.sessionService.rotateHash(session.id, data.hash, hash);
+    if (!rotated) {
+      this.logger.warn(`Token refresh failed - session rotated concurrently: ${data.sessionId}`);
+      throw new UnauthorizedException();
+    }
 
     this.logger.debug(`Token refreshed for user: ${session.user.id}`);
 

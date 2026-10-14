@@ -16,6 +16,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 import { SharesService } from './shares.service';
 import { CreateShareDto } from './dto/create-share.dto';
 import { QueryShareDto } from './dto/query-share.dto';
@@ -120,16 +121,17 @@ export class SharesController {
   }
 
   @ApiOperation({ operationId: 'trackShare', summary: '追踪分享行为' })
-  @ApiParam({ name: 'id', type: Number })
-  @Post(':id/track')
+  @ApiParam({ name: 'code', type: String })
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @Post('code/:code/track')
   @HttpCode(HttpStatus.OK)
   async track(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('code') code: string,
     @Body() trackShareDto: TrackShareDto,
     @Ip() ip: string,
     @Headers('user-agent') userAgent: string,
   ): Promise<void> {
-    return this.sharesService.trackShare(id, trackShareDto.action, ip, userAgent, trackShareDto.metadata);
+    return this.sharesService.trackShare(code, trackShareDto.action, ip, userAgent, trackShareDto.metadata);
   }
 
   @ApiOkResponse({ type: WeChatJsSdkConfigResponseDto })

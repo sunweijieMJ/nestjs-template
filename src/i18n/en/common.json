@@ -29,5 +29,8 @@
   "statusNotExists": "Status does not exist",
   "imageNotExists": "Image does not exist",
   "productNotFound": "Product does not exist or is unavailable",
-  "orderAmountTooLarge": "Order amount exceeds the limit"
+  "orderAmountTooLarge": "Order amount exceeds the limit",
+  "conflict": "Conflict",
+  "gone": "Resource is no longer available",
+  "metadataTooLarge": "Metadata is too large"
 }

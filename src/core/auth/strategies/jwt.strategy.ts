@@ -8,11 +8,19 @@ import { OrNeverType } from '../../../common/types/or-never.type';
 import { JwtPayloadType } from './types/jwt-payload.type';
 import { AllConfigType } from '../../../config/config.type';
 import { UsersService } from '../../users/users.service';
-import { SessionService } from '../../session/session.service';
+import { SessionService, sessionAuthCacheKey } from '../../session/session.service';
 import { isUserStatusAllowedForAuth } from '../../../common/utils/status.util';
 
 /** JWT 会话与用户校验缓存 TTL：30 秒（平衡安全性与性能） */
 const JWT_USER_CACHE_TTL_MS = 30_000;
+
+/** 以库中当前角色覆盖令牌签发时的角色；roleId 为 undefined 表示缓存中没有角色信息 */
+function withRole(payload: JwtPayloadType, roleId: number | null | undefined): JwtPayloadType {
+  if (roleId === undefined) {
+    return payload;
+  }
+  return { ...payload, role: roleId === null ? null : { ...payload.role, id: roleId } };
+}
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -34,14 +42,14 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
 
     // 先查缓存，避免每次请求都查库；会话被删除后最多 30 秒内失效
-    const cacheKey = `jwt:session:${payload.sessionId}`;
-    const cached = await this.cacheManager.get<{ statusId?: number }>(cacheKey);
+    const cacheKey = sessionAuthCacheKey(payload.sessionId);
+    const cached = await this.cacheManager.get<{ statusId?: number; roleId?: number | null }>(cacheKey);
 
     if (cached) {
       if (!isUserStatusAllowedForAuth(cached.statusId)) {
         throw new UnauthorizedException('User is not active');
       }
-      return payload;
+      return withRole(payload, cached.roleId);
     }
 
     // 缓存未命中，查库：会话需存在且属于该用户
@@ -61,8 +69,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
 
     // 写入缓存
-    await this.cacheManager.set(cacheKey, { statusId: user.status?.id }, JWT_USER_CACHE_TTL_MS);
+    await this.cacheManager.set(
+      cacheKey,
+      { statusId: user.status?.id, roleId: user.role?.id ?? null },
+      JWT_USER_CACHE_TTL_MS,
+    );
 
-    return payload;
+    return withRole(payload, user.role?.id ?? null);
   }
 }

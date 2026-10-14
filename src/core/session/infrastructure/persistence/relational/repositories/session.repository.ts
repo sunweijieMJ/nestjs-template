@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Not, Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { SessionEntity } from '../entities/session.entity';
 import { NullableType } from '../../../../../../common/types/nullable.type';
 
@@ -31,6 +31,14 @@ export class SessionRelationalRepository implements SessionRepository {
   async create(data: Session): Promise<Session> {
     const persistenceModel = SessionMapper.toPersistence(data);
     return this.sessionRepository.save(this.sessionRepository.create(persistenceModel));
+  }
+
+  async rotateHash(id: Session['id'], currentHash: string, nextHash: string): Promise<boolean> {
+    const result = await this.sessionRepository.update(
+      { id: Number(id), hash: currentHash, deletedAt: IsNull() },
+      { hash: nextHash },
+    );
+    return (result.affected ?? 0) > 0;
   }
 
   async update(

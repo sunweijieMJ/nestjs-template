@@ -12,6 +12,9 @@ export abstract class SessionRepository {
     payload: Partial<Omit<Session, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>>,
   ): Promise<Session | null>;
 
+  /** 仅当会话当前 hash 等于 currentHash 时替换为 nextHash，返回是否替换成功 */
+  abstract rotateHash(id: Session['id'], currentHash: string, nextHash: string): Promise<boolean>;
+
   abstract deleteById(id: Session['id']): Promise<void>;
 
   abstract deleteByUserId(conditions: { userId: User['id'] }): Promise<void>;

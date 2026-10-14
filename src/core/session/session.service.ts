@@ -1,9 +1,23 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 import { SessionRepository } from './infrastructure/persistence/session.repository';
 import { Session } from './domain/session';
 import { User } from '../users/domain/user';
 import { NullableType } from '../../common/types/nullable.type';
+
+/** 刷新令牌轮换后，旧 hash 视为并发或重试请求而非盗用的时长 */
+const ROTATED_HASH_GRACE_MS = 60_000;
+
+/** JwtStrategy 缓存会话校验结果使用的键 */
+export function sessionAuthCacheKey(id: Session['id']): string {
+  return `jwt:session:${id}`;
+}
+
+function rotatedHashCacheKey(id: Session['id']): string {
+  return `session:rotated:${id}`;
+}
 
 /**
  * 会话服务 - 管理用户登录会话
@@ -12,7 +26,10 @@ import { NullableType } from '../../common/types/nullable.type';
 export class SessionService {
   private readonly logger = new Logger(SessionService.name);
 
-  constructor(private readonly sessionRepository: SessionRepository) {}
+  constructor(
+    private readonly sessionRepository: SessionRepository,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+  ) {}
 
   /**
    * 根据ID查找会话
@@ -46,6 +63,26 @@ export class SessionService {
   ): Promise<Session | null> {
     this.logger.debug(`Session updated: ${id}`);
     return this.sessionRepository.update(id, payload);
+  }
+
+  /** 仅当当前 hash 等于 currentHash 时轮换，成功后在宽限期内记住旧 hash */
+  async rotateHash(id: Session['id'], currentHash: string, nextHash: string): Promise<boolean> {
+    const rotated = await this.sessionRepository.rotateHash(id, currentHash, nextHash);
+    if (rotated) {
+      await this.cacheManager.set(rotatedHashCacheKey(id), currentHash, ROTATED_HASH_GRACE_MS);
+    }
+    return rotated;
+  }
+
+  async wasRecentlyRotatedFrom(id: Session['id'], hash: string): Promise<boolean> {
+    return (await this.cacheManager.get<string>(rotatedHashCacheKey(id))) === hash;
+  }
+
+  /** 删除会话并清除令牌校验缓存，使该会话的访问令牌立即失效 */
+  async revoke(id: Session['id']): Promise<void> {
+    await this.sessionRepository.deleteById(id);
+    await this.cacheManager.del(sessionAuthCacheKey(id));
+    this.logger.debug(`Session revoked: ${id}`);
   }
 
   /**
