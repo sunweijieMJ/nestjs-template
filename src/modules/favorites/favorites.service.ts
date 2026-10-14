@@ -91,7 +91,7 @@ export class FavoritesService {
     this.logger.log(`Removing favorite: ${id} for user: ${userId}`);
 
     const favorite = await this.favoriteRepository.findById(id);
-    if (!favorite || favorite.userId.toString() !== userId.toString()) {
+    if (favorite?.userId.toString() !== userId.toString()) {
       this.logger.warn(`Favorite ${id} not found or not owned by user ${userId}`);
       throw new NotFoundException({
         error: 'favoriteNotFound',

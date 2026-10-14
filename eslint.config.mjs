@@ -21,10 +21,7 @@ export default defineConfig(
   ...tseslint.configs.recommendedTypeChecked,
   {
     languageOptions: {
-      globals: {
-        ...globals.node,
-        ...globals.vitest,
-      },
+      globals: globals.node,
       parserOptions: {
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
@@ -109,6 +106,9 @@ export default defineConfig(
   },
   {
     files: ['**/*.spec.ts', '**/*.e2e-spec.ts', 'test/**/*.ts'],
+    languageOptions: {
+      globals: globals.vitest,
+    },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/require-await': 'off',

@@ -33,7 +33,7 @@
     "start:prod": "node --enable-source-maps dist/main",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "lint:check": "eslint . && prettier . --check && markdownlint-cli2",
+    "lint:check": "eslint . --max-warnings 0 && prettier . --check && markdownlint-cli2 && cspell --no-progress",
     "lint:md": "markdownlint-cli2",
     "type-check": "pnpm type-check:app && pnpm type-check:test && pnpm type-check:node",
     "type-check:app": "tsc --noEmit -p tsconfig.app.json",
@@ -51,8 +51,11 @@
   },
   "lint-staged": {
     "*.{ts,js,mjs,cjs}": [
-      "eslint --fix --no-warn-ignored",
+      "eslint --fix --no-warn-ignored --max-warnings 0",
       "prettier --write"
+    ],
+    "src/**/*.{js,ts}": [
+      "cspell --no-progress --no-must-find-files"
     ],
     "!(*.ts|*.js|*.mjs|*.cjs)": [
       "prettier --write --ignore-unknown"

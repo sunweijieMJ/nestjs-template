@@ -73,7 +73,7 @@ export class FeedbacksController {
     const feedback = await this.feedbacksService.findById(id);
 
     // Check if feedback exists and belongs to current user
-    if (!feedback || feedback.userId.toString() !== request.user.id.toString()) {
+    if (feedback?.userId.toString() !== request.user.id.toString()) {
       throw new NotFoundException({
         error: 'feedbackNotFound',
       });
