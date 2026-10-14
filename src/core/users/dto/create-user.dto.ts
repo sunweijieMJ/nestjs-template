@@ -104,4 +104,9 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   wechatUnionId?: string | null;
+
+  @ApiPropertyOptional({ example: '074a1CcTG1LelxKe4xQC0zgNdId0nxi95b5lsNpazWYoCo5', type: String })
+  @IsOptional()
+  @IsString()
+  alipayOpenId?: string | null;
 }

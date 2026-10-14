@@ -41,6 +41,7 @@ const UPDATABLE_COLUMNS = [
   'birthday',
   'wechatOpenId',
   'wechatUnionId',
+  'alipayOpenId',
 ] as const;
 
 @Injectable()
@@ -140,6 +141,17 @@ export class UsersRelationalRepository implements UserRepository {
     return entity ? UserMapper.toDomain(entity) : null;
   }
 
+  async findByAlipayOpenId(openId: string): Promise<NullableType<User>> {
+    if (!openId) return null;
+
+    const entity = await this.usersRepository.findOne({
+      where: { alipayOpenId: openId },
+      relations: { photo: true, role: true, status: true },
+    });
+
+    return entity ? UserMapper.toDomain(entity) : null;
+  }
+
   /** 只更新 payload 中有值的字段，已软删除的用户视为不存在 */
   async update(id: User['id'], payload: Partial<User>): Promise<User> {
     const changes = toPartialEntity(payload);
@@ -189,6 +201,7 @@ export class UsersRelationalRepository implements UserRepository {
         phone: null,
         wechatOpenId: null,
         wechatUnionId: null,
+        alipayOpenId: null,
       });
       await manager.softDelete(UserEntity, id);
     });

@@ -24,6 +24,19 @@ export interface AlipayPaymentParams {
 
 const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
 
+/** 同一订单号再次下单但交易信息（金额、付款人、标题等）不一致 */
+const TRADE_CONTEXT_INCONSISTENT = 'ACQ.CONTEXT_INCONSISTENT';
+
+interface AlipayOauthTokenResponse {
+  alipay_system_oauth_token_response?: {
+    open_id?: string;
+    user_id?: string;
+    access_token: string;
+    expires_in: number;
+  };
+  error_response?: AlipayCommonResponse;
+}
+
 /** 支付宝要求的 yyyy-MM-dd HH:mm:ss（北京时间） */
 function toBeijingTime(date: Date): string {
   return new Date(date.getTime() + BEIJING_OFFSET_MS).toISOString().slice(0, 19).replace('T', ' ');
@@ -56,31 +69,71 @@ export class AlipayService {
   }
 
   /**
-   * 通过授权码获取访问令牌
+   * 用小程序 my.getAuthCode 返回的授权码换取用户标识
+   * @returns open_id；应用未开启 OpenID（只返回 user_id）时视为配置错误
+   * @throws UnprocessableEntityException 授权码无效时为 invalidAlipayAuthCode，未配置或请求失败时为 alipay 字段错误
    */
-  async getAccessToken(authCode: string): Promise<{
-    access_token: string;
-    user_id: string;
-    expires_in: number;
-  }> {
-    const bizContent = {
+  async exchangeAuthCode(authCode: string): Promise<{ openId: string }> {
+    if (!this.config.appId || !this.config.privateKey) {
+      this.logger.error('Alipay credentials not configured');
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: { alipay: 'notConfigured' },
+      });
+    }
+
+    const params: Record<string, string> = {
+      app_id: this.config.appId,
+      method: 'alipay.system.oauth.token',
+      format: 'JSON',
+      charset: this.config.charset,
+      sign_type: this.config.signType,
+      timestamp: toBeijingTime(new Date()),
+      version: '1.0',
       grant_type: 'authorization_code',
       code: authCode,
     };
+    params.sign = this.sign(params);
 
-    const params = this.buildCommonParams('alipay.system.oauth.token', bizContent);
-    const sign = this.sign(params);
-    params.sign = sign;
+    let response: AlipayOauthTokenResponse;
+    try {
+      // 授权码只能使用一次，超时重试会因授权码已使用而失败
+      response = await this.sendRequest<AlipayOauthTokenResponse>(params, { maxRetries: 0 });
+    } catch (error) {
+      this.logger.error('Alipay oauth token request failed', error);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: { alipay: 'requestFailed' },
+      });
+    }
 
-    const response = await this.sendRequest<{
-      alipay_system_oauth_token_response: {
-        access_token: string;
-        user_id: string;
-        expires_in: number;
-      } & AlipayCommonResponse;
-    }>(params);
+    const errorResponse = response.error_response;
+    if (errorResponse) {
+      this.logger.error(`Alipay oauth token failed: ${errorResponse.code} ${errorResponse.sub_code ?? ''}`);
+      if (errorResponse.sub_code?.startsWith('isv.code-')) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          error: 'invalidAlipayAuthCode',
+          errors: { authCode: 'invalidCode' },
+        });
+      }
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: { alipay: 'requestFailed' },
+      });
+    }
 
-    return response.alipay_system_oauth_token_response;
+    const token = response.alipay_system_oauth_token_response;
+    const openId = token?.open_id;
+    if (!openId) {
+      this.logger.error('Alipay oauth token response has no open_id, check that OpenID is enabled for the app');
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: { alipay: 'requestFailed' },
+      });
+    }
+
+    return { openId };
   }
 
   /**
@@ -130,6 +183,61 @@ export class AlipayService {
     };
 
     return this.buildRequestForm('alipay.trade.wap.pay', bizContent);
+  }
+
+  /**
+   * 创建小程序支付订单（alipay.trade.create）
+   * @param buyerOpenId - 付款用户的 open_id
+   * @returns 支付宝交易号，供小程序 my.tradePay 拉起收银台
+   * @throws UnprocessableEntityException 交易信息与该订单号已有交易不一致时为 alipayTradeInconsistent，请求失败时为 alipay 字段错误
+   */
+  async createMiniProgramPayment(params: AlipayPaymentParams & { buyerOpenId: string }): Promise<string> {
+    const bizContent = {
+      out_trade_no: params.outTradeNo,
+      product_code: 'JSAPI_PAY',
+      total_amount: params.totalAmount,
+      subject: params.subject,
+      body: params.body,
+      time_expire: params.timeExpire ? toBeijingTime(params.timeExpire) : undefined,
+      buyer_open_id: params.buyerOpenId,
+    };
+
+    const requestParams = this.buildCommonParams('alipay.trade.create', bizContent);
+    requestParams.sign = this.sign(requestParams);
+
+    let response: {
+      alipay_trade_create_response?: { trade_no: string; out_trade_no: string } & AlipayCommonResponse;
+      error_response?: AlipayCommonResponse;
+    };
+    try {
+      response = await this.sendRequest(requestParams);
+    } catch (error) {
+      this.logger.error('Alipay trade create request failed', error);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: { alipay: 'requestFailed' },
+      });
+    }
+
+    const result = response.alipay_trade_create_response ?? response.error_response;
+    if (!result) {
+      this.logger.error('Alipay trade create response is empty');
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: { alipay: 'requestFailed' },
+      });
+    }
+
+    if (result.sub_code === TRADE_CONTEXT_INCONSISTENT) {
+      this.logger.warn(`Alipay trade context inconsistent for order ${params.outTradeNo}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        error: 'alipayTradeInconsistent',
+        errors: { outTradeNo: 'tradeInconsistent' },
+      });
+    }
+
+    return this.assertSuccess(result as { trade_no: string } & AlipayCommonResponse).trade_no;
   }
 
   /**
@@ -322,9 +430,6 @@ export class AlipayService {
   }
 
   /**
-   * 发送 HTTP 请求到支付宝网关
-   */
-  /**
    * 业务返回码不是 10000 时抛出 422
    */
   private assertSuccess<T extends AlipayCommonResponse>(response: T): T {
@@ -340,7 +445,10 @@ export class AlipayService {
     return response;
   }
 
-  private async sendRequest<T>(params: Record<string, string>): Promise<T> {
+  /**
+   * 发送 HTTP 请求到支付宝网关
+   */
+  private async sendRequest<T>(params: Record<string, string>, retryOptions: { maxRetries?: number } = {}): Promise<T> {
     const queryString = new URLSearchParams(params).toString();
     const url = `${this.config.gateway}?${queryString}`;
 
@@ -353,7 +461,7 @@ export class AlipayService {
         },
       },
       {
-        maxRetries: 3,
+        maxRetries: retryOptions.maxRetries ?? 3,
         retryDelay: 1000,
         timeout: 30000,
       },

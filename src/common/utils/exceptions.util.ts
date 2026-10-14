@@ -100,6 +100,10 @@ export const UNIQUE_CONSTRAINT_RESPONSES: Partial<Record<string, UniqueViolation
     status: HttpStatus.UNPROCESSABLE_ENTITY,
     errors: { wechatOpenId: 'wechatOpenIdAlreadyExists' },
   },
+  user_alipayOpenId_key: {
+    status: HttpStatus.UNPROCESSABLE_ENTITY,
+    errors: { alipayOpenId: 'alipayOpenIdAlreadyExists' },
+  },
   REL_75e2be4ce11d447ef43be0e374: { status: HttpStatus.UNPROCESSABLE_ENTITY, errors: { photo: 'alreadyExists' } },
   UQ_favorite_user_target: { status: HttpStatus.CONFLICT, error: 'alreadyFavorited' },
   UQ_order_orderNo: { status: HttpStatus.INTERNAL_SERVER_ERROR },

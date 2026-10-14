@@ -8,6 +8,12 @@ export interface RetryOptions {
   timeout?: number;
 }
 
+/** 去掉查询参数，避免签名、授权码等写入日志 */
+function stripQuery(url: string): string {
+  const index = url.indexOf('?');
+  return index === -1 ? url : url.slice(0, index);
+}
+
 /**
  * 带重试机制的 HTTP 请求
  */
@@ -34,7 +40,7 @@ export async function fetchWithRetry(
       const isLastAttempt = attempt === maxRetries;
 
       if (isLastAttempt) {
-        logger.error(`Request failed after ${maxRetries + 1} attempts: ${url}`);
+        logger.error(`Request failed after ${maxRetries + 1} attempts: ${stripQuery(url)}`);
         throw error;
       }
 

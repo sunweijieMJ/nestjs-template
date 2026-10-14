@@ -7,6 +7,8 @@ import { UsersService } from '../users/users.service';
 import { TokenService } from './services/token.service';
 import { StatusEnum } from '../../common/enums/statuses/statuses.enum';
 import { WechatService } from '../../integrations/wechat/wechat.service';
+import { AlipayService } from '../../integrations/alipay/alipay.service';
+import { AuthProvidersEnum } from './auth-providers.enum';
 import { NotificationsService } from '../../modules/notifications/notifications.service';
 import { User } from '../users/domain/user';
 
@@ -238,6 +240,84 @@ describe('AuthService', () => {
 
       await expect(service.wechatPhoneLogin(dto)).rejects.toThrow('duplicate key');
       expect(usersService.create).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('alipayLogin', () => {
+    const dto = { authCode: 'A1' };
+
+    let usersService: Mocked<Pick<UsersService, 'findByAlipayOpenId' | 'create'>>;
+    let alipayService: Mocked<Pick<AlipayService, 'exchangeAuthCode'>>;
+    let notificationsService: Mocked<Pick<NotificationsService, 'initializeDefaultSettings'>>;
+    let service: AuthService;
+
+    function buildUser(overrides: Partial<User> = {}): User {
+      return { id: 1, role: { id: 2 }, status: { id: StatusEnum.active }, ...overrides } as User;
+    }
+
+    beforeEach(async () => {
+      usersService = {
+        findByAlipayOpenId: vi.fn().mockResolvedValue(null),
+        create: vi.fn(),
+      };
+      alipayService = { exchangeAuthCode: vi.fn().mockResolvedValue({ openId: 'ALI1' }) };
+      notificationsService = { initializeDefaultSettings: vi.fn() };
+      const sessionService = { create: vi.fn().mockResolvedValue({ id: 10 }) };
+      const tokenService = {
+        generateSessionHash: vi.fn().mockReturnValue('H'),
+        getTokensData: vi.fn().mockResolvedValue({ token: 't', refreshToken: 'r', tokenExpires: 1 }),
+      };
+
+      const moduleRef = await Test.createTestingModule({ providers: [AuthService] })
+        .useMocker((token) => {
+          if (token === UsersService) return usersService;
+          if (token === AlipayService) return alipayService;
+          if (token === NotificationsService) return notificationsService;
+          if (token === SessionService) return sessionService;
+          if (token === TokenService) return tokenService;
+          return {};
+        })
+        .compile();
+      service = moduleRef.get(AuthService);
+    });
+
+    it('should log in the user bound to the Alipay openId', async () => {
+      usersService.findByAlipayOpenId.mockResolvedValue(buildUser({ id: 3, alipayOpenId: 'ALI1' }));
+
+      const result = await service.alipayLogin(dto);
+
+      expect(alipayService.exchangeAuthCode).toHaveBeenCalledWith('A1');
+      expect(result.user.id).toBe(3);
+      expect(usersService.create).not.toHaveBeenCalled();
+    });
+
+    it('should create an Alipay user and initialize notification settings on first login', async () => {
+      usersService.create.mockResolvedValue(buildUser({ id: 5 }));
+
+      const result = await service.alipayLogin(dto);
+
+      expect(usersService.create).toHaveBeenCalledWith(
+        expect.objectContaining({ alipayOpenId: 'ALI1', provider: AuthProvidersEnum.alipay }),
+      );
+      expect(notificationsService.initializeDefaultSettings).toHaveBeenCalledWith(5);
+      expect(result.user.id).toBe(5);
+    });
+
+    it('should use the user created by a concurrent first login', async () => {
+      usersService.create.mockRejectedValue(
+        Object.assign(new Error('duplicate key'), { code: '23505', constraint: 'user_alipayOpenId_key' }),
+      );
+      usersService.findByAlipayOpenId.mockResolvedValueOnce(null).mockResolvedValueOnce(buildUser({ id: 7 }));
+
+      const result = await service.alipayLogin(dto);
+
+      expect(result.user.id).toBe(7);
+    });
+
+    it('should reject a user whose status does not allow login', async () => {
+      usersService.findByAlipayOpenId.mockResolvedValue(buildUser({ status: { id: 99 } }));
+
+      await expect(service.alipayLogin(dto)).rejects.toBeInstanceOf(UnprocessableEntityException);
     });
   });
 });

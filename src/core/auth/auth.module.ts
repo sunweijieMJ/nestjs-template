@@ -10,6 +10,7 @@ import { SessionModule } from '../session/session.module';
 import { UsersModule } from '../users/users.module';
 import { SmsModule } from '../../integrations/sms/sms.module';
 import { WechatModule } from '../../integrations/wechat/wechat.module';
+import { AlipayModule } from '../../integrations/alipay/alipay.module';
 import { TokenService } from './services/token.service';
 import { NotificationsModule } from '../../modules/notifications/notifications.module';
 import { RelationalAuthPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
@@ -22,6 +23,7 @@ import { RelationalAuthPersistenceModule } from './infrastructure/persistence/re
     MailModule,
     SmsModule,
     WechatModule,
+    AlipayModule,
     JwtModule.register({}),
     RelationalAuthPersistenceModule,
     NotificationsModule,

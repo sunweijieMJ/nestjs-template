@@ -15,6 +15,9 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { AuthGuard } from '@nestjs/passport';
 import { AlipayService, AlipayPaymentParams } from '../../integrations/alipay/alipay.service';
 import { CreatePaymentDto } from './dto/alipay-create-payment.dto';
+import { CreateMiniPaymentDto } from './dto/alipay-create-mini-payment.dto';
+import { AlipayMiniPaymentResponseDto } from './dto/alipay-mini-payment-response.dto';
+import { AlipayFormPaymentResponseDto } from './dto/alipay-form-payment-response.dto';
 import { RefundDto } from './dto/alipay-refund.dto';
 import { OrdersService } from '../orders/orders.service';
 import { Order, PaymentChannel } from '../orders/domain/order';
@@ -47,15 +50,37 @@ export class AlipayController {
   @ApiOperation({ summary: '创建手机网站支付订单' })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '返回支付表单 HTML',
+    type: AlipayFormPaymentResponseDto,
   })
   async createMobilePayment(
     @Request() request: RequestWithUser,
     @Body() createPaymentDto: CreatePaymentDto,
-  ): Promise<{ form: string }> {
+  ): Promise<AlipayFormPaymentResponseDto> {
     const order = await this.ordersService.findPayableOrder(createPaymentDto.outTradeNo, request.user.id);
     const form = this.alipayService.createMobilePayment(this.toPaymentParams(createPaymentDto, order));
     return { form };
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Post('payment/mini')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '创建支付宝小程序支付订单' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: AlipayMiniPaymentResponseDto,
+  })
+  async createMiniPayment(
+    @Request() request: RequestWithUser,
+    @Body() createPaymentDto: CreateMiniPaymentDto,
+  ): Promise<AlipayMiniPaymentResponseDto> {
+    const order = await this.ordersService.findPayableOrder(createPaymentDto.outTradeNo, request.user.id);
+    const { openId } = await this.alipayService.exchangeAuthCode(createPaymentDto.authCode);
+    const tradeNo = await this.alipayService.createMiniProgramPayment({
+      ...this.toPaymentParams(createPaymentDto, order),
+      buyerOpenId: openId,
+    });
+    return { tradeNo };
   }
 
   @ApiBearerAuth()
@@ -65,12 +90,12 @@ export class AlipayController {
   @ApiOperation({ summary: '创建电脑网站支付订单' })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '返回支付表单 HTML',
+    type: AlipayFormPaymentResponseDto,
   })
   async createWebPayment(
     @Request() request: RequestWithUser,
     @Body() createPaymentDto: CreatePaymentDto,
-  ): Promise<{ form: string }> {
+  ): Promise<AlipayFormPaymentResponseDto> {
     const order = await this.ordersService.findPayableOrder(createPaymentDto.outTradeNo, request.user.id);
     const form = this.alipayService.createWebPayment(this.toPaymentParams(createPaymentDto, order));
     return { form };

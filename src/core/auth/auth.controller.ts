@@ -34,6 +34,7 @@ import { AuthChangePasswordDto } from './dto/auth-change-password.dto';
 import { SmsCodeType } from '../../integrations/sms/sms.service';
 import { AuthWechatLoginDto } from './dto/auth-wechat-login.dto';
 import { AuthWechatPhoneLoginDto } from './dto/auth-wechat-phone-login.dto';
+import { AuthAlipayLoginDto } from './dto/auth-alipay-login.dto';
 import { AuthPhoneResetPasswordDto } from './dto/auth-phone-reset-password.dto';
 
 @ApiTags('Auth')
@@ -262,5 +263,19 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   public wechatPhoneLogin(@Body() loginDto: AuthWechatPhoneLoginDto): Promise<LoginResponseDto> {
     return this.service.wechatPhoneLogin(loginDto);
+  }
+
+  @SerializeOptions({
+    groups: ['me'],
+  })
+  @Post('alipay/login')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ operationId: 'loginWithAlipay', summary: '支付宝登录（小程序）' })
+  @ApiOkResponse({
+    type: LoginResponseDto,
+  })
+  @HttpCode(HttpStatus.OK)
+  public alipayLogin(@Body() loginDto: AuthAlipayLoginDto): Promise<LoginResponseDto> {
+    return this.service.alipayLogin(loginDto);
   }
 }

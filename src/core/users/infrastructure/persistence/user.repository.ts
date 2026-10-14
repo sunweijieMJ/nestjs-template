@@ -23,6 +23,7 @@ export abstract class UserRepository {
   abstract findByEmail(email: User['email']): Promise<NullableType<User>>;
   abstract findByPhone(phone: User['phone']): Promise<NullableType<User>>;
   abstract findByWechatOpenId(openId: string): Promise<NullableType<User>>;
+  abstract findByAlipayOpenId(openId: string): Promise<NullableType<User>>;
 
   abstract update(id: User['id'], payload: DeepPartial<User>): Promise<User | null>;
 

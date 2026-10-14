@@ -112,7 +112,9 @@
     "miniprogram",
     "touser",
     "wxa",
-    "unstub"
+    "unstub",
+    "isv",
+    "ACQ"
   ],
   "patterns": [
     {

@@ -32,6 +32,9 @@ import { AuthPhoneSmsLoginDto } from './dto/auth-phone-sms-login.dto';
 import { AuthPhoneRegisterDto } from './dto/auth-phone-register.dto';
 import { AuthWechatLoginDto, WechatLoginType } from './dto/auth-wechat-login.dto';
 import { AuthWechatPhoneLoginDto } from './dto/auth-wechat-phone-login.dto';
+import { AuthAlipayLoginDto } from './dto/auth-alipay-login.dto';
+import { AlipayService } from '../../integrations/alipay/alipay.service';
+import { CreateUserDto } from '../users/dto/create-user.dto';
 import { WechatService } from '../../integrations/wechat/wechat.service';
 import { maskEmail, maskPhone } from '../../common/utils/sanitize.utils';
 import { TokenService } from './services/token.service';
@@ -60,6 +63,7 @@ export class AuthService {
     private configService: ConfigService<AllConfigType>,
     private smsService: SmsService,
     private wechatService: WechatService,
+    private alipayService: AlipayService,
     private tokenService: TokenService,
     private notificationsService: NotificationsService,
     private credentialRepository: CredentialRepository,
@@ -1117,16 +1121,55 @@ export class AuthService {
   }
 
   /**
+   * 支付宝登录（小程序）
+   * 首次登录创建独立账号，不与已有账号合并
+   * @param dto - my.getAuthCode 返回的授权码
+   * @returns 登录响应，包含用户信息和令牌
+   */
+  async alipayLogin(dto: AuthAlipayLoginDto): Promise<LoginResponseDto> {
+    const { openId } = await this.alipayService.exchangeAuthCode(dto.authCode);
+
+    let user = await this.usersService.findByAlipayOpenId(openId);
+
+    if (!user) {
+      try {
+        user = await this.createUserWithDefaultSettings({
+          alipayOpenId: openId,
+          nickname: '支付宝用户',
+          provider: AuthProvidersEnum.alipay,
+          role: { id: RoleEnum.user },
+          status: { id: StatusEnum.active },
+        });
+        this.logger.log(`New Alipay user created: ${user.id}`);
+      } catch (error) {
+        if (!isUniqueViolationOf(error, 'user_alipayOpenId_key')) {
+          throw error;
+        }
+        // 并发首次登录时另一请求已创建该用户
+        user = await this.usersService.findByAlipayOpenId(openId);
+        if (!user) {
+          throw error;
+        }
+      }
+    }
+
+    validateUserStatusForAuth(user, 'alipay', this.logger);
+
+    this.logger.log(`Alipay login successful for user: ${user.id}`);
+    return this.createSessionAndTokens(user);
+  }
+
+  /**
    * 创建微信用户并初始化通知设置
    */
-  private async createWechatUser(data: {
+  private createWechatUser(data: {
     openId: string;
     unionId?: string;
     phone?: string;
     nickname?: string;
     gender?: number;
   }): Promise<User> {
-    const user = await this.usersService.create({
+    return this.createUserWithDefaultSettings({
       wechatOpenId: data.openId,
       wechatUnionId: data.unionId,
       phone: data.phone,
@@ -1140,6 +1183,13 @@ export class AuthService {
         id: StatusEnum.active,
       },
     });
+  }
+
+  /**
+   * 创建用户并初始化通知设置，通知设置初始化失败不影响创建结果
+   */
+  private async createUserWithDefaultSettings(createUserDto: CreateUserDto): Promise<User> {
+    const user = await this.usersService.create(createUserDto);
 
     try {
       await this.notificationsService.initializeDefaultSettings(user.id);

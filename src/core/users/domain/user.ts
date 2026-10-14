@@ -112,4 +112,12 @@ export class User {
   })
   @Expose({ groups: ['me', 'admin'] })
   wechatUnionId: string | null;
+
+  @ApiProperty({
+    type: String,
+    example: '074a1CcTG1LelxKe4xQC0zgNdId0nxi95b5lsNpazWYoCo5',
+    description: 'Alipay OpenID',
+  })
+  @Expose({ groups: ['me', 'admin'] })
+  alipayOpenId: string | null;
 }

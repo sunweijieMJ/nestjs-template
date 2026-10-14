@@ -38,5 +38,8 @@
   "wechatOpenIdAlreadyExists": "微信账号已被绑定",
   "phoneBoundToOtherWechat": "该手机号已绑定其他微信账号，请使用验证码登录",
   "phoneRegionNotSupported": "暂不支持中国大陆以外的手机号",
-  "invalidPhoneCode": "手机号授权已失效，请重试"
+  "invalidPhoneCode": "手机号授权已失效，请重试",
+  "alipayOpenIdAlreadyExists": "支付宝账号已被绑定",
+  "invalidAlipayAuthCode": "支付宝授权已失效，请重试",
+  "alipayTradeInconsistent": "订单支付信息已变化，请重新下单"
 }

@@ -148,6 +148,7 @@ export class UsersService {
       provider: createUserDto.provider ?? AuthProvidersEnum.email,
       wechatOpenId: createUserDto.wechatOpenId ?? null,
       wechatUnionId: createUserDto.wechatUnionId ?? null,
+      alipayOpenId: createUserDto.alipayOpenId ?? null,
     });
 
     this.logger.log(`User created successfully: ${user.id}`);
@@ -287,6 +288,15 @@ export class UsersService {
 
     this.logger.log(`User updated successfully: ${id}`);
     return user;
+  }
+
+  /**
+   * 根据支付宝 OpenID 查找用户
+   * @param openId - 支付宝 OpenID
+   * @returns 用户对象或 null
+   */
+  findByAlipayOpenId(openId: string): Promise<NullableType<User>> {
+    return this.usersRepository.findByAlipayOpenId(openId);
   }
 
   /**

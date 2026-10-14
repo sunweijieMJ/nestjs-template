@@ -25,6 +25,7 @@ import { EntityRelationalHelper } from '../../../../../../common/relational-enti
 @Unique('UQ_e12875dfb3b1d92d7d7c5377e22', ['email'])
 @Unique('user_phone_key', ['phone'])
 @Unique('user_wechatOpenId_key', ['wechatOpenId'])
+@Unique('user_alipayOpenId_key', ['alipayOpenId'])
 export class UserEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn()
   id: number;
@@ -87,4 +88,7 @@ export class UserEntity extends EntityRelationalHelper {
   @Index('IDX_user_wechatUnionId')
   @Column({ type: String, nullable: true })
   wechatUnionId: string | null;
+
+  @Column({ type: String, nullable: true })
+  alipayOpenId: string | null;
 }
