@@ -35,6 +35,15 @@ describe('SessionService', () => {
     await expect(service.wasRecentlyRotatedFrom(10, 'H1')).resolves.toBe(false);
   });
 
+  it('should clear the token validation cache of sessions deleted elsewhere', async () => {
+    cache.set(sessionAuthCacheKey(10), { statusId: 1 });
+    cache.set(sessionAuthCacheKey(11), { statusId: 1 });
+
+    await service.forgetSessions([10, 11]);
+
+    expect(cache.size).toBe(0);
+  });
+
   it('should clear the token validation cache when revoking', async () => {
     cache.set(sessionAuthCacheKey(10), { statusId: 1 });
 

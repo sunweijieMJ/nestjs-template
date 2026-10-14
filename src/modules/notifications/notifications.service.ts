@@ -21,6 +21,14 @@ export class NotificationsService {
     @InjectQueue(NOTIFICATION_QUEUE) private readonly notificationQueue: Queue,
   ) {}
 
+  async recordChannelResult(
+    id: Notification['id'],
+    channel: NotificationChannel,
+    result: Omit<Notification['sentChannels'][string], 'sentAt'>,
+  ): Promise<void> {
+    await this.notificationRepository.recordChannelResult(id, channel, { ...result, sentAt: new Date() });
+  }
+
   async create(createNotificationDto: CreateNotificationDto): Promise<Notification> {
     this.logger.log(`Creating notification for user: ${createNotificationDto.userId}`);
 

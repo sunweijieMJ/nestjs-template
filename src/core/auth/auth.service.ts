@@ -11,7 +11,6 @@ import {
 import ms from 'ms';
 import { createHash } from 'crypto';
 import { JwtService, TokenExpiredError, JsonWebTokenError } from '@nestjs/jwt';
-import { DataSource } from 'typeorm';
 import { hashPassword, comparePassword } from '../../common/utils/crypto.utils';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthUpdateDto } from './dto/auth-update.dto';
@@ -37,12 +36,9 @@ import { AuthWechatLoginDto, WechatLoginType } from './dto/auth-wechat-login.dto
 import { WechatService } from '../../integrations/wechat/wechat.service';
 import { maskEmail, maskPhone } from '../../common/utils/sanitize.utils';
 import { TokenService } from './services/token.service';
+import { CredentialRepository } from './infrastructure/persistence/credential.repository';
 import { NotificationsService } from '../../modules/notifications/notifications.service';
 import { verifySmsCode, validateUserStatusForAuth } from './helpers/auth-validation.helper';
-// eslint-disable-next-line local/no-cross-module-persistence -- 事务内通过 EntityManager 操作实体
-import { SessionEntity } from '../session/infrastructure/persistence/relational/entities/session.entity';
-// eslint-disable-next-line local/no-cross-module-persistence -- 事务内通过 EntityManager 操作实体
-import { UserEntity } from '../users/infrastructure/persistence/relational/entities/user.entity';
 
 /** 密码哈希的指纹，写入重置密码令牌，密码变更后令牌失效 */
 function passwordFingerprint(password?: string | null): string {
@@ -67,7 +63,7 @@ export class AuthService {
     private tokenService: TokenService,
     @Inject(forwardRef(() => NotificationsService))
     private notificationsService: NotificationsService,
-    private dataSource: DataSource,
+    private credentialRepository: CredentialRepository,
   ) {}
 
   /**
@@ -439,16 +435,21 @@ export class AuthService {
     // Encrypt password before updating
     const hashedPassword = await hashPassword(password);
 
-    // 使用事务确保删除会话和更新密码的原子性
-    await this.dataSource.transaction(async (manager) => {
-      // Delete all user sessions
-      await manager.softDelete(SessionEntity, {
-        user: { id: Number(user.id) },
+    const { updated, revokedSessionIds } = await this.credentialRepository.resetPassword(
+      user.id,
+      hashedPassword,
+      user.password ?? null,
+    );
+    if (!updated) {
+      this.logger.warn(`Password reset failed - token used concurrently: ${userId}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          hash: 'invalidHash',
+        },
       });
-
-      // Update password
-      await manager.update(UserEntity, { id: Number(user.id) }, { password: hashedPassword });
-    });
+    }
+    await this.sessionService.forgetSessions(revokedSessionIds);
 
     this.logger.log(`Password reset successful for user: ${userId}`);
   }
@@ -493,16 +494,8 @@ export class AuthService {
     // 加密新密码
     const hashedPassword = await hashPassword(password);
 
-    // 使用事务确保删除会话和更新密码的原子性
-    await this.dataSource.transaction(async (manager) => {
-      // 删除所有用户会话
-      await manager.softDelete(SessionEntity, {
-        user: { id: Number(user.id) },
-      });
-
-      // 更新密码
-      await manager.update(UserEntity, { id: Number(user.id) }, { password: hashedPassword });
-    });
+    const { revokedSessionIds } = await this.credentialRepository.resetPassword(user.id, hashedPassword);
+    await this.sessionService.forgetSessions(revokedSessionIds);
 
     this.logger.log(`Phone password reset successful for user: ${user.id}`);
   }

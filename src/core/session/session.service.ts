@@ -64,6 +64,11 @@ export class SessionService {
     return (await this.cacheManager.get<string>(rotatedHashCacheKey(id))) === hash;
   }
 
+  /** 清除会话的令牌校验缓存，用于会话已在别处删除的情况 */
+  async forgetSessions(ids: Session['id'][]): Promise<void> {
+    await Promise.all(ids.map((id) => this.cacheManager.del(sessionAuthCacheKey(id))));
+  }
+
   /** 删除会话并清除令牌校验缓存，使该会话的访问令牌立即失效 */
   async revoke(id: Session['id']): Promise<void> {
     await this.sessionRepository.deleteById(id);

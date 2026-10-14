@@ -12,6 +12,7 @@ import { SmsModule } from '../../integrations/sms/sms.module';
 import { WechatModule } from '../../integrations/wechat/wechat.module';
 import { TokenService } from './services/token.service';
 import { NotificationsModule } from '../../modules/notifications/notifications.module';
+import { RelationalAuthPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { NotificationsModule } from '../../modules/notifications/notifications.m
     SmsModule,
     WechatModule,
     JwtModule.register({}),
+    RelationalAuthPersistenceModule,
     forwardRef(() => NotificationsModule),
   ],
   controllers: [AuthController],

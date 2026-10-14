@@ -1,15 +1,12 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
-import { Logger, Inject, forwardRef } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { NOTIFICATION_QUEUE } from './notification-queue.constants';
 import { MailerService } from '../../../integrations/mail/mailer.service';
 import { AliyunSmsProvider } from '../../../integrations/sms/providers/aliyun-sms.provider';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-// eslint-disable-next-line local/no-cross-module-persistence -- 队列处理器直接注入实体仓储
-import { NotificationEntity } from '../../../modules/notifications/infrastructure/persistence/relational/entities/notification.entity';
-// eslint-disable-next-line local/no-cross-module-persistence -- 队列处理器直接注入实体仓储
-import { UserEntity } from '../../../core/users/infrastructure/persistence/relational/entities/user.entity';
+import { UsersService } from '../../../core/users/users.service';
+import { NotificationsService } from '../../../modules/notifications/notifications.service';
+import { NotificationChannel } from '../../../modules/notifications/domain/notification';
 
 interface EmailJobData {
   notificationId: number;
@@ -35,14 +32,10 @@ export class NotificationQueueProcessor extends WorkerHost {
   private readonly logger = new Logger(NotificationQueueProcessor.name);
 
   constructor(
-    @Inject(forwardRef(() => MailerService))
-    private mailerService: MailerService,
-    @Inject(forwardRef(() => AliyunSmsProvider))
-    private smsProvider: AliyunSmsProvider,
-    @InjectRepository(NotificationEntity)
-    private readonly notificationRepository: Repository<NotificationEntity>,
-    @InjectRepository(UserEntity)
-    private readonly userRepository: Repository<UserEntity>,
+    private readonly mailerService: MailerService,
+    private readonly smsProvider: AliyunSmsProvider,
+    private readonly usersService: UsersService,
+    private readonly notificationsService: NotificationsService,
   ) {
     super();
   }
@@ -66,11 +59,9 @@ export class NotificationQueueProcessor extends WorkerHost {
     const { notificationId, userId, title, content } = job.data;
 
     try {
-      const user = await this.userRepository.findOne({ where: { id: userId } });
+      const user = await this.usersService.findById(userId);
       if (!user?.email) {
-        const error = `User ${userId} not found or has no email`;
-        await this.updateSentChannel(notificationId, 'EMAIL', false, error);
-        throw new Error(error);
+        throw new Error(`User ${userId} not found or has no email`);
       }
 
       await this.mailerService.sendMail({
@@ -80,11 +71,11 @@ export class NotificationQueueProcessor extends WorkerHost {
         html: `<p>${content}</p>`,
       });
 
-      await this.updateSentChannel(notificationId, 'EMAIL', true);
+      await this.updateSentChannel(notificationId, NotificationChannel.EMAIL, true);
       this.logger.log(`Email sent for notification ${notificationId}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      await this.updateSentChannel(notificationId, 'EMAIL', false, errorMessage);
+      await this.updateSentChannel(notificationId, NotificationChannel.EMAIL, false, errorMessage);
       throw error;
     }
   }
@@ -93,11 +84,9 @@ export class NotificationQueueProcessor extends WorkerHost {
     const { notificationId, userId, content } = job.data;
 
     try {
-      const user = await this.userRepository.findOne({ where: { id: userId } });
+      const user = await this.usersService.findById(userId);
       if (!user?.phone) {
-        const error = `User ${userId} not found or has no phone`;
-        await this.updateSentChannel(notificationId, 'SMS', false, error);
-        throw new Error(error);
+        throw new Error(`User ${userId} not found or has no phone`);
       }
 
       // Send SMS via Aliyun provider
@@ -106,45 +95,28 @@ export class NotificationQueueProcessor extends WorkerHost {
       const result = await this.smsProvider.sendSms(user.phone, { content });
 
       if (!result.success) {
-        const error = result.message ?? 'SMS send failed';
-        await this.updateSentChannel(notificationId, 'SMS', false, error);
-        throw new Error(error);
+        throw new Error(result.message ?? 'SMS send failed');
       }
 
-      await this.updateSentChannel(notificationId, 'SMS', true);
+      await this.updateSentChannel(notificationId, NotificationChannel.SMS, true);
       this.logger.log(`SMS sent for notification ${notificationId} to ${user.phone}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      // Only update if not already updated (avoid duplicate updates)
-      if (!errorMessage.includes('not found')) {
-        await this.updateSentChannel(notificationId, 'SMS', false, errorMessage);
-      }
+      await this.updateSentChannel(notificationId, NotificationChannel.SMS, false, errorMessage);
       throw error;
     }
   }
 
   private async updateSentChannel(
     notificationId: number,
-    channel: string,
+    channel: NotificationChannel,
     success: boolean,
     error?: string,
   ): Promise<void> {
-    const notification = await this.notificationRepository.findOne({
-      where: { id: notificationId },
+    await this.notificationsService.recordChannelResult(notificationId, channel, {
+      sent: success,
+      ...(error && { error }),
     });
-
-    if (notification) {
-      const sentChannels = notification.sentChannels || {};
-      sentChannels[channel] = {
-        sent: success,
-        sentAt: new Date(),
-        ...(error && { error }),
-      };
-
-      await this.notificationRepository.update(notificationId, {
-        sentChannels,
-      });
-    }
   }
 
   @OnWorkerEvent('completed')

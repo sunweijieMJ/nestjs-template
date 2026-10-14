@@ -4,7 +4,7 @@ import { FindOptionsWhere, Repository } from 'typeorm';
 import { NotificationEntity } from '../entities/notification.entity';
 import { NotificationRepository } from '../../notification.repository';
 import { NotificationMapper } from '../mappers/notification.mapper';
-import { Notification } from '../../../../domain/notification';
+import { Notification, NotificationChannel } from '../../../../domain/notification';
 import { NullableType } from '../../../../../../common/types/nullable.type';
 import { QueryNotificationDto } from '../../../../dto/query-notification.dto';
 import { IPaginationOptions } from '../../../../../../common/types/pagination-options';
@@ -16,6 +16,21 @@ export class NotificationRelationalRepository implements NotificationRepository 
     @InjectRepository(NotificationEntity)
     private readonly notificationRepository: Repository<NotificationEntity>,
   ) {}
+
+  async recordChannelResult(
+    id: Notification['id'],
+    channel: NotificationChannel,
+    result: Notification['sentChannels'][string],
+  ): Promise<void> {
+    await this.notificationRepository
+      .createQueryBuilder()
+      .update(NotificationEntity)
+      .set({ sentChannels: () => `"sentChannels" || CAST(:patch AS jsonb)` })
+      .where('id = :id', { id: Number(id) })
+      .andWhere('"deletedAt" IS NULL')
+      .setParameter('patch', JSON.stringify({ [channel]: result }))
+      .execute();
+  }
 
   async create(data: Omit<Notification, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>): Promise<Notification> {
     const persistenceModel = NotificationMapper.toPersistence(data);

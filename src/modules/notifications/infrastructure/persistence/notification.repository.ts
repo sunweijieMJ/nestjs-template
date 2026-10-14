@@ -1,5 +1,5 @@
 import { NullableType } from '../../../../common/types/nullable.type';
-import { Notification } from '../../domain/notification';
+import { Notification, NotificationChannel } from '../../domain/notification';
 import { DeepPartial } from '../../../../common/types/deep-partial.type';
 import { IPaginationOptions } from '../../../../common/types/pagination-options';
 import { QueryNotificationDto } from '../../dto/query-notification.dto';
@@ -29,6 +29,13 @@ export abstract class NotificationRepository {
   abstract markAsRead(id: Notification['id'], userId: Notification['userId']): Promise<Notification | null>;
 
   abstract markAllAsRead(userId: Notification['userId']): Promise<void>;
+
+  /** 原子写入单个渠道的发送结果，不覆盖其他渠道 */
+  abstract recordChannelResult(
+    id: Notification['id'],
+    channel: NotificationChannel,
+    result: Notification['sentChannels'][string],
+  ): Promise<void>;
 
   abstract countUnreadByUserId(userId: Notification['userId']): Promise<number>;
 
