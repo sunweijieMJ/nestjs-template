@@ -4,8 +4,7 @@ import unitConfig from './vitest.config.mts';
 export default defineConfig({
   ...unitConfig,
   test: {
-    globals: true,
-    environment: 'node',
+    ...unitConfig.test,
     include: ['test/**/*.e2e-spec.ts'],
     fileParallelism: false,
   },

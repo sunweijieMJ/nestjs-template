@@ -3,7 +3,7 @@ import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import type { Cache } from 'cache-manager';
 import { OrNeverType } from '../../../common/types/or-never.type';
 import { JwtPayloadType } from './types/jwt-payload.type';
 import { AllConfigType } from '../../../config/config.type';

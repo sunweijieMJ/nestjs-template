@@ -1,7 +1,7 @@
 import { Get, Res, UseGuards } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { PrometheusController } from '@willsoto/nestjs-prometheus';
-import { Response } from 'express';
+import type { Response } from 'express';
 import { MetricsTokenGuard } from './metrics-token.guard';
 import { SkipResponseTransform } from '../../common/decorators/skip-response-transform.decorator';
 

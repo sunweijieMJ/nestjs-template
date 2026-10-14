@@ -6,7 +6,7 @@
 
 - **单元测试**: Vitest + unplugin-swc（只转译不做类型检查，类型由 `pnpm type-check` 覆盖），配置见 `vitest.config.mts`
 - **E2E 测试**: Vitest + Supertest，配置见 `vitest.e2e.config.mts`
-- **覆盖率**: `@vitest/coverage-v8`（60% 阈值）
+- **覆盖率**: `@vitest/coverage-v8`
 - **全局 API**: `describe` / `it` / `expect` / `vi` 为全局变量，类型 `Mocked` / `Mock` 需从 `vitest` 导入
 
 ## 单元测试

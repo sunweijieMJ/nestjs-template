@@ -1,7 +1,7 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import type { Cache } from 'cache-manager';
 import { randomInt } from 'crypto';
 import { AllConfigType } from '../../config/config.type';
 import { maskPhone } from '../../common/utils/sanitize.utils';

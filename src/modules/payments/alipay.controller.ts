@@ -20,7 +20,7 @@ import { OrdersService } from '../orders/orders.service';
 import { Order, PaymentChannel } from '../orders/domain/order';
 import { PaymentsService } from './payments.service';
 import { fenToYuan, yuanToFen } from './money.utils';
-import { RequestWithUser } from '../../common/types/request-with-user.type';
+import type { RequestWithUser } from '../../common/types/request-with-user.type';
 import { PermissionsGuard } from '../../core/permissions/permissions.guard';
 import { RequirePermissions } from '../../core/permissions/permissions.decorator';
 import { Permission } from '../../core/permissions/permission.enum';

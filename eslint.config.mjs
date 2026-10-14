@@ -26,7 +26,7 @@ export default defineConfig(
         ...globals.vitest,
       },
       parserOptions: {
-        project: ['./tsconfig.json', './tsconfig.test.json', './tsconfig.node.json'],
+        projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },

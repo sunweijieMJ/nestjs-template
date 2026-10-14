@@ -25,7 +25,7 @@ import { LoginResponseDto } from './dto/login-response.dto';
 import { NullableType } from '../../common/types/nullable.type';
 import { User } from '../users/domain/user';
 import { RefreshResponseDto } from './dto/refresh-response.dto';
-import { RequestWithUser, RequestWithRefreshUser } from '../../common/types/request-with-user.type';
+import type { RequestWithUser, RequestWithRefreshUser } from '../../common/types/request-with-user.type';
 import { AuthPhoneLoginDto } from './dto/auth-phone-login.dto';
 import { AuthPhoneSmsLoginDto } from './dto/auth-phone-sms-login.dto';
 import { AuthPhoneRegisterDto } from './dto/auth-phone-register.dto';

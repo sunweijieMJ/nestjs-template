@@ -1,5 +1,5 @@
 import { Injectable, Inject, Logger, HttpStatus, UnprocessableEntityException } from '@nestjs/common';
-import { ConfigType } from '@nestjs/config';
+import type { ConfigType } from '@nestjs/config';
 import alipayConfig from './config/alipay.config';
 import * as crypto from 'crypto';
 import { formatPrivateKey, formatPublicKey, escapeHtml } from '../../common/utils/crypto.utils';

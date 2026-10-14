@@ -1,5 +1,5 @@
 import { Injectable, Inject, Logger, OnModuleInit } from '@nestjs/common';
-import { ConfigType } from '@nestjs/config';
+import type { ConfigType } from '@nestjs/config';
 import wechatConfig from './config/wechat.config';
 import * as crypto from 'crypto';
 import { formatPrivateKey, formatPublicKey, generateNonceStr } from '../../common/utils/crypto.utils';

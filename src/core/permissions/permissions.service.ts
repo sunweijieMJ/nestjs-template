@@ -1,6 +1,6 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import type { Cache } from 'cache-manager';
 import { PermissionRepository } from './infrastructure/persistence/permission.repository';
 import { Permission } from './permission.enum';
 import { RoleEnum } from '../../common/enums/roles/roles.enum';

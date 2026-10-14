@@ -19,7 +19,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { QueryOrderDto } from './dto/query-order.dto';
 import { Order } from './domain/order';
 import { OrderItem } from './domain/order-item';
-import { RequestWithUser } from '../../common/types/request-with-user.type';
+import type { RequestWithUser } from '../../common/types/request-with-user.type';
 import { PaginationResponseDto } from '../../common/dto/pagination-response.dto';
 
 @ApiTags('Orders')

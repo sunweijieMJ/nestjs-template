@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'crypto';
 import { AllConfigType } from '../../config/config.type';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import type { Cache } from 'cache-manager';
 import { generateWeChatSignature } from '../../modules/shares/utils/wechat-signature.util';
 
 /** 外部 API 调用默认超时时间（毫秒） */

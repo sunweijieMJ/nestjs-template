@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import type { Cache } from 'cache-manager';
 import { RegionRepository } from './infrastructure/persistence/region.repository';
 import { Region } from './domain/region';
 import { QueryRegionDto } from './dto/query-region.dto';

@@ -23,7 +23,7 @@ import { Address } from './domain/address';
 import { NullableType } from '../../common/types/nullable.type';
 import { PaginationResponse, PaginationResponseDto } from '../../common/dto/pagination-response.dto';
 import { pagination } from '../../common/pagination';
-import { RequestWithUser } from '../../common/types/request-with-user.type';
+import type { RequestWithUser } from '../../common/types/request-with-user.type';
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))

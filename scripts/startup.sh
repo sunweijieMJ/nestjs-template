@@ -95,6 +95,6 @@ case $ENV_MODE in
     ;;
   prod|*)
     echo "Starting in production mode..."
-    npm run start:prod
+    exec node --enable-source-maps dist/main
     ;;
 esac

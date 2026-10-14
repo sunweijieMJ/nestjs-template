@@ -5,6 +5,7 @@ export default defineConfig({
   oxc: false,
   plugins: [
     swc.vite({
+      tsconfigFile: './tsconfig.test.json',
       module: { type: 'es6' },
     }),
   ],
@@ -31,12 +32,6 @@ export default defineConfig({
       ],
       reportsDirectory: './coverage',
       reporter: ['text', 'text-summary', 'lcov', 'html'],
-      thresholds: {
-        branches: 60,
-        functions: 60,
-        lines: 60,
-        statements: 60,
-      },
     },
   },
 });

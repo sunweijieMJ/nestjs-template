@@ -7,7 +7,6 @@ import {
   HttpCode,
   HttpStatus,
   Headers,
-  RawBodyRequest,
   Req,
   Request,
   Logger,
@@ -16,6 +15,7 @@ import {
   BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
+import type { RawBodyRequest } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import {
@@ -29,7 +29,7 @@ import { WechatRefundDto } from './dto/wechat-refund.dto';
 import { OrdersService } from '../orders/orders.service';
 import { PaymentChannel } from '../orders/domain/order';
 import { PaymentsService } from './payments.service';
-import { RequestWithUser } from '../../common/types/request-with-user.type';
+import type { RequestWithUser } from '../../common/types/request-with-user.type';
 import { PermissionsGuard } from '../../core/permissions/permissions.guard';
 import { RequirePermissions } from '../../core/permissions/permissions.decorator';
 import { Permission } from '../../core/permissions/permission.enum';
