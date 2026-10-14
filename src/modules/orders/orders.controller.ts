@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../../common/pipes/parse-id.pipe';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiOkResponse, ApiCreatedResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { OrdersService } from './orders.service';
@@ -72,14 +73,17 @@ export class OrdersController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ operationId: 'getOrder', summary: '获取订单详情' })
   @ApiOkResponse({ type: Order })
-  async findOne(@Request() request: RequestWithUser, @Param('id') id: string): Promise<Order & { items: OrderItem[] }> {
+  async findOne(
+    @Request() request: RequestWithUser,
+    @Param('id', ParseIdPipe) id: number,
+  ): Promise<Order & { items: OrderItem[] }> {
     return this.ordersService.findOne(id, request.user.id);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ operationId: 'cancelOrder', summary: '取消未支付订单' })
-  async cancel(@Request() request: RequestWithUser, @Param('id') id: string): Promise<void> {
+  async cancel(@Request() request: RequestWithUser, @Param('id', ParseIdPipe) id: number): Promise<void> {
     return this.ordersService.cancelOrder(id, request.user.id);
   }
 }

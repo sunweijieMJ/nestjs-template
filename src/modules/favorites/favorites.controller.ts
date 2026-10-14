@@ -11,6 +11,7 @@ import {
   HttpCode,
   Request,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../../common/pipes/parse-id.pipe';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FavoritesService } from './favorites.service';
@@ -95,9 +96,9 @@ export class FavoritesController {
 
   @ApiOperation({ operationId: 'deleteFavorite', summary: '取消收藏' })
   @Delete(':id')
-  @ApiParam({ name: 'id', type: String, required: true })
+  @ApiParam({ name: 'id', type: Number, required: true })
   @HttpCode(HttpStatus.OK)
-  remove(@Request() request: RequestWithUser, @Param('id') id: Favorite['id']): Promise<void> {
+  remove(@Request() request: RequestWithUser, @Param('id', ParseIdPipe) id: number): Promise<void> {
     return this.favoritesService.remove(id, request.user.id);
   }
 }

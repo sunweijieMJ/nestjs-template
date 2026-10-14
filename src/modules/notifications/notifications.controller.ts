@@ -11,8 +11,8 @@ import {
   HttpStatus,
   HttpCode,
   Request,
-  ParseIntPipe,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../../common/pipes/parse-id.pipe';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { NotificationsService } from './notifications.service';
@@ -80,7 +80,7 @@ export class NotificationsController {
   @ApiParam({ name: 'id', type: Number })
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  findOne(@Request() request: RequestWithUser, @Param('id', ParseIntPipe) id: number): Promise<Notification> {
+  findOne(@Request() request: RequestWithUser, @Param('id', ParseIdPipe) id: number): Promise<Notification> {
     return this.notificationsService.findOne(id, request.user.id);
   }
 
@@ -108,7 +108,7 @@ export class NotificationsController {
   @ApiParam({ name: 'id', type: Number })
   @Post(':id/read')
   @HttpCode(HttpStatus.OK)
-  markAsRead(@Request() request: RequestWithUser, @Param('id', ParseIntPipe) id: number): Promise<Notification> {
+  markAsRead(@Request() request: RequestWithUser, @Param('id', ParseIdPipe) id: number): Promise<Notification> {
     return this.notificationsService.markAsRead(id, request.user.id);
   }
 
@@ -117,7 +117,7 @@ export class NotificationsController {
   @ApiParam({ name: 'id', type: Number })
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  async remove(@Request() request: RequestWithUser, @Param('id', ParseIntPipe) id: number): Promise<void> {
+  async remove(@Request() request: RequestWithUser, @Param('id', ParseIdPipe) id: number): Promise<void> {
     return this.notificationsService.remove(id, request.user.id);
   }
 }

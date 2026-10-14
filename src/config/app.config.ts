@@ -1,7 +1,7 @@
 import { registerAs } from '@nestjs/config';
 import { AppConfig } from './app-config.type';
 import validateConfig from '../common/validate-config';
-import { IsEnum, IsInt, IsOptional, IsString, IsUrl, Matches, Max, Min } from 'class-validator';
+import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, IsUrl, Matches, Max, Min } from 'class-validator';
 
 enum Environment {
   Development = 'development',
@@ -48,6 +48,10 @@ class EnvironmentVariablesValidator {
   @Min(0)
   @IsOptional()
   TRUST_PROXY: number;
+
+  @IsBoolean()
+  @IsOptional()
+  SWAGGER_ENABLED: boolean;
 }
 
 export default registerAs<AppConfig>('app', () => {
@@ -68,5 +72,8 @@ export default registerAs<AppConfig>('app', () => {
     fallbackLanguage: process.env.APP_FALLBACK_LANGUAGE ?? 'en',
     headerLanguage: process.env.APP_HEADER_LANGUAGE ?? 'x-custom-lang',
     trustProxy: process.env.TRUST_PROXY ? parseInt(process.env.TRUST_PROXY, 10) : 0,
+    swaggerEnabled: process.env.SWAGGER_ENABLED
+      ? process.env.SWAGGER_ENABLED === 'true'
+      : process.env.NODE_ENV !== 'production',
   };
 });

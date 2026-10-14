@@ -12,8 +12,9 @@ import {
   Request,
   Ip,
   Headers,
-  ParseIntPipe,
+  SerializeOptions,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../../common/pipes/parse-id.pipe';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
@@ -47,6 +48,7 @@ export class SharesController {
   @UseGuards(AuthGuard('jwt'))
   @ApiOkResponse({ type: Share })
   @ApiOperation({ operationId: 'createShare', summary: '创建分享' })
+  @SerializeOptions({ groups: ['owner'] })
   @Post()
   @HttpCode(HttpStatus.OK)
   async create(@Request() request: RequestWithUser, @Body() createShareDto: CreateShareDto): Promise<Share> {
@@ -57,6 +59,7 @@ export class SharesController {
   @UseGuards(AuthGuard('jwt'))
   @ApiOkResponse({ type: PaginationResponse(Share) })
   @ApiOperation({ operationId: 'getShares', summary: '获取分享列表' })
+  @SerializeOptions({ groups: ['owner'] })
   @Get()
   @HttpCode(HttpStatus.OK)
   async findAll(
@@ -93,9 +96,10 @@ export class SharesController {
   @ApiOkResponse({ type: Share })
   @ApiOperation({ operationId: 'getShareById', summary: '获取分享详情' })
   @ApiParam({ name: 'id', type: Number })
+  @SerializeOptions({ groups: ['owner'] })
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  async findOne(@Request() request: RequestWithUser, @Param('id', ParseIntPipe) id: number): Promise<Share> {
+  async findOne(@Request() request: RequestWithUser, @Param('id', ParseIdPipe) id: number): Promise<Share> {
     return this.sharesService.findOne(id, request.user.id);
   }
 
@@ -105,7 +109,7 @@ export class SharesController {
   @ApiParam({ name: 'id', type: Number })
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  async remove(@Request() request: RequestWithUser, @Param('id', ParseIntPipe) id: number): Promise<void> {
+  async remove(@Request() request: RequestWithUser, @Param('id', ParseIdPipe) id: number): Promise<void> {
     return this.sharesService.remove(id, request.user.id);
   }
 
@@ -116,7 +120,7 @@ export class SharesController {
   @ApiParam({ name: 'id', type: Number })
   @Get(':id/stats')
   @HttpCode(HttpStatus.OK)
-  async getStats(@Request() request: RequestWithUser, @Param('id', ParseIntPipe) id: number): Promise<ShareStatsDto> {
+  async getStats(@Request() request: RequestWithUser, @Param('id', ParseIdPipe) id: number): Promise<ShareStatsDto> {
     return this.sharesService.getStats(id, request.user.id);
   }
 

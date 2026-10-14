@@ -13,8 +13,8 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  ParseIntPipe,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../../common/pipes/parse-id.pipe';
 import { <%= h.inflection.transform(name, ['pluralize']) %>Service } from './<%= h.inflection.transform(name, ['pluralize', 'underscore', 'dasherize']) %>.service';
 import { Create<%= name %>Dto } from './dto/create-<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>.dto';
 import { Update<%= name %>Dto } from './dto/update-<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>.dto';
@@ -90,7 +90,7 @@ export class <%= h.inflection.transform(name, ['pluralize']) %>Controller {
   @ApiOperation({ operationId: 'get<%= name %>', summary: 'Get <%= name %>' })
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  findOne(@Param('id', ParseIntPipe) id: number): Promise<<%= name %>> {
+  findOne(@Param('id', ParseIdPipe) id: number): Promise<<%= name %>> {
     return this.<%= h.inflection.camelize(h.inflection.pluralize(name), true) %>Service.findOne(id);
   }
 
@@ -106,7 +106,7 @@ export class <%= h.inflection.transform(name, ['pluralize']) %>Controller {
   @Put(':id')
   @HttpCode(HttpStatus.OK)
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @Body() update<%= name %>Dto: Update<%= name %>Dto,
   ): Promise<<%= name %>> {
     return this.<%= h.inflection.camelize(h.inflection.pluralize(name), true) %>Service.update(id, update<%= name %>Dto);
@@ -120,7 +120,7 @@ export class <%= h.inflection.transform(name, ['pluralize']) %>Controller {
   @ApiOperation({ operationId: 'delete<%= name %>', summary: 'Delete <%= name %>' })
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
+  remove(@Param('id', ParseIdPipe) id: number): Promise<void> {
     return this.<%= h.inflection.camelize(h.inflection.pluralize(name), true) %>Service.remove(id);
   }
 }

@@ -32,5 +32,6 @@
   "orderAmountTooLarge": "Order amount exceeds the limit",
   "conflict": "Conflict",
   "gone": "Resource is no longer available",
-  "metadataTooLarge": "Metadata is too large"
+  "metadataTooLarge": "Metadata is too large",
+  "invalidId": "Invalid id"
 }

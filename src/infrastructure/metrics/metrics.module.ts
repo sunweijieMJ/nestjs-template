@@ -8,6 +8,7 @@ import {
 } from '@willsoto/nestjs-prometheus';
 import { AllConfigType } from '../../config/config.type';
 import { MetricsInterceptor } from './metrics.interceptor';
+import { MetricsController } from './metrics.controller';
 
 // Custom metrics providers
 const httpRequestsTotal = makeCounterProvider({
@@ -60,6 +61,7 @@ export class MetricsModule {
       module: MetricsModule,
       imports: [
         PrometheusModule.registerAsync({
+          controller: MetricsController,
           imports: [ConfigModule],
           inject: [ConfigService],
           useFactory: (configService: ConfigService<AllConfigType>) => {

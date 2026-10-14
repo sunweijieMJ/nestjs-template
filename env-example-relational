@@ -75,6 +75,8 @@ TRUST_PROXY=0
 # Prometheus Metrics
 METRICS_ENABLED=true
 METRICS_PATH=metrics
+# Bearer token for /metrics; without it /metrics is denied in production
+METRICS_TOKEN=
 
 # Aliyun SMS Service (for phone verification codes)
 SMS_ACCESS_KEY_ID=

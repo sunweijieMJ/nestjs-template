@@ -12,6 +12,7 @@ import {
   HttpCode,
   SerializeOptions,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../../common/pipes/parse-id.pipe';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
@@ -96,10 +97,10 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   @ApiParam({
     name: 'id',
-    type: String,
+    type: Number,
     required: true,
   })
-  findOne(@Param('id') id: User['id']): Promise<NullableType<User>> {
+  findOne(@Param('id', ParseIdPipe) id: number): Promise<NullableType<User>> {
     return this.usersService.findById(id);
   }
 
@@ -115,10 +116,10 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   @ApiParam({
     name: 'id',
-    type: String,
+    type: Number,
     required: true,
   })
-  update(@Param('id') id: User['id'], @Body() updateProfileDto: UpdateUserDto): Promise<User | null> {
+  update(@Param('id', ParseIdPipe) id: number, @Body() updateProfileDto: UpdateUserDto): Promise<User | null> {
     return this.usersService.update(id, updateProfileDto);
   }
 
@@ -127,11 +128,11 @@ export class UsersController {
   @Delete(':id')
   @ApiParam({
     name: 'id',
-    type: String,
+    type: Number,
     required: true,
   })
   @HttpCode(HttpStatus.OK)
-  remove(@Param('id') id: User['id']): Promise<void> {
+  remove(@Param('id', ParseIdPipe) id: number): Promise<void> {
     return this.usersService.remove(id);
   }
 }

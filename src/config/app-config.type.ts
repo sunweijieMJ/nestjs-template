@@ -9,4 +9,5 @@ export type AppConfig = {
   fallbackLanguage: string;
   headerLanguage: string;
   trustProxy: number;
+  swaggerEnabled: boolean;
 };

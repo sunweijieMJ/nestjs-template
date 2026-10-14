@@ -11,6 +11,7 @@ import {
   Request,
   NotFoundException,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../../common/pipes/parse-id.pipe';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FeedbacksService } from './feedbacks.service';
@@ -66,9 +67,9 @@ export class FeedbacksController {
   @ApiOkResponse({ type: Feedback })
   @ApiOperation({ operationId: 'getFeedback', summary: '获取反馈详情' })
   @Get(':id')
-  @ApiParam({ name: 'id', type: String, required: true })
+  @ApiParam({ name: 'id', type: Number, required: true })
   @HttpCode(HttpStatus.OK)
-  async findOne(@Request() request: RequestWithUser, @Param('id') id: Feedback['id']): Promise<Feedback> {
+  async findOne(@Request() request: RequestWithUser, @Param('id', ParseIdPipe) id: number): Promise<Feedback> {
     const feedback = await this.feedbacksService.findById(id);
 
     // Check if feedback exists and belongs to current user

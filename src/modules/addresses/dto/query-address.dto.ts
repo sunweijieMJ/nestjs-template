@@ -1,8 +1,11 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, ValidateNested, IsInt, Min } from 'class-validator';
-import { Transform, Type, plainToInstance } from 'class-transformer';
+import { IsOptional, IsString, ValidateNested, IsInt, Min, IsIn, IsArray } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
 import { Address } from '../domain/address';
 import { IsRegionCode } from '../../../common/decorators/is-region-code.decorator';
+import { jsonQueryTransformer, sortOrderTransformer } from '../../../common/transformers/json-query.transformer';
+
+const SORTABLE_FIELDS: (keyof Address)[] = ['id', 'name', 'isDefault', 'createdAt', 'updatedAt'];
 
 export class FilterAddressDto {
   @ApiPropertyOptional({ type: String, description: 'Filter by province name' })
@@ -32,13 +35,13 @@ export class FilterAddressDto {
 }
 
 export class SortAddressDto {
-  @ApiPropertyOptional()
-  @Type(() => String)
-  @IsString()
+  @ApiPropertyOptional({ enum: SORTABLE_FIELDS })
+  @IsIn(SORTABLE_FIELDS)
   orderBy: keyof Address;
 
-  @ApiPropertyOptional()
-  @IsString()
+  @ApiPropertyOptional({ enum: ['ASC', 'DESC'] })
+  @Transform(sortOrderTransformer)
+  @IsIn(['ASC', 'DESC'])
   order: 'ASC' | 'DESC';
 }
 
@@ -59,14 +62,15 @@ export class QueryAddressDto {
 
   @ApiPropertyOptional({ type: String })
   @IsOptional()
-  @Transform(({ value }) => (value ? plainToInstance(FilterAddressDto, JSON.parse(value)) : undefined))
+  @Transform(jsonQueryTransformer(FilterAddressDto))
   @ValidateNested()
   @Type(() => FilterAddressDto)
   filters?: FilterAddressDto | null;
 
   @ApiPropertyOptional({ type: String })
   @IsOptional()
-  @Transform(({ value }) => (value ? plainToInstance(SortAddressDto, JSON.parse(value)) : undefined))
+  @Transform(jsonQueryTransformer(SortAddressDto))
+  @IsArray()
   @ValidateNested({ each: true })
   @Type(() => SortAddressDto)
   sort?: SortAddressDto[] | null;

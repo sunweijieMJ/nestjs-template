@@ -137,7 +137,10 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
         fallbackLanguage: configService.getOrThrow('app.fallbackLanguage', {
           infer: true,
         }),
-        loaderOptions: { path: path.join(__dirname, '/i18n/'), watch: true },
+        loaderOptions: {
+          path: path.join(__dirname, '/i18n/'),
+          watch: configService.get('app.nodeEnv', { infer: true }) !== 'production',
+        },
       }),
       resolvers: [
         {

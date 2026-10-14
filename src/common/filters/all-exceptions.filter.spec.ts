@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { I18nContext } from 'nestjs-i18n';
+import { QueryFailedError } from 'typeorm';
 import { AllExceptionsFilter } from './all-exceptions.filter';
 
 const TRANSLATIONS: Record<string, string> = {
@@ -14,6 +15,7 @@ const TRANSLATIONS: Record<string, string> = {
   'common.unauthorized': '未授权',
   'common.forbidden': '禁止访问',
   'common.conflict': '资源冲突',
+  'common.internalServerError': '服务器内部错误',
 };
 
 function run(exception: unknown): { body: { code: number; message: unknown; data: unknown }; status: number } {
@@ -57,6 +59,18 @@ describe('AllExceptionsFilter', () => {
   it('should translate a built-in exception created with its default description', () => {
     expect(run(new ForbiddenException('Forbidden')).body.message).toBe('禁止访问');
     expect(run(new ConflictException()).body.message).toBe('资源冲突');
+  });
+
+  it('should map a unique constraint violation to 409', () => {
+    const exception = new QueryFailedError('INSERT', [], Object.assign(new Error('duplicate'), { code: '23505' }));
+    const { body, status } = run(exception);
+    expect(status).toBe(409);
+    expect(body.message).toBe('资源冲突');
+  });
+
+  it('should keep other database errors as 500', () => {
+    const exception = new QueryFailedError('INSERT', [], Object.assign(new Error('boom'), { code: '22001' }));
+    expect(run(exception).status).toBe(500);
   });
 
   it('should keep a custom message of a built-in exception', () => {

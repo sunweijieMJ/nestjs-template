@@ -12,6 +12,7 @@ import {
   HttpCode,
   Request,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../../common/pipes/parse-id.pipe';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AddressesService } from './addresses.service';
@@ -82,10 +83,10 @@ export class AddressesController {
   @HttpCode(HttpStatus.OK)
   @ApiParam({
     name: 'id',
-    type: String,
+    type: Number,
     required: true,
   })
-  findOne(@Request() request: RequestWithUser, @Param('id') id: Address['id']): Promise<NullableType<Address>> {
+  findOne(@Request() request: RequestWithUser, @Param('id', ParseIdPipe) id: number): Promise<NullableType<Address>> {
     return this.addressesService.findById(id, request.user.id);
   }
 
@@ -95,12 +96,12 @@ export class AddressesController {
   @HttpCode(HttpStatus.OK)
   @ApiParam({
     name: 'id',
-    type: String,
+    type: Number,
     required: true,
   })
   update(
     @Request() request: RequestWithUser,
-    @Param('id') id: Address['id'],
+    @Param('id', ParseIdPipe) id: number,
     @Body() updateAddressDto: UpdateAddressDto,
   ): Promise<Address> {
     return this.addressesService.update(id, request.user.id, updateAddressDto);
@@ -112,10 +113,10 @@ export class AddressesController {
   @HttpCode(HttpStatus.OK)
   @ApiParam({
     name: 'id',
-    type: String,
+    type: Number,
     required: true,
   })
-  setDefault(@Request() request: RequestWithUser, @Param('id') id: Address['id']): Promise<Address> {
+  setDefault(@Request() request: RequestWithUser, @Param('id', ParseIdPipe) id: number): Promise<Address> {
     return this.addressesService.setDefault(id, request.user.id);
   }
 
@@ -123,11 +124,11 @@ export class AddressesController {
   @Delete(':id')
   @ApiParam({
     name: 'id',
-    type: String,
+    type: Number,
     required: true,
   })
   @HttpCode(HttpStatus.OK)
-  remove(@Request() request: RequestWithUser, @Param('id') id: Address['id']): Promise<void> {
+  remove(@Request() request: RequestWithUser, @Param('id', ParseIdPipe) id: number): Promise<void> {
     return this.addressesService.remove(id, request.user.id);
   }
 }

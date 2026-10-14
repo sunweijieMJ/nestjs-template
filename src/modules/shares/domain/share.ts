@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Expose } from 'class-transformer';
 
 export enum ShareTargetType {
   PRODUCT = 'PRODUCT',
@@ -24,6 +25,7 @@ export class Share {
     type: Number,
     description: 'User ID who created this share',
   })
+  @Expose({ groups: ['owner'] })
   userId: number;
 
   @ApiProperty({
@@ -83,6 +85,7 @@ export class Share {
     required: false,
     description: 'Additional metadata in JSON format',
   })
+  @Expose({ groups: ['owner'] })
   metadata?: Record<string, unknown>;
 
   @ApiProperty({
@@ -90,6 +93,7 @@ export class Share {
     type: Number,
     description: 'Number of times this share was viewed',
   })
+  @Expose({ groups: ['owner'] })
   viewCount: number;
 
   @ApiProperty({
@@ -97,6 +101,7 @@ export class Share {
     type: Number,
     description: 'Number of times this share was clicked',
   })
+  @Expose({ groups: ['owner'] })
   clickCount: number;
 
   @ApiProperty({
@@ -104,6 +109,7 @@ export class Share {
     type: Number,
     description: 'Number of conversions from this share',
   })
+  @Expose({ groups: ['owner'] })
   conversionCount: number;
 
   @ApiProperty({

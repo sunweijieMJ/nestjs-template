@@ -1,5 +1,5 @@
 import { GoneException, NotFoundException } from '@nestjs/common';
-import { plainToInstance } from 'class-transformer';
+import { instanceToPlain, plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { SharesService } from './shares.service';
 import { ShareRepository } from './infrastructure/persistence/share.repository';
@@ -71,5 +71,17 @@ describe('TrackShareDto', () => {
   it('should accept small metadata', async () => {
     const dto = plainToInstance(TrackShareDto, { action: ShareLogAction.CLICK, metadata: { from: 'feed' } });
     await expect(validate(dto)).resolves.toHaveLength(0);
+  });
+});
+
+describe('Share serialization', () => {
+  const share = Object.assign(new Share(), { id: 7, userId: 1, shareCode: 'CODE', metadata: { a: 1 }, viewCount: 3 });
+
+  it.each(['userId', 'metadata', 'viewCount'])('should hide %s from public responses', (field) => {
+    expect(instanceToPlain(share)).not.toHaveProperty(field);
+  });
+
+  it('should expose the owner fields to the owner', () => {
+    expect(instanceToPlain(share, { groups: ['owner'] })).toMatchObject({ userId: 1, metadata: { a: 1 } });
   });
 });

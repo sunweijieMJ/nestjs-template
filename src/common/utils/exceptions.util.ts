@@ -69,7 +69,12 @@ export function createNotFoundError(error: string): NotFoundException {
 /**
  * PostgreSQL unique constraint violation error code
  */
-const PG_UNIQUE_VIOLATION = '23505';
+export const PG_UNIQUE_VIOLATION = '23505';
+
+/** 是否为数据库唯一约束冲突 */
+export function isUniqueViolation(error: unknown): boolean {
+  return !!error && typeof error === 'object' && 'code' in error && error.code === PG_UNIQUE_VIOLATION;
+}
 
 /**
  * Mapping of database column names to field names and error codes
@@ -86,8 +91,8 @@ const UNIQUE_CONSTRAINT_MAP: Record<string, { field: string; error: string }> = 
  * @throws UnprocessableEntityException if it's a unique constraint violation
  */
 export function handleUniqueConstraintError(error: unknown): void {
-  if (error && typeof error === 'object' && 'code' in error && error.code === PG_UNIQUE_VIOLATION) {
-    const detail = 'detail' in error ? String(error.detail) : '';
+  if (isUniqueViolation(error)) {
+    const detail = 'detail' in (error as object) ? String((error as { detail?: unknown }).detail) : '';
 
     // Extract column name from PostgreSQL error detail
     // Format: "Key (column_name)=(value) already exists."

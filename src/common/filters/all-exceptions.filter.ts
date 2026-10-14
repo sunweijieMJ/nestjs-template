@@ -4,6 +4,7 @@ import { I18nContext } from 'nestjs-i18n';
 import { ThrottlerException } from '@nestjs/throttler';
 import { ApiErrorResponse } from '../dto/api-response.dto';
 import { DEFAULT_EXCEPTION_MESSAGES } from './exception-messages.constant';
+import { isUniqueViolation } from '../utils/exceptions.util';
 
 /**
  * Map HTTP status codes to i18n keys
@@ -57,6 +58,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
       statusCode = HttpStatus.TOO_MANY_REQUESTS;
       message = this.translateMessage('tooManyRequests', i18n) ?? DEFAULT_EXCEPTION_MESSAGES.TOO_MANY_REQUESTS;
       error = 'Too Many Requests';
+    } else if (isUniqueViolation(exception)) {
+      statusCode = HttpStatus.CONFLICT;
+      message = this.getDefaultMessage(statusCode, i18n);
+      error = 'Conflict';
+
+      const { constraint, detail } = exception as { constraint?: string; detail?: string };
+      this.logger.warn(`Unique constraint violation: ${constraint ?? 'unknown'} ${detail ?? ''}`, { path, requestId });
     } else if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
       const response = exception.getResponse();

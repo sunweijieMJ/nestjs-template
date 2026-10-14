@@ -106,32 +106,34 @@ async function bootstrap(): Promise<void> {
 
   app.useGlobalInterceptors(...interceptors);
 
-  const options = new DocumentBuilder()
-    .setTitle('API')
-    .setDescription(
-      'API docs\n\n' +
-        '📄 **OpenAPI JSON**: [/docs-json](/docs-json)\n\n' +
-        '📥 **Download**: [openapi.json](/docs-json)',
-    )
-    .setVersion('1.0')
-    .addBearerAuth()
-    .addGlobalParameters({
-      in: 'header',
-      required: false,
-      name: configService.getOrThrow('app.headerLanguage', { infer: true }),
-      schema: {
-        example: 'en',
-      },
-    })
-    .build();
+  if (configService.get('app.swaggerEnabled', { infer: true })) {
+    const options = new DocumentBuilder()
+      .setTitle('API')
+      .setDescription(
+        'API docs\n\n' +
+          '📄 **OpenAPI JSON**: [/docs-json](/docs-json)\n\n' +
+          '📥 **Download**: [openapi.json](/docs-json)',
+      )
+      .setVersion('1.0')
+      .addBearerAuth()
+      .addGlobalParameters({
+        in: 'header',
+        required: false,
+        name: configService.getOrThrow('app.headerLanguage', { infer: true }),
+        schema: {
+          example: 'en',
+        },
+      })
+      .build();
 
-  const document = SwaggerModule.createDocument(app, options);
-  SwaggerModule.setup('docs', app, document, {
-    jsonDocumentUrl: 'docs-json',
-    swaggerOptions: {
-      persistAuthorization: true,
-    },
-  });
+    const document = SwaggerModule.createDocument(app, options);
+    SwaggerModule.setup('docs', app, document, {
+      jsonDocumentUrl: 'docs-json',
+      swaggerOptions: {
+        persistAuthorization: true,
+      },
+    });
+  }
 
   await app.listen(configService.getOrThrow('app.port', { infer: true }));
 }
