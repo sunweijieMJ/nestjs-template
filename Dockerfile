@@ -92,11 +92,6 @@ ARG ENV_MODE=dev
 ENV ENV_MODE=${ENV_MODE}
 ENV NODE_ENV=development
 
-# Setup pnpm global bin directory and install global CLI tools
-ENV PNPM_HOME="/root/.local/share/pnpm"
-ENV PATH="$PNPM_HOME/bin:$PNPM_HOME:$PATH"
-RUN pnpm add -g @nestjs/cli typescript ts-node
-
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
