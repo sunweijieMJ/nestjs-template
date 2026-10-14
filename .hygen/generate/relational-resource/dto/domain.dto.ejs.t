@@ -2,11 +2,10 @@
 to: src/modules/<%= h.inflection.transform(name, ['pluralize', 'underscore', 'dasherize']) %>/dto/<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>.dto.ts
 ---
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsInt } from 'class-validator';
 
 export class <%= name %>Dto {
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  id: string;
+  @ApiProperty({ type: Number })
+  @IsInt()
+  id: number;
 }

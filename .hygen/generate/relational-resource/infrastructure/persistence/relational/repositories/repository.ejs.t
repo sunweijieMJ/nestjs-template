@@ -3,7 +3,7 @@ to: src/modules/<%= h.inflection.transform(name, ['pluralize', 'underscore', 'da
 ---
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, IsNull } from 'typeorm';
 import { <%= name %>Entity } from '../entities/<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>.entity';
 import { NullableType } from '../../../../../../common/types/nullable.type';
 import { <%= name %> } from '../../../../domain/<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>';
@@ -26,17 +26,18 @@ export class <%= name %>RelationalRepository implements <%= name %>Repository {
     return <%= name %>Mapper.toDomain(newEntity);
   }
 
-  async findAllWithPagination({
+  async findManyWithPaginationAndCount({
     paginationOptions,
   }: {
     paginationOptions: IPaginationOptions;
-  }): Promise<<%= name %>[]> {
-    const entities = await this.<%= h.inflection.camelize(name, true) %>Repository.find({
+  }): Promise<{ data: <%= name %>[]; total: number }> {
+    const [entities, total] = await this.<%= h.inflection.camelize(name, true) %>Repository.findAndCount({
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
       take: paginationOptions.limit,
+      order: { id: 'DESC' },
     });
 
-    return entities.map((entity) => <%= name %>Mapper.toDomain(entity));
+    return { data: entities.map((entity) => <%= name %>Mapper.toDomain(entity)), total };
   }
 
   async findById(id: <%= name %>['id']): Promise<NullableType<<%= name %>>> {
@@ -58,13 +59,13 @@ export class <%= name %>RelationalRepository implements <%= name %>Repository {
   async update(
     id: <%= name %>['id'],
     payload: Partial<<%= name %>>,
-  ): Promise<<%= name %>> {
+  ): Promise<<%= name %> | null> {
     const entity = await this.<%= h.inflection.camelize(name, true) %>Repository.findOne({
       where: { id },
     });
 
     if (!entity) {
-      throw new Error('Record not found');
+      return null;
     }
 
     const updatedEntity = await this.<%= h.inflection.camelize(name, true) %>Repository.save(
@@ -79,7 +80,8 @@ export class <%= name %>RelationalRepository implements <%= name %>Repository {
     return <%= name %>Mapper.toDomain(updatedEntity);
   }
 
-  async remove(id: <%= name %>['id']): Promise<void> {
-    await this.<%= h.inflection.camelize(name, true) %>Repository.delete(id);
+  async remove(id: <%= name %>['id']): Promise<boolean> {
+    const result = await this.<%= h.inflection.camelize(name, true) %>Repository.softDelete({ id, deletedAt: IsNull() });
+    return (result.affected ?? 0) > 0;
   }
 }

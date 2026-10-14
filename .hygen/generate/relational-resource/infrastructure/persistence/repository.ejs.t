@@ -8,14 +8,14 @@ import { <%= name %> } from '../../domain/<%= h.inflection.transform(name, ['und
 
 export abstract class <%= name %>Repository {
   abstract create(
-    data: Omit<<%= name %>, 'id' | 'createdAt' | 'updatedAt'>,
+    data: Omit<<%= name %>, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>,
   ): Promise<<%= name %>>;
 
-  abstract findAllWithPagination({
+  abstract findManyWithPaginationAndCount({
     paginationOptions,
   }: {
     paginationOptions: IPaginationOptions;
-  }): Promise<<%= name %>[]>;
+  }): Promise<{ data: <%= name %>[]; total: number }>;
 
   abstract findById(id: <%= name %>['id']): Promise<NullableType<<%= name %>>>;
 
@@ -26,5 +26,6 @@ export abstract class <%= name %>Repository {
     payload: DeepPartial<<%= name %>>,
   ): Promise<<%= name %> | null>;
 
-  abstract remove(id: <%= name %>['id']): Promise<void>;
+  /** 软删除，记录不存在时返回 false */
+  abstract remove(id: <%= name %>['id']): Promise<boolean>;
 }

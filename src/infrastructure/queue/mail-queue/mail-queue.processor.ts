@@ -1,5 +1,5 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
-import { Logger, Inject, forwardRef } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { MailerService } from '../../../integrations/mail/mailer.service';
 import { MailJobData } from './mail-queue.service';
@@ -9,10 +9,7 @@ import { MAIL_QUEUE } from './mail-queue.constants';
 export class MailQueueProcessor extends WorkerHost {
   private readonly logger = new Logger(MailQueueProcessor.name);
 
-  constructor(
-    @Inject(forwardRef(() => MailerService))
-    private mailerService: MailerService,
-  ) {
+  constructor(private readonly mailerService: MailerService) {
     super();
   }
 

@@ -6,5 +6,4 @@ skip_if: HttpStatus,
 ---
 <% if (kind === 'reference' || kind === 'duplication') { -%>
   HttpStatus,
-  UnprocessableEntityException,
 <% } -%>

@@ -6,29 +6,32 @@ import {
   Get,
   Post,
   Body,
-  Patch,
+  Put,
   Param,
   Delete,
   UseGuards,
   Query,
+  HttpCode,
+  HttpStatus,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { <%= h.inflection.transform(name, ['pluralize']) %>Service } from './<%= h.inflection.transform(name, ['pluralize', 'underscore', 'dasherize']) %>.service';
 import { Create<%= name %>Dto } from './dto/create-<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>.dto';
 import { Update<%= name %>Dto } from './dto/update-<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>.dto';
 import {
   ApiBearerAuth,
-  ApiCreatedResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
 import { <%= name %> } from './domain/<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>';
 import { AuthGuard } from '@nestjs/passport';
 import {
-  InfinityPaginationResponse,
-  InfinityPaginationResponseDto,
-} from '../../common/dto/infinity-pagination-response.dto';
-import { infinityPagination } from '../../common/infinity-pagination';
+  PaginationResponse,
+  PaginationResponseDto,
+} from '../../common/dto/pagination-response.dto';
+import { pagination } from '../../common/pagination';
 import { FindAll<%= h.inflection.transform(name, ['pluralize']) %>Dto } from './dto/find-all-<%= h.inflection.transform(name, ['pluralize', 'underscore', 'dasherize']) %>.dto';
 
 @ApiTags('<%= h.inflection.transform(name, ['pluralize', 'humanize']) %>')
@@ -41,74 +44,83 @@ import { FindAll<%= h.inflection.transform(name, ['pluralize']) %>Dto } from './
 export class <%= h.inflection.transform(name, ['pluralize']) %>Controller {
   constructor(private readonly <%= h.inflection.camelize(h.inflection.pluralize(name), true) %>Service: <%= h.inflection.transform(name, ['pluralize']) %>Service) {}
 
-  @Post()
-  @ApiCreatedResponse({
+  @ApiOkResponse({
     type: <%= name %>,
   })
-  create(@Body() create<%= name %>Dto: Create<%= name %>Dto) {
+  @ApiOperation({ operationId: 'create<%= name %>', summary: 'Create <%= name %>' })
+  @Post()
+  @HttpCode(HttpStatus.OK)
+  create(@Body() create<%= name %>Dto: Create<%= name %>Dto): Promise<<%= name %>> {
     return this.<%= h.inflection.camelize(h.inflection.pluralize(name), true) %>Service.create(create<%= name %>Dto);
   }
 
-  @Get()
   @ApiOkResponse({
-    type: InfinityPaginationResponse(<%= name %>),
+    type: PaginationResponse(<%= name %>),
   })
+  @ApiOperation({ operationId: 'get<%= h.inflection.transform(name, ['pluralize']) %>', summary: 'List <%= h.inflection.transform(name, ['pluralize']) %>' })
+  @Get()
+  @HttpCode(HttpStatus.OK)
   async findAll(
     @Query() query: FindAll<%= h.inflection.transform(name, ['pluralize']) %>Dto,
-  ): Promise<InfinityPaginationResponseDto<<%= name %>>> {
+  ): Promise<PaginationResponseDto<<%= name %>>> {
     const page = query?.page ?? 1;
     let limit = query?.limit ?? 10;
     if (limit > 50) {
       limit = 50;
     }
 
-    return infinityPagination(
-      await this.<%= h.inflection.camelize(h.inflection.pluralize(name), true) %>Service.findAllWithPagination({
-        paginationOptions: {
-          page,
-          limit,
-        },
-      }),
-      { page, limit },
-    );
+    const { data, total } = await this.<%= h.inflection.camelize(h.inflection.pluralize(name), true) %>Service.findManyWithPaginationAndCount({
+      paginationOptions: {
+        page,
+        limit,
+      },
+    });
+
+    return pagination(data, total, { page, limit });
   }
 
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: <%= name %>,
+  })
+  @ApiOperation({ operationId: 'get<%= name %>', summary: 'Get <%= name %>' })
   @Get(':id')
-  @ApiParam({
-    name: 'id',
-    type: String,
-    required: true,
-  })
-  @ApiOkResponse({
-    type: <%= name %>,
-  })
-  findById(@Param('id') id: string) {
-    return this.<%= h.inflection.camelize(h.inflection.pluralize(name), true) %>Service.findById(id);
+  @HttpCode(HttpStatus.OK)
+  findOne(@Param('id', ParseIntPipe) id: number): Promise<<%= name %>> {
+    return this.<%= h.inflection.camelize(h.inflection.pluralize(name), true) %>Service.findOne(id);
   }
 
-  @Patch(':id')
   @ApiParam({
     name: 'id',
-    type: String,
+    type: Number,
     required: true,
   })
   @ApiOkResponse({
     type: <%= name %>,
   })
+  @ApiOperation({ operationId: 'update<%= name %>', summary: 'Update <%= name %>' })
+  @Put(':id')
+  @HttpCode(HttpStatus.OK)
   update(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() update<%= name %>Dto: Update<%= name %>Dto,
-  ) {
+  ): Promise<<%= name %>> {
     return this.<%= h.inflection.camelize(h.inflection.pluralize(name), true) %>Service.update(id, update<%= name %>Dto);
   }
 
-  @Delete(':id')
   @ApiParam({
     name: 'id',
-    type: String,
+    type: Number,
     required: true,
   })
-  remove(@Param('id') id: string) {
+  @ApiOperation({ operationId: 'delete<%= name %>', summary: 'Delete <%= name %>' })
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.<%= h.inflection.camelize(h.inflection.pluralize(name), true) %>Service.remove(id);
   }
 }

@@ -16,6 +16,6 @@ import { Relational<%= name %>PersistenceModule } from './infrastructure/persist
   ],
   controllers: [<%= h.inflection.transform(name, ['pluralize']) %>Controller],
   providers: [<%= h.inflection.transform(name, ['pluralize']) %>Service],
-  exports: [<%= h.inflection.transform(name, ['pluralize']) %>Service, Relational<%= name %>PersistenceModule],
+  exports: [<%= h.inflection.transform(name, ['pluralize']) %>Service],
 })
 export class <%= h.inflection.transform(name, ['pluralize']) %>Module {}

@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { MailQueueProcessor } from './mail-queue.processor';
 import { MailQueueService } from './mail-queue.service';
@@ -11,7 +11,7 @@ import { MAIL_QUEUE } from './mail-queue.constants';
     BullModule.registerQueue({
       name: MAIL_QUEUE,
     }),
-    forwardRef(() => MailerModule),
+    MailerModule,
     ConfigModule,
   ],
   providers: [MailQueueProcessor, MailQueueService],

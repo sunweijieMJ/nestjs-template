@@ -5,8 +5,6 @@ import {
   NotFoundException,
   UnauthorizedException,
   UnprocessableEntityException,
-  Inject,
-  forwardRef,
 } from '@nestjs/common';
 import ms from 'ms';
 import { createHash } from 'crypto';
@@ -61,7 +59,6 @@ export class AuthService {
     private smsService: SmsService,
     private wechatService: WechatService,
     private tokenService: TokenService,
-    @Inject(forwardRef(() => NotificationsService))
     private notificationsService: NotificationsService,
     private credentialRepository: CredentialRepository,
   ) {}
