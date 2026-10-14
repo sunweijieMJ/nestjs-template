@@ -4,7 +4,7 @@ import { IsString, IsNotEmpty } from 'class-validator';
 export class CreateWechatJsapiPaymentDto {
   @ApiProperty({
     description: '用户 OpenID',
-    example: 'oUpF8uMuAJO_M2pxb1Q9zNjWeS6o',
+    example: 'oUpF8uMuAJO_M2pxb1Q9zNjWeS6o', // cspell:disable-line
   })
   @IsString()
   @IsNotEmpty()

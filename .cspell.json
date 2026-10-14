@@ -66,9 +66,6 @@
     "entrypoint",
     "postgres",
     "postgresql",
-    "mongodb",
-    "mongoose",
-    "persistance",
     "relational",
     "boilerplate",
     "ioredis",
@@ -78,7 +75,6 @@
     "healthcheck",
     "healthchecks",
     "terminus",
-    "Procfile",
     "wechat",
     "alipay",
     "jsapi",
@@ -88,8 +84,30 @@
     "mchid",
     "prepay",
     "refundable",
-    "outTradeNo",
-    "transactionId"
+    "IDX",
+    "datname",
+    "numbackends",
+    "iat",
+    "cls",
+    "ciphertext",
+    "apikey",
+    "willsoto",
+    "CNY",
+    "favorited",
+    "aliyun",
+    "aliyuncs",
+    "alicloud",
+    "dysmsapi",
+    "alipaysubmit",
+    "wechatpay",
+    "mch",
+    "noncestr",
+    "prepayid",
+    "partnerid",
+    "errcode",
+    "errmsg",
+    "headimgurl",
+    "sessionkey"
   ],
   "patterns": [
     {
@@ -102,5 +120,14 @@
     }
   ],
   "ignoreRegExpList": ["jwt-token", "import-path"],
-  "ignorePaths": ["node_modules", "dist", "coverage", "*.lock", "*.json", ".git", "CHANGELOG.md"]
+  "ignorePaths": [
+    "node_modules",
+    "dist",
+    "coverage",
+    "*.lock",
+    "*.json",
+    ".git",
+    "CHANGELOG.md",
+    "src/infrastructure/database/migrations/**"
+  ]
 }

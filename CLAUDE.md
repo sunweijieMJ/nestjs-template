@@ -114,6 +114,7 @@ pnpm lint:fix              # ESLint 自动修复
 pnpm lint:check            # CI 同款检查（ESLint + Prettier + markdownlint）
 pnpm type-check            # TypeScript 类型检查
 pnpm format                # Prettier 格式化
+pnpm cspell                # 拼写检查（不在 CI 中执行）
 pnpm test                  # 单元测试
 pnpm test:e2e              # E2E 测试
 pnpm migration:generate    # 生成数据库迁移

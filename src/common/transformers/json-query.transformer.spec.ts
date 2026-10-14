@@ -9,7 +9,7 @@ async function invalidProperties(cls: new () => object, query: Record<string, st
 }
 
 describe('JSON query parameters', () => {
-  it('should accept a whitelisted sort and normalise the direction', async () => {
+  it('should accept a whitelisted sort and normalize the direction', async () => {
     const dto = plainToInstance(QueryUserDto, { sort: '[{"orderBy":"createdAt","order":"desc"}]' });
     expect(dto.sort?.[0].order).toBe('DESC');
     await expect(validate(dto)).resolves.toHaveLength(0);

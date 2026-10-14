@@ -6,7 +6,7 @@ import * as crypto from 'crypto';
  */
 export function generateShareCode(): string {
   // Exclude similar-looking characters: 0, O, I, l, 1
-  const alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  const alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'; // cspell:disable-line
   const length = 8;
 
   let result = '';
