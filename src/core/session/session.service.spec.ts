@@ -1,14 +1,15 @@
+import type { Mocked } from 'vitest';
 import { Cache } from 'cache-manager';
 import { SessionService, sessionAuthCacheKey } from './session.service';
 import { SessionRepository } from './infrastructure/persistence/session.repository';
 
 describe('SessionService', () => {
-  let repository: jest.Mocked<Pick<SessionRepository, 'rotateHash' | 'deleteById'>>;
+  let repository: Mocked<Pick<SessionRepository, 'rotateHash' | 'deleteById'>>;
   let cache: Map<string, unknown>;
   let service: SessionService;
 
   beforeEach(() => {
-    repository = { rotateHash: jest.fn(), deleteById: jest.fn() };
+    repository = { rotateHash: vi.fn(), deleteById: vi.fn() };
     cache = new Map();
     const cacheManager = {
       get: async (key: string) => cache.get(key),

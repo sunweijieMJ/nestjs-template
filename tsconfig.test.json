@@ -3,7 +3,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
-    "types": ["node", "jest"],
+    "types": ["node", "vitest/globals"],
     "noImplicitAny": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false

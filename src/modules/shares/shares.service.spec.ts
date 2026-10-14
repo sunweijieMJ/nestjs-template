@@ -1,3 +1,4 @@
+import type { Mocked } from 'vitest';
 import { GoneException, NotFoundException } from '@nestjs/common';
 import { instanceToPlain, plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
@@ -13,19 +14,19 @@ function buildShare(overrides: Partial<Share> = {}): Share {
 }
 
 describe('SharesService', () => {
-  let shareRepository: jest.Mocked<
+  let shareRepository: Mocked<
     Pick<ShareRepository, 'findByShareCode' | 'incrementClickCount' | 'incrementConversionCount'>
   >;
-  let shareLogRepository: jest.Mocked<Pick<ShareLogRepository, 'create'>>;
+  let shareLogRepository: Mocked<Pick<ShareLogRepository, 'create'>>;
   let service: SharesService;
 
   beforeEach(() => {
     shareRepository = {
-      findByShareCode: jest.fn(),
-      incrementClickCount: jest.fn(),
-      incrementConversionCount: jest.fn(),
+      findByShareCode: vi.fn(),
+      incrementClickCount: vi.fn(),
+      incrementConversionCount: vi.fn(),
     };
-    shareLogRepository = { create: jest.fn() };
+    shareLogRepository = { create: vi.fn() };
     service = new SharesService(
       shareRepository as unknown as ShareRepository,
       shareLogRepository as unknown as ShareLogRepository,

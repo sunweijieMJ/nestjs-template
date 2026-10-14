@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PermissionsGuard } from './permissions.guard';
@@ -27,7 +28,7 @@ function context(handler: string, roleId?: number): ExecutionContext {
 
 describe('PermissionsGuard', () => {
   const permissionsService = {
-    getPermissionsForRole: jest.fn().mockResolvedValue([Permission.USER_LIST]),
+    getPermissionsForRole: vi.fn().mockResolvedValue([Permission.USER_LIST]),
   } as unknown as PermissionsService;
   const guard = new PermissionsGuard(new Reflector(), permissionsService);
 
@@ -36,7 +37,7 @@ describe('PermissionsGuard', () => {
   });
 
   it('should reject a role missing the required permission', async () => {
-    (permissionsService.getPermissionsForRole as jest.Mock).mockResolvedValueOnce([]);
+    (permissionsService.getPermissionsForRole as Mock).mockResolvedValueOnce([]);
     await expect(guard.canActivate(context('list', 2))).rejects.toBeInstanceOf(ForbiddenException);
   });
 

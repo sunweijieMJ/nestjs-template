@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { HealthIndicator, HealthIndicatorResult, HealthCheckError } from '@nestjs/terminus';
+import { HealthIndicatorResult, HealthIndicatorService } from '@nestjs/terminus';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 
@@ -10,17 +10,18 @@ interface PoolStats {
 }
 
 @Injectable()
-export class DatabasePoolHealthIndicator extends HealthIndicator {
+export class DatabasePoolHealthIndicator {
   private readonly UTILIZATION_THRESHOLD = 90; // Mark unhealthy if utilization > 90%
 
   constructor(
     @InjectDataSource()
     private dataSource: DataSource,
-  ) {
-    super();
-  }
+    private healthIndicatorService: HealthIndicatorService,
+  ) {}
 
   async isHealthy(key: string): Promise<HealthIndicatorResult> {
+    const indicator = this.healthIndicatorService.check(key);
+
     try {
       // Query PostgreSQL connection pool statistics
       const result = await this.dataSource.query(`
@@ -47,21 +48,12 @@ export class DatabasePoolHealthIndicator extends HealthIndicator {
       };
 
       if (utilizationPercent > this.UTILIZATION_THRESHOLD) {
-        throw new HealthCheckError('Database pool utilization too high', this.getStatus(key, false, poolStats));
+        return indicator.down({ ...poolStats });
       }
 
-      return this.getStatus(key, true, poolStats);
+      return indicator.up({ ...poolStats });
     } catch (error) {
-      if (error instanceof HealthCheckError) {
-        throw error;
-      }
-
-      throw new HealthCheckError(
-        'Database pool health check failed',
-        this.getStatus(key, false, {
-          message: error instanceof Error ? error.message : 'Unknown error',
-        }),
-      );
+      return indicator.down({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 }

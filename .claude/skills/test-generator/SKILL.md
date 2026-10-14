@@ -21,19 +21,20 @@ triggers:
 ## 单元测试模版（Service）
 
 ```typescript
+import type { Mocked } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 
 describe('{Feature}Service', () => {
   let service: {Feature}Service;
-  let repository: jest.Mocked<{Feature}Repository>;
+  let repository: Mocked<{Feature}Repository>;
 
   beforeEach(async () => {
     const mockRepository = {
-      create: jest.fn(),
-      findById: jest.fn(),
-      findManyWithPagination: jest.fn(),
-      update: jest.fn(),
-      remove: jest.fn(),
+      create: vi.fn(),
+      findById: vi.fn(),
+      findManyWithPagination: vi.fn(),
+      update: vi.fn(),
+      remove: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({

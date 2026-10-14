@@ -9,13 +9,10 @@ const S3_ENV = {
 
 async function signedUrl(env: Record<string, string>): Promise<URL> {
   Object.assign(process.env, env);
-  let plain: Record<string, unknown> = {};
-  jest.isolateModules(() => {
-    const { FileType } = jest.requireActual<typeof import('./file')>('./file');
-    const { instanceToPlain, plainToInstance } =
-      jest.requireActual<typeof import('class-transformer')>('class-transformer');
-    plain = instanceToPlain(plainToInstance(FileType, { id: '1', path: 'a/b.png' }));
-  });
+  vi.resetModules();
+  const { FileType } = await import('./file.js');
+  const { instanceToPlain, plainToInstance } = await import('class-transformer');
+  const plain = instanceToPlain(plainToInstance(FileType, { id: '1', path: 'a/b.png' }));
   return new URL(await (plain.path as Promise<string>));
 }
 

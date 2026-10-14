@@ -1,20 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { HealthIndicator, HealthIndicatorResult, HealthCheckError } from '@nestjs/terminus';
+import { HealthIndicatorResult, HealthIndicatorService } from '@nestjs/terminus';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '../../../config/config.type';
 import Redis from 'ioredis';
 
 @Injectable()
-export class RedisHealthIndicator extends HealthIndicator {
-  constructor(private configService: ConfigService<AllConfigType>) {
-    super();
-  }
+export class RedisHealthIndicator {
+  constructor(
+    private configService: ConfigService<AllConfigType>,
+    private healthIndicatorService: HealthIndicatorService,
+  ) {}
 
   async isHealthy(key: string): Promise<HealthIndicatorResult> {
+    const indicator = this.healthIndicatorService.check(key);
     const redisEnabled = this.configService.get('redis.enabled', { infer: true });
 
     if (!redisEnabled) {
-      return this.getStatus(key, true, { message: 'Redis disabled' });
+      return indicator.up({ message: 'Redis disabled' });
     }
 
     const redisHost = this.configService.get('redis.host', { infer: true });
@@ -37,18 +39,13 @@ export class RedisHealthIndicator extends HealthIndicator {
       await redis.quit();
 
       if (pong === 'PONG') {
-        return this.getStatus(key, true);
+        return indicator.up();
       }
 
-      throw new HealthCheckError('Redis ping failed', this.getStatus(key, false));
+      return indicator.down();
     } catch (error) {
       await redis.quit().catch(() => {});
-      throw new HealthCheckError(
-        'Redis health check failed',
-        this.getStatus(key, false, {
-          message: error instanceof Error ? error.message : 'Unknown error',
-        }),
-      );
+      return indicator.down({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 }

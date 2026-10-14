@@ -23,7 +23,7 @@ export default defineConfig(
     languageOptions: {
       globals: {
         ...globals.node,
-        ...globals.jest,
+        ...globals.vitest,
       },
       parserOptions: {
         project: ['./tsconfig.json', './tsconfig.test.json', './tsconfig.node.json'],

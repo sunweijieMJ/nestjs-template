@@ -24,7 +24,8 @@ export class AuditInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest<RequestWithUser>();
     const { action, entityType, idParam, includeBody, includeResponse } = auditOptions;
 
-    const entityId = request.params[idParam ?? 'id'] ?? 'unknown';
+    const param = request.params[idParam ?? 'id'];
+    const entityId = (Array.isArray(param) ? param.join('/') : param) ?? 'unknown';
     const userId = request.user?.id ?? null;
     const requestBody = includeBody ? { ...request.body } : null;
 

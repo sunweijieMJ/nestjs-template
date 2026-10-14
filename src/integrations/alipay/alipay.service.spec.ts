@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { UnprocessableEntityException } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import { AlipayService } from './alipay.service';
@@ -13,8 +14,8 @@ function createService(refundResponse: Record<string, string>): AlipayService {
     returnUrl: '',
   } as unknown as ConfigType<typeof alipayConfig>);
   Object.assign(service, {
-    sign: jest.fn().mockReturnValue('sign'),
-    sendRequest: jest.fn().mockResolvedValue({ alipay_trade_refund_response: refundResponse }),
+    sign: vi.fn().mockReturnValue('sign'),
+    sendRequest: vi.fn().mockResolvedValue({ alipay_trade_refund_response: refundResponse }),
   });
   return service;
 }
@@ -42,17 +43,17 @@ describe('AlipayService', () => {
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
       process.env.TZ = originalTz;
     });
 
     it('should send the request timestamp in Beijing time regardless of the server time zone', async () => {
-      jest.useFakeTimers().setSystemTime(new Date('2026-01-01T00:00:00Z'));
+      vi.useFakeTimers().setSystemTime(new Date('2026-01-01T00:00:00Z'));
       const service = createService({ code: '10000', msg: 'Success' });
 
       await service.refund({ outTradeNo: 'ORD1', refundAmount: '1.00', outRequestNo: 'R1' });
 
-      const [params] = (service as unknown as { sendRequest: jest.Mock }).sendRequest.mock.calls[0];
+      const [params] = (service as unknown as { sendRequest: Mock }).sendRequest.mock.calls[0];
       expect(params.timestamp).toBe('2026-01-01 08:00:00');
     });
 

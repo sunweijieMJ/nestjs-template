@@ -1,3 +1,4 @@
+import type { Mocked } from 'vitest';
 import { NotFoundException } from '@nestjs/common';
 import { IsNull, Repository } from 'typeorm';
 import { UsersRelationalRepository } from './user.repository';
@@ -5,13 +6,13 @@ import { UserEntity } from '../entities/user.entity';
 
 describe('UsersRelationalRepository', () => {
   describe('update', () => {
-    let typeormRepository: jest.Mocked<Pick<Repository<UserEntity>, 'update' | 'findOne'>>;
+    let typeormRepository: Mocked<Pick<Repository<UserEntity>, 'update' | 'findOne'>>;
     let repository: UsersRelationalRepository;
 
     beforeEach(() => {
       typeormRepository = {
-        update: jest.fn().mockResolvedValue({ affected: 1 }),
-        findOne: jest.fn().mockResolvedValue({ id: 1, email: 'a@b.c' }),
+        update: vi.fn().mockResolvedValue({ affected: 1 }),
+        findOne: vi.fn().mockResolvedValue({ id: 1, email: 'a@b.c' }),
       };
       repository = new UsersRelationalRepository(typeormRepository as unknown as Repository<UserEntity>);
     });

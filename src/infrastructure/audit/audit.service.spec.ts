@@ -3,7 +3,7 @@ import { AuditLogRepository } from './infrastructure/persistence/audit-log.repos
 
 describe('AuditService', () => {
   it('should redact sensitive fields regardless of their case and nesting', async () => {
-    const create = jest.fn().mockImplementation(async (data: unknown) => data);
+    const create = vi.fn().mockImplementation(async (data: unknown) => data);
     const service = new AuditService({ create } as unknown as AuditLogRepository);
 
     await service.log({

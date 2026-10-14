@@ -134,7 +134,7 @@ pnpm format      # Prettier 格式化
 - `@typescript-eslint/no-explicit-any`: warn — 尽量不用 `any`
 - ConfigService 必须传 `{ infer: true }`
 - 不允许未使用的变量（除 `_` 前缀）
-- Jest 测试文件不检查 any
+- 测试文件不检查 any
 
 ## 错误处理
 

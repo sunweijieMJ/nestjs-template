@@ -1,5 +1,5 @@
 import { Global, Module, Logger } from '@nestjs/common';
-import { CacheModule as NestCacheModule } from '@nestjs/cache-manager';
+import { CacheModule as NestCacheModule, CacheOptions } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import KeyvRedis, { Keyv } from '@keyv/redis';
 import { AllConfigType } from '../../config/config.type';
@@ -45,8 +45,10 @@ const CACHE_NAMESPACE = 'cache';
             await store.getClient();
 
             logger.log('Successfully connected to Redis cache');
+            const keyv = new Keyv(store, { namespace: CACHE_NAMESPACE, useKeyPrefix: false });
             return {
-              stores: [new Keyv(store, { namespace: CACHE_NAMESPACE, useKeyPrefix: false })],
+              // keyv 的 CJS 与 ESM 声明互不兼容；cache-manager 按鸭子类型识别 Keyv 实例
+              stores: [keyv] as unknown as CacheOptions['stores'],
               ttl: CACHE_TTL_MS,
             };
           } catch (error) {

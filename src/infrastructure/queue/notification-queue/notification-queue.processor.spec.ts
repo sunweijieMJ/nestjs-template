@@ -1,3 +1,4 @@
+import type { Mocked } from 'vitest';
 import { Job } from 'bullmq';
 import { NotificationQueueProcessor } from './notification-queue.processor';
 import { MailerService } from '../../../integrations/mail/mailer.service';
@@ -6,17 +7,17 @@ import { UsersService } from '../../../core/users/users.service';
 import { NotificationsService } from '../../../modules/notifications/notifications.service';
 
 describe('NotificationQueueProcessor', () => {
-  let mailerService: jest.Mocked<Pick<MailerService, 'sendMail'>>;
-  let usersService: jest.Mocked<Pick<UsersService, 'findById'>>;
-  let notificationsService: jest.Mocked<Pick<NotificationsService, 'recordChannelResult'>>;
+  let mailerService: Mocked<Pick<MailerService, 'sendMail'>>;
+  let usersService: Mocked<Pick<UsersService, 'findById'>>;
+  let notificationsService: Mocked<Pick<NotificationsService, 'recordChannelResult'>>;
   let processor: NotificationQueueProcessor;
 
   const emailJob = { id: '1', name: 'send-email', data: { notificationId: 5, userId: 1, title: 'T', content: 'C' } };
 
   beforeEach(() => {
-    mailerService = { sendMail: jest.fn() };
-    usersService = { findById: jest.fn() };
-    notificationsService = { recordChannelResult: jest.fn() };
+    mailerService = { sendMail: vi.fn() };
+    usersService = { findById: vi.fn() };
+    notificationsService = { recordChannelResult: vi.fn() };
     processor = new NotificationQueueProcessor(
       mailerService as unknown as MailerService,
       {} as AliyunSmsProvider,

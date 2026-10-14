@@ -21,7 +21,7 @@ const TRANSLATIONS: Record<string, string> = {
 };
 
 function run(exception: unknown): { body: { code: number; message: unknown; data: unknown }; status: number } {
-  const reply = jest.fn();
+  const reply = vi.fn();
   const filter = new AllExceptionsFilter({
     httpAdapter: { reply, getRequestUrl: () => '/test' },
   } as unknown as HttpAdapterHost);
@@ -37,12 +37,12 @@ function run(exception: unknown): { body: { code: number; message: unknown; data
 
 describe('AllExceptionsFilter', () => {
   beforeEach(() => {
-    jest.spyOn(I18nContext, 'current').mockReturnValue({
+    vi.spyOn(I18nContext, 'current').mockReturnValue({
       t: (key: string) => TRANSLATIONS[key] ?? key,
     } as unknown as I18nContext<unknown>);
   });
 
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => vi.restoreAllMocks());
 
   it('should translate the business error code into the message', () => {
     const { body, status } = run(new NotFoundException({ error: 'favoriteNotFound' }));

@@ -1,3 +1,4 @@
+import type { Mocked } from 'vitest';
 import { Cache } from 'cache-manager';
 import { PermissionsService } from './permissions.service';
 import { PermissionRepository } from './infrastructure/persistence/permission.repository';
@@ -5,7 +6,7 @@ import { RoleEnum } from '../../common/enums/roles/roles.enum';
 import { Permission } from './permission.enum';
 
 describe('PermissionsService', () => {
-  let repository: jest.Mocked<
+  let repository: Mocked<
     Pick<PermissionRepository, 'findAllRolePermissions' | 'addPermissionToRole' | 'setRolePermissions'>
   >;
   let cache: Map<string, unknown>;
@@ -13,9 +14,9 @@ describe('PermissionsService', () => {
 
   beforeEach(() => {
     repository = {
-      findAllRolePermissions: jest.fn().mockResolvedValue(new Map()),
-      addPermissionToRole: jest.fn(),
-      setRolePermissions: jest.fn(),
+      findAllRolePermissions: vi.fn().mockResolvedValue(new Map()),
+      addPermissionToRole: vi.fn(),
+      setRolePermissions: vi.fn(),
     };
     cache = new Map();
     const cacheManager = {

@@ -1,3 +1,4 @@
+import type { Mocked } from 'vitest';
 import { UnauthorizedException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { AuthService } from './auth.service';
@@ -8,25 +9,23 @@ import { StatusEnum } from '../../common/enums/statuses/statuses.enum';
 
 describe('AuthService', () => {
   describe('refreshToken', () => {
-    let sessionService: jest.Mocked<
-      Pick<SessionService, 'findById' | 'rotateHash' | 'wasRecentlyRotatedFrom' | 'revoke'>
-    >;
-    let tokenService: jest.Mocked<Pick<TokenService, 'generateSessionHash' | 'getTokensData'>>;
+    let sessionService: Mocked<Pick<SessionService, 'findById' | 'rotateHash' | 'wasRecentlyRotatedFrom' | 'revoke'>>;
+    let tokenService: Mocked<Pick<TokenService, 'generateSessionHash' | 'getTokensData'>>;
     let service: AuthService;
 
     beforeEach(async () => {
       sessionService = {
-        findById: jest.fn().mockResolvedValue({ id: 10, hash: 'H1', user: { id: 1 } }),
-        rotateHash: jest.fn().mockResolvedValue(true),
-        wasRecentlyRotatedFrom: jest.fn().mockResolvedValue(false),
-        revoke: jest.fn(),
+        findById: vi.fn().mockResolvedValue({ id: 10, hash: 'H1', user: { id: 1 } }),
+        rotateHash: vi.fn().mockResolvedValue(true),
+        wasRecentlyRotatedFrom: vi.fn().mockResolvedValue(false),
+        revoke: vi.fn(),
       };
       tokenService = {
-        generateSessionHash: jest.fn().mockReturnValue('H2'),
-        getTokensData: jest.fn().mockResolvedValue({ token: 't', refreshToken: 'r', tokenExpires: 1 }),
+        generateSessionHash: vi.fn().mockReturnValue('H2'),
+        getTokensData: vi.fn().mockResolvedValue({ token: 't', refreshToken: 'r', tokenExpires: 1 }),
       };
       const usersService = {
-        findById: jest.fn().mockResolvedValue({ id: 1, role: { id: 2 }, status: { id: StatusEnum.active } }),
+        findById: vi.fn().mockResolvedValue({ id: 1, role: { id: 2 }, status: { id: StatusEnum.active } }),
       };
 
       const moduleRef = await Test.createTestingModule({ providers: [AuthService] })

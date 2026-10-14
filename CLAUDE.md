@@ -98,7 +98,7 @@ src/xxx/config/xxx-config.type.ts  → 配置类型接口
 | `src/infrastructure/` | 基础设施     | database, cache, queue, redis, logger, health, metrics, audit, throttler, scheduler |
 | `src/integrations/`   | 外部集成     | mail, sms, wechat, alipay                                                           |
 | `src/i18n/`           | 国际化       | en/, zh/ 翻译文件                                                                   |
-| `test/`               | E2E 测试     | supertest + jest-e2e                                                                |
+| `test/`               | E2E 测试     | supertest + vitest                                                                  |
 | `docker/`             | Docker 配置  | compose 文件 + Makefile                                                             |
 | `.hygen/`             | 代码生成模版 | hygen 模版文件                                                                      |
 

@@ -1,3 +1,4 @@
+import type { Mocked } from 'vitest';
 import { NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { OrderRepository } from './infrastructure/persistence/order.repository';
@@ -19,7 +20,7 @@ function buildOrder(overrides: Partial<Order> = {}): Order {
 }
 
 describe('OrdersService', () => {
-  let orderRepository: jest.Mocked<
+  let orderRepository: Mocked<
     Pick<
       OrderRepository,
       | 'findByOrderNo'
@@ -31,22 +32,22 @@ describe('OrdersService', () => {
       | 'createWithItems'
     >
   >;
-  let productCatalog: jest.Mocked<ProductCatalog>;
-  let paymentTradeCloser: jest.Mocked<PaymentTradeCloser>;
+  let productCatalog: Mocked<ProductCatalog>;
+  let paymentTradeCloser: Mocked<PaymentTradeCloser>;
   let service: OrdersService;
 
   beforeEach(() => {
     orderRepository = {
-      findByOrderNo: jest.fn(),
-      findByIdAndUserId: jest.fn(),
-      updatePaymentStatus: jest.fn(),
-      update: jest.fn(),
-      closeIfUnpaid: jest.fn(),
-      closeExpiredUnpaid: jest.fn(),
-      createWithItems: jest.fn(),
+      findByOrderNo: vi.fn(),
+      findByIdAndUserId: vi.fn(),
+      updatePaymentStatus: vi.fn(),
+      update: vi.fn(),
+      closeIfUnpaid: vi.fn(),
+      closeExpiredUnpaid: vi.fn(),
+      createWithItems: vi.fn(),
     };
-    productCatalog = { findByIds: jest.fn() };
-    paymentTradeCloser = { closeTrades: jest.fn() };
+    productCatalog = { findByIds: vi.fn() };
+    paymentTradeCloser = { closeTrades: vi.fn() };
     service = new OrdersService(orderRepository as unknown as OrderRepository, productCatalog, paymentTradeCloser);
   });
 

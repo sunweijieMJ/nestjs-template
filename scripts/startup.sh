@@ -88,7 +88,7 @@ case $ENV_MODE in
     fi
 
     echo "Running E2E tests..."
-    pnpm test:e2e --runInBand
+    pnpm test:e2e
 
     # Cleanup
     kill $APP_PID 2>/dev/null || true

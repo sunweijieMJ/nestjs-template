@@ -27,11 +27,12 @@ updates:
           - '@eslint/*'
           - '@typescript-eslint/*'
           - 'typescript-eslint'
-      jest:
+      vitest:
         patterns:
-          - 'jest'
-          - '@types/jest'
-          - '@swc/jest'
+          - 'vitest'
+          - '@vitest/*'
+          - 'vite'
+          - 'unplugin-swc'
           - 'supertest'
           - '@nestjs/testing'
       redis:

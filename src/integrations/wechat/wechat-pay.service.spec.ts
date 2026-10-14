@@ -80,7 +80,7 @@ describe('WechatPayService', () => {
 
     it('should download certificates once per interval when the serial is unknown', async () => {
       const service = createService(certificateConfig);
-      const refresh = jest.spyOn(service, 'refreshPlatformCertificates').mockImplementation(async () => {
+      const refresh = vi.spyOn(service, 'refreshPlatformCertificates').mockImplementation(async () => {
         service.setPlatformCertificate('NEW_SERIAL', publicKeyPem);
         Object.assign(service, { lastCertificateRefresh: Date.now() });
       });
@@ -95,7 +95,7 @@ describe('WechatPayService', () => {
 
     it('should not download certificates for a public key serial', async () => {
       const service = createService(certificateConfig);
-      const refresh = jest.spyOn(service, 'refreshPlatformCertificates').mockResolvedValue();
+      const refresh = vi.spyOn(service, 'refreshPlatformCertificates').mockResolvedValue();
 
       await service.verifyNotify(signedHeaders(privateKey, body, 'PUB_KEY_ID_UNKNOWN'), body);
 
@@ -134,7 +134,7 @@ describe('WechatPayService', () => {
   describe('queryOrder', () => {
     it('should URL-encode the order number in the request path', async () => {
       const service = createService();
-      const request = jest.fn().mockResolvedValue({});
+      const request = vi.fn().mockResolvedValue({});
       Object.assign(service, { request });
 
       await service.queryOrder('../../refund/domestic/refunds/X?');

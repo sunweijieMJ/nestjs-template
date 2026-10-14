@@ -1,15 +1,16 @@
+import type { Mocked } from 'vitest';
 import { Cache } from 'cache-manager';
 import { RegionsService } from './regions.service';
 import { RegionRepository } from './infrastructure/persistence/region.repository';
 import { Region } from './domain/region';
 
 describe('RegionsService', () => {
-  let repository: jest.Mocked<Pick<RegionRepository, 'findByCode' | 'findByParentCode'>>;
+  let repository: Mocked<Pick<RegionRepository, 'findByCode' | 'findByParentCode'>>;
   let cache: Map<string, unknown>;
   let service: RegionsService;
 
   beforeEach(() => {
-    repository = { findByCode: jest.fn(), findByParentCode: jest.fn() };
+    repository = { findByCode: vi.fn(), findByParentCode: vi.fn() };
     cache = new Map();
     const cacheManager = {
       get: async (key: string) => cache.get(key),

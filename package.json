@@ -42,11 +42,11 @@
     "type-check:node": "tsc --noEmit -p tsconfig.node.json",
     "cspell": "cspell",
     "commit": "czg",
-    "test": "jest --passWithNoTests",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk node_modules/jest/bin/jest.js --runInBand",
-    "test:e2e": "env-cmd -- jest --config ./test/jest-e2e.json",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage",
+    "test:debug": "vitest run --inspect-brk --no-file-parallelism",
+    "test:e2e": "env-cmd -- vitest run --config vitest.e2e.config.mts",
     "prepare": "is-ci || husky",
     "release": "release-it"
   },
@@ -70,25 +70,26 @@
     "@aws-sdk/client-s3": "3.1150.0",
     "@aws-sdk/s3-request-presigner": "3.1150.0",
     "@keyv/redis": "5.1.5",
-    "@nestjs/bullmq": "11.0.4",
-    "@nestjs/cache-manager": "3.0.1",
-    "@nestjs/common": "11.1.6",
-    "@nestjs/config": "4.0.2",
-    "@nestjs/core": "11.1.6",
-    "@nestjs/jwt": "11.0.1",
-    "@nestjs/passport": "11.0.5",
-    "@nestjs/platform-express": "11.1.6",
-    "@nestjs/schedule": "6.1.0",
-    "@nestjs/swagger": "11.2.0",
-    "@nestjs/terminus": "11.0.0",
+    "@nestjs/bullmq": "12.0.0",
+    "@nestjs/cache-manager": "12.0.1",
+    "@nestjs/common": "12.1.3",
+    "@nestjs/config": "12.0.1",
+    "@nestjs/core": "12.1.3",
+    "@nestjs/jwt": "12.0.3",
+    "@nestjs/passport": "12.0.0",
+    "@nestjs/platform-express": "12.1.3",
+    "@nestjs/schedule": "12.0.2",
+    "@nestjs/swagger": "12.0.2",
+    "@nestjs/terminus": "12.1.0",
     "@nestjs/throttler": "6.7.1",
-    "@nestjs/typeorm": "11.0.0",
-    "@willsoto/nestjs-prometheus": "6.0.2",
+    "@nestjs/typeorm": "12.0.2",
+    "@prometheus-io/client": "0.16.1",
+    "@willsoto/nestjs-prometheus": "7.0.0",
     "bcryptjs": "3.0.3",
     "bullmq": "5.65.1",
     "cache-manager": "7.2.9",
     "class-transformer": "0.5.1",
-    "class-validator": "0.14.2",
+    "class-validator": "0.15.1",
     "dotenv": "17.2.2",
     "handlebars": "4.7.10",
     "helmet": "8.3.0",
@@ -98,14 +99,14 @@
     "multer": "2.4.0",
     "multer-s3": "3.0.1",
     "nestjs-i18n": "10.8.5",
-    "nestjs-pino": "4.5.0",
+    "nestjs-pino": "5.3.1",
     "nodemailer": "7.0.7",
     "passport": "0.7.0",
     "passport-jwt": "4.0.1",
     "pg": "8.23.1",
+    "pino": "10.4.0",
     "pino-http": "11.0.0",
     "pino-pretty": "13.2.0",
-    "prom-client": "15.1.3",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
     "swagger-ui-express": "5.0.1",
@@ -116,16 +117,14 @@
     "@commitlint/config-conventional": "21.2.3",
     "@commitlint/format": "21.2.3",
     "@commitlint/types": "21.2.3",
-    "@nestjs/cli": "11.0.10",
-    "@nestjs/schematics": "11.0.9",
-    "@nestjs/testing": "11.1.6",
+    "@nestjs/cli": "12.0.8",
+    "@nestjs/schematics": "12.0.7",
+    "@nestjs/testing": "12.1.3",
     "@release-it/conventional-changelog": "12.0.2",
-    "@swc/cli": "0.7.10",
+    "@swc/cli": "0.8.1",
     "@swc/core": "1.16.18",
-    "@swc/jest": "0.2.39",
     "@types/bcryptjs": "3.0.0",
     "@types/express": "5.0.6",
-    "@types/jest": "30.0.0",
     "@types/ms": "2.1.0",
     "@types/multer": "2.3.0",
     "@types/multer-s3": "3.0.3",
@@ -133,6 +132,7 @@
     "@types/nodemailer": "7.0.4",
     "@types/passport-jwt": "4.0.1",
     "@types/supertest": "6.0.3",
+    "@vitest/coverage-v8": "5.0.4",
     "chalk": "6.0.1",
     "conventional-changelog-conventionalcommits": "10.4.1",
     "cspell": "10.3.6",
@@ -146,7 +146,6 @@
     "husky": "9.1.7",
     "hygen": "6.2.11",
     "is-ci": "4.1.0",
-    "jest": "30.5.2",
     "lint-staged": "17.6.0",
     "markdownlint-cli2": "0.23.3",
     "prettier": "3.9.10",
@@ -156,70 +155,10 @@
     "ts-node": "10.9.2",
     "tsx": "4.23.15",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.71.2"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": [
-        "@swc/jest",
-        {
-          "jsc": {
-            "parser": {
-              "syntax": "typescript",
-              "decorators": true
-            },
-            "transform": {
-              "legacyDecorator": true,
-              "decoratorMetadata": true
-            },
-            "target": "es2021"
-          }
-        }
-      ]
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s",
-      "!**/*.module.ts",
-      "!**/*.dto.ts",
-      "!**/*.entity.ts",
-      "!**/*.schema.ts",
-      "!**/index.ts",
-      "!**/main.ts",
-      "!**/*.d.ts"
-    ],
-    "coveragePathIgnorePatterns": [
-      "/node_modules/",
-      "/dist/",
-      "/coverage/",
-      "/test/",
-      ".mock.ts",
-      ".stub.ts"
-    ],
-    "coverageDirectory": "../coverage",
-    "coverageReporters": [
-      "text",
-      "text-summary",
-      "lcov",
-      "html"
-    ],
-    "coverageThreshold": {
-      "global": {
-        "branches": 60,
-        "functions": 60,
-        "lines": 60,
-        "statements": 60
-      }
-    },
-    "testEnvironment": "node",
-    "testTimeout": 30000,
-    "verbose": true
+    "typescript-eslint": "8.71.2",
+    "unplugin-swc": "2.0.0",
+    "vite": "8.3.4",
+    "vitest": "5.0.4"
   },
   "engines": {
     "node": ">=22.21.1",

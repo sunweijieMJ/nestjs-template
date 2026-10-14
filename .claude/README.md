@@ -71,13 +71,13 @@
 
 ### 专业 Agents
 
-| Agent               | 职责                         |
-| ------------------- | ---------------------------- |
-| `coding-standards`  | TypeScript / NestJS 编码规范 |
-| `code-review`       | 代码审查清单                 |
-| `testing`           | Jest 单元测试 + E2E 测试策略 |
-| `project-structure` | 目录组织规范                 |
-| `deployment`        | Docker / CI-CD / 生产部署    |
+| Agent               | 职责                           |
+| ------------------- | ------------------------------ |
+| `coding-standards`  | TypeScript / NestJS 编码规范   |
+| `code-review`       | 代码审查清单                   |
+| `testing`           | Vitest 单元测试 + E2E 测试策略 |
+| `project-structure` | 目录组织规范                   |
+| `deployment`        | Docker / CI-CD / 生产部署      |
 
 ### Agent 依赖关系
 

@@ -1,3 +1,4 @@
+import type { Mocked } from 'vitest';
 import { UnprocessableEntityException } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { OrdersService } from '../orders/orders.service';
@@ -22,25 +23,25 @@ function buildOrder(overrides: Partial<Order> = {}): Order {
 }
 
 describe('PaymentsService', () => {
-  let ordersService: jest.Mocked<
+  let ordersService: Mocked<
     Pick<OrdersService, 'updatePaymentStatus' | 'findRefundableOrder' | 'markRefunded' | 'findByOrderNo'>
   >;
-  let gateway: jest.Mocked<PaymentGateway>;
+  let gateway: Mocked<PaymentGateway>;
   let service: PaymentsService;
 
   beforeEach(() => {
     ordersService = {
-      updatePaymentStatus: jest.fn(),
-      findRefundableOrder: jest.fn(),
-      markRefunded: jest.fn(),
-      findByOrderNo: jest.fn(),
+      updatePaymentStatus: vi.fn(),
+      findRefundableOrder: vi.fn(),
+      markRefunded: vi.fn(),
+      findByOrderNo: vi.fn(),
     };
     gateway = {
       channel: PaymentChannel.ALIPAY,
-      closeTrade: jest.fn(),
-      refund: jest.fn(),
+      closeTrade: vi.fn(),
+      refund: vi.fn(),
     };
-    const registry = { get: jest.fn().mockReturnValue(gateway) } as unknown as PaymentGatewayRegistry;
+    const registry = { get: vi.fn().mockReturnValue(gateway) } as unknown as PaymentGatewayRegistry;
     service = new PaymentsService(ordersService as unknown as OrdersService, registry);
   });
 

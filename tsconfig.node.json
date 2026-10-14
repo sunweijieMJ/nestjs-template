@@ -6,6 +6,7 @@
     "moduleResolution": "bundler",
     "types": ["node"],
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "strict": true,
@@ -14,5 +15,5 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": ["scripts/**/*.ts"]
+  "include": ["scripts/**/*.ts", "*.config.mts"]
 }

@@ -4,9 +4,10 @@
 
 ## 测试框架
 
-- **单元测试**: Jest + @swc/jest（只转译不做类型检查，类型由 `pnpm type-check` 覆盖）
-- **E2E 测试**: Jest + Supertest
-- **覆盖率**: Jest Coverage（60% 阈值）
+- **单元测试**: Vitest + unplugin-swc（只转译不做类型检查，类型由 `pnpm type-check` 覆盖），配置见 `vitest.config.mts`
+- **E2E 测试**: Vitest + Supertest，配置见 `vitest.e2e.config.mts`
+- **覆盖率**: `@vitest/coverage-v8`（60% 阈值）
+- **全局 API**: `describe` / `it` / `expect` / `vi` 为全局变量，类型 `Mocked` / `Mock` 需从 `vitest` 导入
 
 ## 单元测试
 
@@ -24,21 +25,22 @@ src/modules/feature/
 ### Service 测试模式
 
 ```typescript
+import type { Mocked } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FeatureService } from './feature.service';
 import { FeatureRepository } from './infrastructure/persistence/feature.repository';
 
 describe('FeatureService', () => {
   let service: FeatureService;
-  let repository: jest.Mocked<FeatureRepository>;
+  let repository: Mocked<FeatureRepository>;
 
   beforeEach(async () => {
     const mockRepository = {
-      create: jest.fn(),
-      findById: jest.fn(),
-      findManyWithPagination: jest.fn(),
-      update: jest.fn(),
-      remove: jest.fn(),
+      create: vi.fn(),
+      findById: vi.fn(),
+      findManyWithPagination: vi.fn(),
+      update: vi.fn(),
+      remove: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -100,7 +102,7 @@ test/
 │   └── auth.e2e-spec.ts
 ├── utils/
 │   └── ...
-└── jest-e2e.json
+└── ...
 ```
 
 ### E2E 测试模式
