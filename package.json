@@ -90,7 +90,7 @@
     "cache-manager": "7.2.9",
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",
-    "dotenv": "17.2.2",
+    "dotenv": "18.0.7",
     "handlebars": "4.7.10",
     "helmet": "8.3.0",
     "ioredis": "5.8.2",
