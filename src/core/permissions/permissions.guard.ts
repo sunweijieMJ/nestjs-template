@@ -13,6 +13,7 @@ interface RequestUser {
 /**
  * Guard that checks if the user has the required permissions.
  * Must be used after authentication (JwtAuthGuard).
+ * Routes guarded without @RequirePermissions() are rejected.
  *
  * The guard checks the user's role and verifies if that role
  * has all the permissions specified by @RequirePermissions().
@@ -43,9 +44,8 @@ export class PermissionsGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    // If no permissions are required, allow access
     if (!requiredPermissions || requiredPermissions.length === 0) {
-      return true;
+      throw new ForbiddenException('No permission declared for this route');
     }
 
     const request = context.switchToHttp().getRequest();

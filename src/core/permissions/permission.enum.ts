@@ -39,6 +39,9 @@ export enum Permission {
   SYSTEM_CONFIG = 'system:config',
   SYSTEM_METRICS = 'system:metrics',
 
+  // Payment Management (Admin only)
+  PAYMENT_REFUND = 'payment:refund',
+
   // Audit Log (Admin only)
   AUDIT_READ = 'audit:read',
   AUDIT_LIST = 'audit:list',

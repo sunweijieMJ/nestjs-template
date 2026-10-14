@@ -1,4 +1,4 @@
-import { Injectable, Logger, Inject, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { PermissionRepository } from './infrastructure/persistence/permission.repository';
@@ -6,91 +6,42 @@ import { Permission } from './permission.enum';
 import { RoleEnum } from '../../common/enums/roles/roles.enum';
 import { RolePermissions as DefaultRolePermissions } from './role-permissions';
 
-const CACHE_KEY_PREFIX = 'permissions:';
+const ROLE_PERMISSIONS_CACHE_KEY = 'permissions:v2:role-map';
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
+type RolePermissionMap = Record<number, string[]>;
+
 @Injectable()
-export class PermissionsService implements OnModuleInit {
+export class PermissionsService {
   private readonly logger = new Logger(PermissionsService.name);
-  private rolePermissionsCache: Map<number, string[]> = new Map();
-  private cacheLoaded = false;
 
   constructor(
     private readonly permissionRepository: PermissionRepository,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
-  async onModuleInit(): Promise<void> {
-    await this.loadAllRolePermissions();
-  }
-
   /**
-   * 加载所有角色权限到内存缓存
-   */
-  async loadAllRolePermissions(): Promise<void> {
-    try {
-      const permissionMap = await this.permissionRepository.findAllRolePermissions();
-
-      if (permissionMap.size === 0) {
-        // 如果数据库为空，使用默认的硬编码配置（向后兼容）
-        this.logger.warn('No permissions found in database, using default configuration');
-        this.rolePermissionsCache = this.getDefaultPermissions();
-      } else {
-        this.rolePermissionsCache = permissionMap;
-        this.logger.log(`Loaded permissions for ${permissionMap.size} roles from database`);
-      }
-
-      this.cacheLoaded = true;
-    } catch (error) {
-      this.logger.error('Failed to load permissions from database, falling back to defaults', error);
-      this.rolePermissionsCache = this.getDefaultPermissions();
-      this.cacheLoaded = true;
-    }
-  }
-
-  /**
-   * 获取默认的权限配置（向后兼容）
-   */
-  private getDefaultPermissions(): Map<number, string[]> {
-    const map = new Map<number, string[]>();
-    for (const [roleId, permissions] of Object.entries(DefaultRolePermissions)) {
-      map.set(Number(roleId), permissions);
-    }
-    return map;
-  }
-
-  /**
-   * 获取角色的权限列表
+   * 获取角色的权限列表；管理员始终拥有全部权限，角色权限表为空（未执行种子）时其他角色使用内置默认配置
    */
   async getPermissionsForRole(roleId: RoleEnum): Promise<string[]> {
-    // 首先检查内存缓存
-    if (this.cacheLoaded && this.rolePermissionsCache.has(roleId)) {
-      return this.rolePermissionsCache.get(roleId) ?? [];
+    if (roleId === RoleEnum.admin) {
+      return Object.values(Permission);
     }
+    const map = await this.getRolePermissionMap();
+    return map[roleId] ?? [];
+  }
 
-    // 如果内存缓存未加载，检查Redis缓存
-    const cacheKey = `${CACHE_KEY_PREFIX}role:${roleId}`;
-    const cached = await this.cacheManager.get<string[]>(cacheKey);
+  private async getRolePermissionMap(): Promise<RolePermissionMap> {
+    const cached = await this.cacheManager.get<RolePermissionMap>(ROLE_PERMISSIONS_CACHE_KEY);
     if (cached) {
-      this.rolePermissionsCache.set(roleId, cached);
       return cached;
     }
 
-    // 从数据库加载
-    const permissions = await this.permissionRepository.findPermissionIdsByRoleId(roleId);
+    const stored = await this.permissionRepository.findAllRolePermissions();
+    const map: RolePermissionMap = stored.size > 0 ? Object.fromEntries(stored) : { ...DefaultRolePermissions };
 
-    // 如果数据库为空，使用默认配置
-    if (permissions.length === 0) {
-      const defaultPermissions = DefaultRolePermissions[roleId] || [];
-      this.rolePermissionsCache.set(roleId, defaultPermissions);
-      return defaultPermissions;
-    }
-
-    // 更新缓存
-    this.rolePermissionsCache.set(roleId, permissions);
-    await this.cacheManager.set(cacheKey, permissions, CACHE_TTL_MS);
-
-    return permissions;
+    await this.cacheManager.set(ROLE_PERMISSIONS_CACHE_KEY, map, CACHE_TTL_MS);
+    return map;
   }
 
   /**
@@ -134,50 +85,19 @@ export class PermissionsService implements OnModuleInit {
   }
 
   /**
-   * 使角色缓存失效
+   * 角色权限变更后清除缓存；表从空变为非空会影响所有角色，因此整体失效
    */
   private async invalidateRoleCache(roleId: RoleEnum): Promise<void> {
-    this.rolePermissionsCache.delete(roleId);
-    await this.cacheManager.del(`${CACHE_KEY_PREFIX}role:${roleId}`);
-    this.logger.debug(`Cache invalidated for role: ${roleId}`);
+    await this.refreshCache();
+    this.logger.debug(`Cache invalidated after permission change of role: ${roleId}`);
   }
 
   /**
-   * 刷新所有权限缓存
-   * 使用原子性替换避免竞态条件
+   * 清除角色权限缓存
    */
   async refreshCache(): Promise<void> {
-    // 先加载新数据到临时变量
-    const newCache = new Map<number, string[]>();
-
-    try {
-      const permissionMap = await this.permissionRepository.findAllRolePermissions();
-
-      if (permissionMap.size === 0) {
-        // 如果数据库为空，使用默认的硬编码配置
-        for (const [roleId, permissions] of Object.entries(DefaultRolePermissions)) {
-          newCache.set(Number(roleId), permissions);
-        }
-      } else {
-        for (const [roleId, permissions] of permissionMap) {
-          newCache.set(roleId, permissions);
-        }
-      }
-
-      // 清除所有角色的Redis缓存
-      for (const roleId of Object.values(RoleEnum)) {
-        if (typeof roleId === 'number') {
-          await this.cacheManager.del(`${CACHE_KEY_PREFIX}role:${roleId}`);
-        }
-      }
-
-      // 原子性替换内存缓存引用
-      this.rolePermissionsCache = newCache;
-      this.logger.log('Permission cache refreshed');
-    } catch (error) {
-      this.logger.error('Failed to refresh permission cache', error);
-      throw error;
-    }
+    await this.cacheManager.del(ROLE_PERMISSIONS_CACHE_KEY);
+    this.logger.log('Permission cache refreshed');
   }
 
   /**

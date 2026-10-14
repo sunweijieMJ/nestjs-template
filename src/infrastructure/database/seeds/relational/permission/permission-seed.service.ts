@@ -154,6 +154,15 @@ const PERMISSIONS_DATA: PermissionData[] = [
     action: 'metrics',
   },
 
+  // Payment Management (Admin only)
+  {
+    id: Permission.PAYMENT_REFUND,
+    name: 'Refund Payment',
+    description: 'Refund paid orders',
+    resource: 'payment',
+    action: 'refund',
+  },
+
   // Audit Log (Admin only)
   {
     id: Permission.AUDIT_READ,

@@ -21,9 +21,9 @@ import { Order, PaymentChannel } from '../orders/domain/order';
 import { PaymentsService } from './payments.service';
 import { fenToYuan, yuanToFen } from './money.utils';
 import { RequestWithUser } from '../../common/types/request-with-user.type';
-import { Roles } from '../../common/enums/roles/roles.decorator';
-import { RoleEnum } from '../../common/enums/roles/roles.enum';
-import { RolesGuard } from '../../common/enums/roles/roles.guard';
+import { PermissionsGuard } from '../../core/permissions/permissions.guard';
+import { RequirePermissions } from '../../core/permissions/permissions.decorator';
+import { Permission } from '../../core/permissions/permission.enum';
 import { SkipResponseTransform } from '../../common/decorators/skip-response-transform.decorator';
 
 @ApiTags('Alipay')
@@ -98,8 +98,8 @@ export class AlipayController {
   }
 
   @ApiBearerAuth()
-  @Roles(RoleEnum.admin)
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @RequirePermissions(Permission.PAYMENT_REFUND)
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
   @Post('refund')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '申请退款（管理员）' })

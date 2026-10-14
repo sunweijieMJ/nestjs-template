@@ -15,8 +15,6 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { Roles } from '../../common/enums/roles/roles.decorator';
-import { RoleEnum } from '../../common/enums/roles/roles.enum';
 import { AuthGuard } from '@nestjs/passport';
 
 import {
@@ -27,12 +25,13 @@ import { NullableType } from '../../common/types/nullable.type';
 import { QueryUserDto } from './dto/query-user.dto';
 import { User } from './domain/user';
 import { UsersService } from './users.service';
-import { RolesGuard } from '../../common/enums/roles/roles.guard';
+import { PermissionsGuard } from '../permissions/permissions.guard';
+import { RequirePermissions } from '../permissions/permissions.decorator';
+import { Permission } from '../permissions/permission.enum';
 import { infinityPagination } from '../../common/infinity-pagination';
 
 @ApiBearerAuth()
-@Roles(RoleEnum.admin)
-@UseGuards(AuthGuard('jwt'), RolesGuard)
+@UseGuards(AuthGuard('jwt'), PermissionsGuard)
 @ApiTags('Users')
 @Controller({
   path: 'users',
@@ -48,6 +47,7 @@ export class UsersController {
   @SerializeOptions({
     groups: ['admin'],
   })
+  @RequirePermissions(Permission.USER_CREATE)
   @Post()
   @HttpCode(HttpStatus.OK)
   create(@Body() createProfileDto: CreateUserDto): Promise<User> {
@@ -61,6 +61,7 @@ export class UsersController {
   @SerializeOptions({
     groups: ['admin'],
   })
+  @RequirePermissions(Permission.USER_LIST)
   @Get()
   @HttpCode(HttpStatus.OK)
   async findAll(@Query() query: QueryUserDto): Promise<InfinityPaginationResponseDto<User>> {
@@ -90,6 +91,7 @@ export class UsersController {
   @SerializeOptions({
     groups: ['admin'],
   })
+  @RequirePermissions(Permission.USER_READ)
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiParam({
@@ -108,6 +110,7 @@ export class UsersController {
   @SerializeOptions({
     groups: ['admin'],
   })
+  @RequirePermissions(Permission.USER_UPDATE)
   @Put(':id')
   @HttpCode(HttpStatus.OK)
   @ApiParam({
@@ -120,6 +123,7 @@ export class UsersController {
   }
 
   @ApiOperation({ operationId: 'deleteUser', summary: '删除用户（管理员）' })
+  @RequirePermissions(Permission.USER_DELETE)
   @Delete(':id')
   @ApiParam({
     name: 'id',

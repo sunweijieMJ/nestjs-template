@@ -51,9 +51,9 @@ export class FeatureController {
 @ApiBearerAuth()
 @Roles(RoleEnum.admin)
 @UseGuards(AuthGuard('jwt'), RolesGuard)
-@Controller({ path: 'users', version: '1' })
-export class UsersController {
-  // 仅管理员可访问
+@Controller({ path: 'reports', version: '1' })
+export class ReportsController {
+  // 仅管理员可访问；管理端点优先使用下方的权限点
 }
 ```
 

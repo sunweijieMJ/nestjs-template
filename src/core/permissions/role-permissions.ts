@@ -9,10 +9,6 @@ export const RolePermissions: Record<RoleEnum, Permission[]> = {
   [RoleEnum.admin]: Object.values(Permission),
 
   [RoleEnum.user]: [
-    // User can read and update their own profile
-    Permission.USER_READ,
-    Permission.USER_UPDATE,
-
     // User can manage their own addresses
     Permission.ADDRESS_READ,
     Permission.ADDRESS_CREATE,
