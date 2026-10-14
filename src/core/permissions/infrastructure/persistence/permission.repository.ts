@@ -35,7 +35,7 @@ export class PermissionRepository {
   async findPermissionIdsByRoleId(roleId: number): Promise<string[]> {
     const rolePermissions = await this.rolePermissionRepository.find({
       where: { roleId },
-      select: ['permissionId'],
+      select: { permissionId: true },
     });
     return rolePermissions.map((rp) => rp.permissionId);
   }
@@ -45,7 +45,7 @@ export class PermissionRepository {
    */
   async findAllRolePermissions(): Promise<Map<number, string[]>> {
     const rolePermissions = await this.rolePermissionRepository.find({
-      select: ['roleId', 'permissionId'],
+      select: { roleId: true, permissionId: true },
     });
 
     const permissionMap = new Map<number, string[]>();

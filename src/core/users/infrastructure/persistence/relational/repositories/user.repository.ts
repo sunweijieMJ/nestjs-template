@@ -83,7 +83,7 @@ export class UsersRelationalRepository implements UserRepository {
         }),
         {},
       ),
-      relations: ['photo', 'role', 'status'],
+      relations: { photo: true, role: true, status: true },
     });
 
     return entities.map((user) => UserMapper.toDomain(user));
@@ -92,7 +92,7 @@ export class UsersRelationalRepository implements UserRepository {
   async findById(id: User['id']): Promise<NullableType<User>> {
     const entity = await this.usersRepository.findOne({
       where: { id: Number(id) },
-      relations: ['photo', 'role', 'status'],
+      relations: { photo: true, role: true, status: true },
     });
 
     return entity ? UserMapper.toDomain(entity) : null;
@@ -101,7 +101,7 @@ export class UsersRelationalRepository implements UserRepository {
   async findByIds(ids: User['id'][]): Promise<User[]> {
     const entities = await this.usersRepository.find({
       where: { id: In(ids) },
-      relations: ['photo', 'role', 'status'],
+      relations: { photo: true, role: true, status: true },
     });
 
     return entities.map((user) => UserMapper.toDomain(user));
@@ -112,7 +112,7 @@ export class UsersRelationalRepository implements UserRepository {
 
     const entity = await this.usersRepository.findOne({
       where: { email },
-      relations: ['photo', 'role', 'status'],
+      relations: { photo: true, role: true, status: true },
     });
 
     return entity ? UserMapper.toDomain(entity) : null;
@@ -123,7 +123,7 @@ export class UsersRelationalRepository implements UserRepository {
 
     const entity = await this.usersRepository.findOne({
       where: { phone },
-      relations: ['photo', 'role', 'status'],
+      relations: { photo: true, role: true, status: true },
     });
 
     return entity ? UserMapper.toDomain(entity) : null;
@@ -134,7 +134,7 @@ export class UsersRelationalRepository implements UserRepository {
 
     const entity = await this.usersRepository.findOne({
       where: { wechatOpenId: openId },
-      relations: ['photo', 'role', 'status'],
+      relations: { photo: true, role: true, status: true },
     });
 
     return entity ? UserMapper.toDomain(entity) : null;
@@ -153,7 +153,7 @@ export class UsersRelationalRepository implements UserRepository {
 
     const entity = await this.usersRepository.findOne({
       where: { id: Number(id) },
-      relations: ['photo', 'role', 'status'],
+      relations: { photo: true, role: true, status: true },
     });
 
     if (!entity) {

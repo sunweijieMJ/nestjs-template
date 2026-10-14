@@ -108,7 +108,7 @@ export class OrderRelationalRepository implements OrderRepository {
     // 使用 relations 一次性 JOIN 加载 items，避免 N+1 查询
     const entity = await this.orderRepository.findOne({
       where: { id: Number(id), userId: Number(userId) },
-      relations: ['items'],
+      relations: { items: true },
     });
 
     if (!entity) {
