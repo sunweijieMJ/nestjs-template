@@ -163,6 +163,22 @@ export class UsersRelationalRepository implements UserRepository {
     return UserMapper.toDomain(entity);
   }
 
+  async bindPhoneIfEmpty(id: User['id'], phone: string): Promise<boolean> {
+    const result = await this.usersRepository.update(
+      { id: Number(id), phone: IsNull(), deletedAt: IsNull() },
+      { phone },
+    );
+    return Boolean(result.affected);
+  }
+
+  async bindWechatIfEmpty(id: User['id'], openId: string, unionId?: string | null): Promise<boolean> {
+    const result = await this.usersRepository.update(
+      { id: Number(id), wechatOpenId: IsNull(), deletedAt: IsNull() },
+      { wechatOpenId: openId, ...(unionId && { wechatUnionId: unionId }) },
+    );
+    return Boolean(result.affected);
+  }
+
   /**
    * 软删除用户，同时清空邮箱、手机号与微信标识，使其可被重新注册
    */

@@ -3,6 +3,7 @@ import { OrdersService } from '../orders/orders.service';
 import { OrderStatus, PaymentChannel } from '../orders/domain/order';
 import { PaymentGatewayRegistry } from './gateways/payment-gateway.registry';
 import { GatewayRefundResult } from './gateways/payment-gateway';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class PaymentsService {
@@ -11,6 +12,7 @@ export class PaymentsService {
   constructor(
     private readonly ordersService: OrdersService,
     private readonly gateways: PaymentGatewayRegistry,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -23,11 +25,22 @@ export class PaymentsService {
     /** 实付金额（分） */
     paidAmount: number;
   }): Promise<void> {
-    const { outcome } = await this.ordersService.updatePaymentStatus(params.orderNo, OrderStatus.PAID, {
+    const { order, outcome } = await this.ordersService.updatePaymentStatus(params.orderNo, OrderStatus.PAID, {
       paymentChannel: params.channel,
       transactionId: params.transactionId,
       paidAmount: params.paidAmount,
     });
+
+    // 不等待通知完成，避免拖慢支付回调
+    if (outcome === 'paid') {
+      void this.notificationsService.notifyPaymentSucceeded({
+        userId: Number(order.userId),
+        orderId: order.id,
+        orderNo: order.orderNo,
+        paidAmount: order.paidAmount ?? params.paidAmount,
+        paidAt: order.paidAt ?? new Date(),
+      });
+    }
 
     if (outcome !== 'conflict') {
       return;

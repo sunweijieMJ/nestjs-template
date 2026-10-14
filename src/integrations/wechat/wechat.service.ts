@@ -5,9 +5,57 @@ import { AllConfigType } from '../../config/config.type';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { generateWeChatSignature } from '../../modules/shares/utils/wechat-signature.util';
+import { WechatMiniProgramState } from './config/wechat-config.type';
 
 /** 外部 API 调用默认超时时间（毫秒） */
 const WECHAT_API_TIMEOUT_MS = 10_000;
+
+const MINI_APP_ACCESS_TOKEN_CACHE_KEY = 'wechat:mini_app:access_token';
+
+/** access_token 无效或过期的错误码，刷新 token 后可重试 */
+const ACCESS_TOKEN_INVALID_ERROR_CODES = new Set([40001, 40014, 42001]);
+
+/** 手机号 code 无效或已使用 */
+const PHONE_CODE_INVALID_ERROR_CODES = new Set([40029, 40163]);
+
+/** 微信接口返回非 0 errcode */
+export class WechatApiError extends Error {
+  constructor(
+    readonly errcode: number,
+    readonly errmsg: string,
+  ) {
+    super(`WeChat API error ${errcode}: ${errmsg}`);
+    this.name = 'WechatApiError';
+  }
+}
+
+export interface WechatPhoneInfo {
+  /** 不带区号的手机号 */
+  purePhoneNumber: string;
+  countryCode: string;
+}
+
+export interface WechatSubscribeMessage {
+  openId: string;
+  templateId: string;
+  /** 点击消息跳转的小程序页面，可带参数 */
+  page?: string;
+  /** 模板字段 key → 值 */
+  data: Record<string, string>;
+}
+
+interface WechatApiResult {
+  errcode?: number;
+  errmsg?: string;
+}
+
+interface WechatPhoneNumberResult extends WechatApiResult {
+  phone_info?: {
+    phoneNumber: string;
+    purePhoneNumber: string;
+    countryCode: string;
+  };
+}
 
 export interface WechatUserInfo {
   openId: string;
@@ -76,10 +124,16 @@ export class WechatService {
 
   /**
    * 封装 fetch 调用：统一超时 + 避免将含 secret 的 URL 写入日志
+   * 传入 body 时以 JSON POST 发送
    */
-  private async wechatFetch(url: string, label: string): Promise<Response> {
+  private async wechatFetch(url: string, label: string, body?: unknown): Promise<Response> {
     const response = await fetch(url, {
       signal: AbortSignal.timeout(WECHAT_API_TIMEOUT_MS),
+      ...(body !== undefined && {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }),
     });
 
     if (!response.ok) {
@@ -278,6 +332,147 @@ export class WechatService {
         errors: { wechat: 'requestFailed' },
       });
     }
+  }
+
+  /**
+   * 获取小程序 access_token（stable_token 普通模式，带缓存）
+   */
+  async getMiniAppAccessToken(): Promise<string> {
+    const cached = await this.cacheManager.get<string>(MINI_APP_ACCESS_TOKEN_CACHE_KEY);
+    if (cached) {
+      return cached;
+    }
+    return this.fetchStableToken(false);
+  }
+
+  /**
+   * token 失效后重新获取：普通模式仍返回同一个 token 时才强制刷新
+   */
+  private async refreshMiniAppAccessToken(invalidToken: string): Promise<string> {
+    await this.cacheManager.del(MINI_APP_ACCESS_TOKEN_CACHE_KEY);
+    const token = await this.fetchStableToken(false);
+    return token === invalidToken ? this.fetchStableToken(true) : token;
+  }
+
+  private async fetchStableToken(forceRefresh: boolean): Promise<string> {
+    const appId = this.configService.get('wechat.miniAppId', { infer: true });
+    const appSecret = this.configService.get('wechat.miniAppSecret', { infer: true });
+
+    if (!appId || !appSecret) {
+      this.logger.error('WeChat Mini App credentials not configured');
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: { wechat: 'notConfigured' },
+      });
+    }
+
+    const response = await this.wechatFetch('https://api.weixin.qq.com/cgi-bin/stable_token', 'Get stable_token', {
+      grant_type: 'client_credential',
+      appid: appId,
+      secret: appSecret,
+      force_refresh: forceRefresh,
+    });
+    const data = (await response.json()) as WechatAccessTokenResult;
+
+    if (data.errcode) {
+      this.logger.error(`Get stable_token failed: ${data.errcode} - ${data.errmsg}`);
+      throw new WechatApiError(data.errcode, data.errmsg ?? '');
+    }
+
+    // expires_in 为剩余有效期
+    const ttlSeconds = data.expires_in > 600 ? data.expires_in - 300 : Math.floor(data.expires_in / 2);
+    if (ttlSeconds > 0) {
+      await this.cacheManager.set(MINI_APP_ACCESS_TOKEN_CACHE_KEY, data.access_token, ttlSeconds * 1000);
+    }
+
+    return data.access_token;
+  }
+
+  /**
+   * 以小程序 access_token 调用微信服务端接口，token 失效时刷新并重试一次
+   * @throws WechatApiError 微信返回非 0 errcode
+   */
+  private async callMiniAppApi<T extends WechatApiResult>(path: string, body: unknown, label: string): Promise<T> {
+    const request = async (accessToken: string): Promise<T> => {
+      const url = `https://api.weixin.qq.com${path}?${new URLSearchParams({ access_token: accessToken })}`;
+      const response = await this.wechatFetch(url, label, body);
+      return (await response.json()) as T;
+    };
+
+    const accessToken = await this.getMiniAppAccessToken();
+    let data = await request(accessToken);
+
+    if (data.errcode && ACCESS_TOKEN_INVALID_ERROR_CODES.has(data.errcode)) {
+      this.logger.warn(`${label}: access_token invalid (${data.errcode}), refreshing`);
+      data = await request(await this.refreshMiniAppAccessToken(accessToken));
+    }
+
+    if (data.errcode) {
+      throw new WechatApiError(data.errcode, data.errmsg ?? '');
+    }
+
+    return data;
+  }
+
+  /**
+   * 用手机号快速验证组件返回的 code 换取用户手机号
+   * @throws UnprocessableEntityException code 无效时为 invalidPhoneCode，配置缺失或请求微信失败时为 wechat 字段错误
+   */
+  async getPhoneNumber(code: string): Promise<WechatPhoneInfo> {
+    try {
+      const data = await this.callMiniAppApi<WechatPhoneNumberResult>(
+        '/wxa/business/getuserphonenumber',
+        { code },
+        'Get phone number',
+      );
+
+      if (!data.phone_info?.purePhoneNumber) {
+        throw new WechatApiError(-1, 'phone_info missing');
+      }
+
+      return {
+        purePhoneNumber: data.phone_info.purePhoneNumber,
+        countryCode: data.phone_info.countryCode,
+      };
+    } catch (error) {
+      if (error instanceof UnprocessableEntityException) {
+        throw error;
+      }
+      this.logger.error(`Get phone number failed: ${error instanceof Error ? error.message : error}`);
+      if (error instanceof WechatApiError && PHONE_CODE_INVALID_ERROR_CODES.has(error.errcode)) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          error: 'invalidPhoneCode',
+          errors: { phoneCode: 'invalidCode' },
+        });
+      }
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: { wechat: 'requestFailed' },
+      });
+    }
+  }
+
+  /**
+   * 发送小程序订阅消息
+   * @throws WechatApiError 微信返回非 0 errcode（如 43101 用户未订阅）
+   */
+  async sendSubscribeMessage(message: WechatSubscribeMessage): Promise<void> {
+    const miniProgramState: WechatMiniProgramState =
+      this.configService.get('wechat.miniProgramState', { infer: true }) ?? 'formal';
+
+    await this.callMiniAppApi<WechatApiResult>(
+      '/cgi-bin/message/subscribe/send',
+      {
+        touser: message.openId,
+        template_id: message.templateId,
+        page: message.page,
+        data: Object.fromEntries(Object.entries(message.data).map(([key, value]) => [key, { value }])),
+        miniprogram_state: miniProgramState,
+        lang: 'zh_CN',
+      },
+      'Send subscribe message',
+    );
   }
 
   /**

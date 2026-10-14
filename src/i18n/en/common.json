@@ -35,5 +35,8 @@
   "metadataTooLarge": "Metadata is too large",
   "invalidId": "Invalid id",
   "alreadyExists": "Already exists",
-  "wechatOpenIdAlreadyExists": "WeChat account is already bound"
+  "wechatOpenIdAlreadyExists": "WeChat account is already bound",
+  "phoneBoundToOtherWechat": "This phone number is bound to another WeChat account, please log in with an SMS code",
+  "phoneRegionNotSupported": "Only mainland China phone numbers are supported",
+  "invalidPhoneCode": "Phone number authorization expired, please try again"
 }

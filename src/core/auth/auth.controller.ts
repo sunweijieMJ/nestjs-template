@@ -33,6 +33,7 @@ import { AuthSendCodeDto } from './dto/auth-send-code.dto';
 import { AuthChangePasswordDto } from './dto/auth-change-password.dto';
 import { SmsCodeType } from '../../integrations/sms/sms.service';
 import { AuthWechatLoginDto } from './dto/auth-wechat-login.dto';
+import { AuthWechatPhoneLoginDto } from './dto/auth-wechat-phone-login.dto';
 import { AuthPhoneResetPasswordDto } from './dto/auth-phone-reset-password.dto';
 
 @ApiTags('Auth')
@@ -247,5 +248,19 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   public wechatLogin(@Body() loginDto: AuthWechatLoginDto): Promise<LoginResponseDto> {
     return this.service.wechatLogin(loginDto);
+  }
+
+  @SerializeOptions({
+    groups: ['me'],
+  })
+  @Post('wechat/phone-login')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ operationId: 'loginWithWechatPhone', summary: '微信手机号快捷登录（小程序）' })
+  @ApiOkResponse({
+    type: LoginResponseDto,
+  })
+  @HttpCode(HttpStatus.OK)
+  public wechatPhoneLogin(@Body() loginDto: AuthWechatPhoneLoginDto): Promise<LoginResponseDto> {
+    return this.service.wechatPhoneLogin(loginDto);
   }
 }

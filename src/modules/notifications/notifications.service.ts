@@ -6,10 +6,12 @@ import { QueryNotificationDto } from './dto/query-notification.dto';
 import { UpdateNotificationSettingsDto } from './dto/update-notification-settings.dto';
 import { NotificationRepository } from './infrastructure/persistence/notification.repository';
 import { NotificationSettingRepository } from './infrastructure/persistence/notification-setting.repository';
-import { Notification, NotificationChannel } from './domain/notification';
+import { Notification, NotificationCategory, NotificationChannel, NotificationType } from './domain/notification';
 import { NotificationSetting } from './domain/notification-setting';
 import { IPaginationOptions } from '../../common/types/pagination-options';
 import { NOTIFICATION_QUEUE } from '../../infrastructure/queue/notification-queue/notification-queue.constants';
+import { formatSubscribeAmount, formatSubscribeTime } from '../../integrations/wechat/utils/subscribe-value.util';
+import { WechatSubscribePayload, WechatSubscribeScene } from './wechat-subscribe';
 
 @Injectable()
 export class NotificationsService {
@@ -77,6 +79,44 @@ export class NotificationsService {
     return notification;
   }
 
+  /**
+   * 订单支付成功：写入站内消息，并按用户设置发送微信订阅消息
+   * 通知失败只记录日志，不影响支付流程
+   */
+  async notifyPaymentSucceeded(params: {
+    userId: number;
+    orderId: number | string;
+    orderNo: string;
+    /** 实付金额（分） */
+    paidAmount: number;
+    paidAt: Date;
+  }): Promise<void> {
+    try {
+      const amount = formatSubscribeAmount(params.paidAmount);
+      const wechatSubscribe: WechatSubscribePayload = {
+        scene: WechatSubscribeScene.ORDER_PAID,
+        values: {
+          orderNo: params.orderNo,
+          amount,
+          paidAt: formatSubscribeTime(params.paidAt),
+        },
+        page: `pages-sub/order/detail/index?id=${params.orderId}`,
+      };
+
+      await this.create({
+        userId: params.userId,
+        type: NotificationType.SUCCESS,
+        category: NotificationCategory.PAYMENT,
+        title: '支付成功',
+        content: `订单 ${params.orderNo} 已支付 ${amount}`,
+        metadata: { orderId: params.orderId, orderNo: params.orderNo, wechatSubscribe },
+        channels: [NotificationChannel.IN_APP, NotificationChannel.PUSH],
+      });
+    } catch (error) {
+      this.logger.error(`Failed to notify payment success for order ${params.orderNo}`, error);
+    }
+  }
+
   private async queueExternalNotifications(notification: Notification): Promise<void> {
     for (const channel of notification.channels) {
       if (channel === NotificationChannel.EMAIL) {
@@ -91,6 +131,12 @@ export class NotificationsService {
           notificationId: notification.id,
           userId: notification.userId,
           content: notification.content,
+        });
+      } else if (channel === NotificationChannel.PUSH && notification.metadata?.wechatSubscribe) {
+        await this.notificationQueue.add('send-wechat-subscribe', {
+          notificationId: notification.id,
+          userId: notification.userId,
+          payload: notification.metadata.wechatSubscribe,
         });
       }
     }

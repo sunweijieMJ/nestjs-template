@@ -290,6 +290,22 @@ export class UsersService {
   }
 
   /**
+   * 用户未绑定手机号时绑定
+   * @returns 是否绑定成功；已绑定手机号或用户不存在时返回 false
+   */
+  bindPhoneIfEmpty(id: User['id'], phone: string): Promise<boolean> {
+    return this.usersRepository.bindPhoneIfEmpty(id, phone);
+  }
+
+  /**
+   * 用户未绑定微信时绑定 openId（及 unionId）
+   * @returns 是否绑定成功；已绑定微信或用户不存在时返回 false
+   */
+  bindWechatIfEmpty(id: User['id'], openId: string, unionId?: string | null): Promise<boolean> {
+    return this.usersRepository.bindWechatIfEmpty(id, openId, unionId);
+  }
+
+  /**
    * 删除用户（软删除）
    * @param id - 用户ID
    */

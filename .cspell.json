@@ -107,7 +107,12 @@
     "errcode",
     "errmsg",
     "headimgurl",
-    "sessionkey"
+    "sessionkey",
+    "getuserphonenumber",
+    "miniprogram",
+    "touser",
+    "wxa",
+    "unstub"
   ],
   "patterns": [
     {

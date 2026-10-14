@@ -31,6 +31,7 @@ import { AuthPhoneLoginDto } from './dto/auth-phone-login.dto';
 import { AuthPhoneSmsLoginDto } from './dto/auth-phone-sms-login.dto';
 import { AuthPhoneRegisterDto } from './dto/auth-phone-register.dto';
 import { AuthWechatLoginDto, WechatLoginType } from './dto/auth-wechat-login.dto';
+import { AuthWechatPhoneLoginDto } from './dto/auth-wechat-phone-login.dto';
 import { WechatService } from '../../integrations/wechat/wechat.service';
 import { maskEmail, maskPhone } from '../../common/utils/sanitize.utils';
 import { TokenService } from './services/token.service';
@@ -967,18 +968,11 @@ export class AuthService {
       this.logger.log(`Creating new user for WeChat openId: ${wechatUserInfo.openId}`);
 
       try {
-        user = await this.usersService.create({
-          wechatOpenId: wechatUserInfo.openId,
-          wechatUnionId: wechatUserInfo.unionId,
-          nickname: dto.nickname ?? wechatUserInfo.nickname ?? '微信用户',
-          gender: wechatUserInfo.gender ?? 0,
-          provider: AuthProvidersEnum.wechat,
-          role: {
-            id: RoleEnum.user,
-          },
-          status: {
-            id: StatusEnum.active,
-          },
+        user = await this.createWechatUser({
+          openId: wechatUserInfo.openId,
+          unionId: wechatUserInfo.unionId,
+          nickname: dto.nickname ?? wechatUserInfo.nickname,
+          gender: wechatUserInfo.gender,
         });
       } catch (error) {
         if (!isUniqueViolationOf(error, 'user_wechatOpenId_key')) {
@@ -995,13 +989,6 @@ export class AuthService {
       }
 
       this.logger.log(`New WeChat user created: ${user.id}`);
-
-      // Initialize default notification settings for new user
-      try {
-        await this.notificationsService.initializeDefaultSettings(user.id);
-      } catch (error) {
-        this.logger.warn(`Failed to initialize notification settings for user ${user.id}`, { error });
-      }
     } else {
       this.logger.log(`Existing user found for WeChat openId: ${wechatUserInfo.openId}`);
       validateUserStatusForAuth(user, 'wechat', this.logger);
@@ -1009,6 +996,158 @@ export class AuthService {
 
     this.logger.log(`WeChat login successful for user: ${user.id}`);
     return this.createSessionAndTokens(user);
+  }
+
+  /**
+   * 微信手机号快捷登录（小程序）
+   * openId 与手机号分属不同用户时拒绝登录，不合并账号
+   * @param dto - wx.login code 与手机号快速验证 code
+   * @returns 登录响应，包含用户信息和令牌
+   * @throws UnprocessableEntityException code 无效、非大陆手机号或手机号已绑定其他微信时
+   */
+  async wechatPhoneLogin(dto: AuthWechatPhoneLoginDto): Promise<LoginResponseDto> {
+    const [wechatUserInfo, phoneInfo] = await Promise.all([
+      this.wechatService.miniAppLogin(dto.loginCode),
+      this.wechatService.getPhoneNumber(dto.phoneCode),
+    ]);
+
+    if (phoneInfo.countryCode !== '86') {
+      this.logger.warn(`WeChat phone login rejected - unsupported country code: ${phoneInfo.countryCode}`);
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        error: 'phoneRegionNotSupported',
+        errors: { phone: 'unsupportedRegion' },
+      });
+    }
+
+    const identity = {
+      openId: wechatUserInfo.openId,
+      unionId: wechatUserInfo.unionId,
+      phone: phoneInfo.purePhoneNumber,
+    };
+    this.logger.log(`WeChat phone login attempt for: ${maskPhone(identity.phone)}`);
+
+    // 并发请求抢先绑定或创建时返回 null，重新查询一次
+    const user =
+      (await this.resolveWechatPhoneUser(identity, true)) ?? (await this.resolveWechatPhoneUser(identity, false));
+
+    if (!user) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: { user: 'notFound' },
+      });
+    }
+
+    validateUserStatusForAuth(user, 'wechat', this.logger);
+
+    this.logger.log(`WeChat phone login successful for user: ${user.id}`);
+    return this.createSessionAndTokens(user);
+  }
+
+  /**
+   * 按 openId 与手机号查找、绑定或创建用户
+   * @param allowRetry - 为 true 时，绑定或创建与并发请求冲突返回 null；为 false 时直接抛出
+   */
+  private async resolveWechatPhoneUser(
+    identity: { openId: string; unionId?: string; phone: string },
+    allowRetry: boolean,
+  ): Promise<User | null> {
+    const [byOpenId, byPhone] = await Promise.all([
+      this.usersService.findByWechatOpenId(identity.openId),
+      this.usersService.findByPhone(identity.phone),
+    ]);
+
+    const phoneBoundToOtherWechat = () => {
+      this.logger.warn(`WeChat phone login rejected - phone bound to another user: ${maskPhone(identity.phone)}`);
+      return new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        error: 'phoneBoundToOtherWechat',
+        errors: { phone: 'boundToOtherWechat' },
+      });
+    };
+
+    const retryOrThrow = (error: unknown): null => {
+      if (allowRetry) return null;
+      throw error;
+    };
+
+    if (byOpenId && byPhone) {
+      if (String(byOpenId.id) !== String(byPhone.id)) {
+        throw phoneBoundToOtherWechat();
+      }
+      return byOpenId;
+    }
+
+    if (byOpenId) {
+      // 已绑定其他手机号时保留原手机号
+      if (byOpenId.phone) {
+        return byOpenId;
+      }
+      validateUserStatusForAuth(byOpenId, 'wechat', this.logger);
+      try {
+        const bound = await this.usersService.bindPhoneIfEmpty(byOpenId.id, identity.phone);
+        if (!bound) return retryOrThrow(new Error(`Failed to bind phone to user ${byOpenId.id}`));
+      } catch (error) {
+        return retryOrThrow(error);
+      }
+      return this.usersService.findById(byOpenId.id);
+    }
+
+    if (byPhone) {
+      if (byPhone.wechatOpenId) {
+        throw phoneBoundToOtherWechat();
+      }
+      validateUserStatusForAuth(byPhone, 'wechat', this.logger);
+      try {
+        const bound = await this.usersService.bindWechatIfEmpty(byPhone.id, identity.openId, identity.unionId);
+        if (!bound) return retryOrThrow(new Error(`Failed to bind WeChat to user ${byPhone.id}`));
+      } catch (error) {
+        return retryOrThrow(error);
+      }
+      return this.usersService.findById(byPhone.id);
+    }
+
+    try {
+      const user = await this.createWechatUser(identity);
+      this.logger.log(`New WeChat phone user created: ${user.id}`);
+      return user;
+    } catch (error) {
+      return retryOrThrow(error);
+    }
+  }
+
+  /**
+   * 创建微信用户并初始化通知设置
+   */
+  private async createWechatUser(data: {
+    openId: string;
+    unionId?: string;
+    phone?: string;
+    nickname?: string;
+    gender?: number;
+  }): Promise<User> {
+    const user = await this.usersService.create({
+      wechatOpenId: data.openId,
+      wechatUnionId: data.unionId,
+      phone: data.phone,
+      nickname: data.nickname ?? '微信用户',
+      gender: data.gender ?? 0,
+      provider: AuthProvidersEnum.wechat,
+      role: {
+        id: RoleEnum.user,
+      },
+      status: {
+        id: StatusEnum.active,
+      },
+    });
+
+    try {
+      await this.notificationsService.initializeDefaultSettings(user.id);
+    } catch (error) {
+      this.logger.warn(`Failed to initialize notification settings for user ${user.id}`, { error });
+    }
+
+    return user;
   }
 
   /**

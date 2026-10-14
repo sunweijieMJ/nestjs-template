@@ -5,6 +5,7 @@ import { OrdersService } from '../orders/orders.service';
 import { Order, OrderStatus, PaymentChannel } from '../orders/domain/order';
 import { PaymentGatewayRegistry } from './gateways/payment-gateway.registry';
 import { PaymentGateway } from './gateways/payment-gateway';
+import { NotificationsService } from '../notifications/notifications.service';
 
 function buildOrder(overrides: Partial<Order> = {}): Order {
   return {
@@ -27,6 +28,7 @@ describe('PaymentsService', () => {
     Pick<OrdersService, 'updatePaymentStatus' | 'findRefundableOrder' | 'markRefunded' | 'findByOrderNo'>
   >;
   let gateway: Mocked<PaymentGateway>;
+  let notificationsService: Mocked<Pick<NotificationsService, 'notifyPaymentSucceeded'>>;
   let service: PaymentsService;
 
   beforeEach(() => {
@@ -42,7 +44,12 @@ describe('PaymentsService', () => {
       refund: vi.fn(),
     };
     const registry = { get: vi.fn().mockReturnValue(gateway) } as unknown as PaymentGatewayRegistry;
-    service = new PaymentsService(ordersService as unknown as OrdersService, registry);
+    notificationsService = { notifyPaymentSucceeded: vi.fn() };
+    service = new PaymentsService(
+      ordersService as unknown as OrdersService,
+      registry,
+      notificationsService as unknown as NotificationsService,
+    );
   });
 
   describe('confirmPaid', () => {
@@ -54,6 +61,29 @@ describe('PaymentsService', () => {
       await service.confirmPaid(notification);
 
       expect(gateway.refund).not.toHaveBeenCalled();
+    });
+
+    it('should notify the user when the notification marks the order as paid', async () => {
+      const paidAt = new Date('2026-10-14T07:01:00Z');
+      ordersService.updatePaymentStatus.mockResolvedValue({ order: buildOrder({ paidAt }), outcome: 'paid' });
+
+      await service.confirmPaid(notification);
+
+      expect(notificationsService.notifyPaymentSucceeded).toHaveBeenCalledWith({
+        userId: 10,
+        orderId: 1,
+        orderNo: 'ORD1',
+        paidAmount: 9900,
+        paidAt,
+      });
+    });
+
+    it('should not notify again for a repeated notification', async () => {
+      ordersService.updatePaymentStatus.mockResolvedValue({ order: buildOrder(), outcome: 'duplicate' });
+
+      await service.confirmPaid(notification);
+
+      expect(notificationsService.notifyPaymentSucceeded).not.toHaveBeenCalled();
     });
 
     it('should not refund a repeated notification of the recorded transaction', async () => {

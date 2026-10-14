@@ -26,5 +26,11 @@ export abstract class UserRepository {
 
   abstract update(id: User['id'], payload: DeepPartial<User>): Promise<User | null>;
 
+  /** 用户未绑定手机号时绑定，返回是否绑定成功 */
+  abstract bindPhoneIfEmpty(id: User['id'], phone: string): Promise<boolean>;
+
+  /** 用户未绑定微信时绑定 openId（及 unionId），返回是否绑定成功 */
+  abstract bindWechatIfEmpty(id: User['id'], openId: string, unionId?: string | null): Promise<boolean>;
+
   abstract remove(id: User['id']): Promise<void>;
 }

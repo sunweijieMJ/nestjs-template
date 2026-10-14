@@ -1,7 +1,21 @@
+/** 订阅消息模板：模板 ID 与「业务字段 → 模板字段 key」映射 */
+export type WechatSubscribeTemplate = {
+  templateId: string;
+  fields: Record<string, string>;
+};
+
+export type WechatMiniProgramState = 'developer' | 'trial' | 'formal';
+
 export type WechatConfig = {
   // 微信小程序
   miniAppId: string;
   miniAppSecret: string;
+  // 订阅消息跳转的小程序版本
+  miniProgramState: WechatMiniProgramState;
+  // 订阅消息模板，按场景配置
+  subscribeTemplates: {
+    orderPaid: WechatSubscribeTemplate;
+  };
   // 微信开放平台（APP登录）
   appId: string;
   appSecret: string;

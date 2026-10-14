@@ -6,6 +6,7 @@ import { UsersModule } from '../../../core/users/users.module';
 import { NotificationsModule } from '../../../modules/notifications/notifications.module';
 import { MailerModule } from '../../../integrations/mail/mailer.module';
 import { SmsModule } from '../../../integrations/sms/sms.module';
+import { WechatModule } from '../../../integrations/wechat/wechat.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { SmsModule } from '../../../integrations/sms/sms.module';
     NotificationsModule,
     MailerModule,
     SmsModule,
+    WechatModule,
   ],
   providers: [NotificationQueueProcessor],
   exports: [NotificationQueueProcessor],
