@@ -210,6 +210,7 @@ export class AlipayController {
       totalAmount: fenToYuan(order.totalAmount),
       body: dto.body,
       timeExpire: order.expiresAt,
+      returnQuery: { orderId: String(order.id) },
     };
   }
 }

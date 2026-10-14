@@ -3,12 +3,12 @@ import { IsString, IsNotEmpty } from 'class-validator';
 
 export class CreateWechatJsapiPaymentDto {
   @ApiProperty({
-    description: '用户 OpenID',
-    example: 'oUpF8uMuAJO_M2pxb1Q9zNjWeS6o', // cspell:disable-line
+    description: '小程序 wx.login 返回的 code，用于确定付款用户的 openid',
+    example: '0a3Xxx',
   })
   @IsString()
   @IsNotEmpty()
-  openid: string;
+  code: string;
 
   @ApiProperty({
     description: '商户订单号（即订单的 orderNo），支付金额取订单金额',

@@ -24,6 +24,8 @@ import {
   WechatTransactionResource,
 } from '../../integrations/wechat/wechat-pay.service';
 import { CreateWechatJsapiPaymentDto } from './dto/create-jsapi-payment.dto';
+import { WechatAppPaymentResponseDto, WechatJsapiPaymentResponseDto } from './dto/wechat-payment-response.dto';
+import { WechatService } from '../../integrations/wechat/wechat.service';
 import { CreateWechatAppPaymentDto } from './dto/create-app-payment.dto';
 import { WechatRefundDto } from './dto/wechat-refund.dto';
 import { OrdersService } from '../orders/orders.service';
@@ -45,6 +47,7 @@ export class WechatPayController {
 
   constructor(
     private readonly wechatPayService: WechatPayService,
+    private readonly wechatService: WechatService,
     private readonly ordersService: OrdersService,
     private readonly paymentsService: PaymentsService,
   ) {}
@@ -53,24 +56,19 @@ export class WechatPayController {
   @UseGuards(AuthGuard('jwt'))
   @Post('payment/jsapi')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '创建 JSAPI 支付订单（小程序/公众号）' })
+  @ApiOperation({ summary: '创建 JSAPI 支付订单（小程序）' })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '返回支付参数',
+    type: WechatJsapiPaymentResponseDto,
   })
   async createJsapiPayment(
     @Request() request: RequestWithUser,
     @Body() dto: CreateWechatJsapiPaymentDto,
-  ): Promise<{
-    timeStamp: string;
-    nonceStr: string;
-    package: string;
-    signType: string;
-    paySign: string;
-  }> {
+  ): Promise<WechatJsapiPaymentResponseDto> {
     const order = await this.ordersService.findPayableOrder(dto.outTradeNo, request.user.id);
+    const { openId } = await this.wechatService.miniAppLogin(dto.code);
     return this.wechatPayService.createJsapiPayment({
-      openid: dto.openid,
+      openid: openId,
       outTradeNo: order.orderNo,
       description: dto.description,
       amount: order.totalAmount,
@@ -85,20 +83,12 @@ export class WechatPayController {
   @ApiOperation({ summary: '创建 APP 支付订单' })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '返回支付参数',
+    type: WechatAppPaymentResponseDto,
   })
   async createAppPayment(
     @Request() request: RequestWithUser,
     @Body() dto: CreateWechatAppPaymentDto,
-  ): Promise<{
-    appid: string;
-    partnerid: string;
-    prepayid: string;
-    package: string;
-    noncestr: string;
-    timestamp: string;
-    sign: string;
-  }> {
+  ): Promise<WechatAppPaymentResponseDto> {
     const order = await this.ordersService.findPayableOrder(dto.outTradeNo, request.user.id);
     return this.wechatPayService.createAppPayment({
       outTradeNo: order.orderNo,

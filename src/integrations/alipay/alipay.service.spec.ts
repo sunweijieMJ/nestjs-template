@@ -257,4 +257,47 @@ describe('AlipayService', () => {
       );
     });
   });
+
+  describe('web payment return_url', () => {
+    const payment = { outTradeNo: 'ORD1', subject: 'S', totalAmount: '99.00' };
+
+    it('should append the return query to the configured return_url', () => {
+      const service = createServiceWithResponse(
+        {},
+        { returnUrl: 'https://h5.example.com/pages-sub/order/payment-result/index' },
+      );
+
+      const form = service.createMobilePayment({ ...payment, returnQuery: { orderId: '12' } });
+
+      expect(form).toContain('value="https://h5.example.com/pages-sub/order/payment-result/index?orderId=12"');
+    });
+
+    it('should append to an existing query string and keep the hash at the end', () => {
+      const service = createServiceWithResponse({}, { returnUrl: 'https://h5.example.com/result?from=alipay#top' });
+
+      const form = service.createWebPayment({ ...payment, returnQuery: { orderId: '12' } });
+
+      expect(form).toContain('value="https://h5.example.com/result?from=alipay&amp;orderId=12#top"');
+    });
+
+    it('should omit return_url when it is not configured', () => {
+      const service = createServiceWithResponse({}, { returnUrl: '' });
+
+      const form = service.createWebPayment({ ...payment, returnQuery: { orderId: '12' } });
+
+      expect(form).toContain('name="return_url" value=""');
+      expect(form).not.toContain('orderId=12');
+    });
+
+    it('should not send return_url for the mini program trade', async () => {
+      const service = createServiceWithResponse(
+        { alipay_trade_create_response: { code: '10000', msg: 'Success', trade_no: 'T1', out_trade_no: 'ORD1' } },
+        { returnUrl: 'https://h5.example.com/result' },
+      );
+
+      await service.createMiniProgramPayment({ ...payment, buyerOpenId: 'OPEN1', returnQuery: { orderId: '12' } });
+
+      expect(sentParams(service).return_url).toBeUndefined();
+    });
+  });
 });

@@ -120,5 +120,6 @@ ALIPAY_GATEWAY=https://openapi.alipay.com/gateway.do
 ALIPAY_SIGN_TYPE=RSA2
 ALIPAY_CHARSET=utf-8
 ALIPAY_NOTIFY_URL=
+# 网页支付完成后的跳转地址，指向 H5 支付结果页（会追加 orderId 参数），如 https://h5.example.com/pages-sub/order/payment-result/index
 ALIPAY_RETURN_URL=
 ALIPAY_SANDBOX=false

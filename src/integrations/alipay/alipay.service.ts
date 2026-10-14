@@ -20,6 +20,17 @@ export interface AlipayPaymentParams {
   body?: string;
   /** 交易截止时间，过期后不可支付 */
   timeExpire?: Date;
+  /** 追加到 return_url 的查询参数（仅网页支付） */
+  returnQuery?: Record<string, string>;
+}
+
+/** 在 URL 的 # 之前追加查询参数，URL 为空时返回空串 */
+function appendQuery(url: string, query?: Record<string, string>): string {
+  if (!url || !query || Object.keys(query).length === 0) return url;
+  const hashIndex = url.indexOf('#');
+  const base = hashIndex === -1 ? url : url.slice(0, hashIndex);
+  const hash = hashIndex === -1 ? '' : url.slice(hashIndex);
+  return `${base}${base.includes('?') ? '&' : '?'}${new URLSearchParams(query).toString()}${hash}`;
 }
 
 const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
@@ -182,7 +193,7 @@ export class AlipayService {
       time_expire: params.timeExpire ? toBeijingTime(params.timeExpire) : undefined,
     };
 
-    return this.buildRequestForm('alipay.trade.wap.pay', bizContent);
+    return this.buildRequestForm('alipay.trade.wap.pay', bizContent, params.returnQuery);
   }
 
   /**
@@ -253,7 +264,7 @@ export class AlipayService {
       time_expire: params.timeExpire ? toBeijingTime(params.timeExpire) : undefined,
     };
 
-    return this.buildRequestForm('alipay.trade.page.pay', bizContent);
+    return this.buildRequestForm('alipay.trade.page.pay', bizContent, params.returnQuery);
   }
 
   /**
@@ -389,10 +400,14 @@ export class AlipayService {
   /**
    * 构建请求表单（用于页面支付）
    */
-  private buildRequestForm(method: string, bizContent: Record<string, unknown>): string {
+  private buildRequestForm(
+    method: string,
+    bizContent: Record<string, unknown>,
+    returnQuery?: Record<string, string>,
+  ): string {
     const params: Record<string, string> = {
       ...this.buildCommonParams(method, bizContent),
-      return_url: this.config.returnUrl,
+      return_url: appendQuery(this.config.returnUrl, returnQuery),
     };
 
     const sign = this.sign(params);
