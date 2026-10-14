@@ -75,9 +75,9 @@ export class SettingsController {
 ### Guard 执行顺序
 
 ```
-AuthGuard('jwt') → 验证 JWT Token → request.user
-  → RolesGuard → 检查 user.role.id 是否匹配
-  → PermissionsGuard → 从数据库查询角色权限 → 验证所需权限
+AuthGuard('jwt') → 验证 JWT Token，用库中当前角色覆盖令牌中的角色 → request.user
+  → PermissionsGuard → 查询角色权限（管理员拥有全部权限）→ 验证所需权限；未声明 @RequirePermissions 的路由直接拒绝
+  → RolesGuard（仅按角色判断时使用）→ 检查 user.role.id 是否匹配
 ```
 
 ## 添加新权限

@@ -13,12 +13,12 @@
 
 ### NestJS 相关
 
-| 错误                                   | 解决方案                                         |
-| -------------------------------------- | ------------------------------------------------ |
-| `Nest can't resolve dependencies`      | 检查 Module imports 和 providers，确保依赖已导出 |
-| `Cannot determine a type for property` | DTO 属性缺少类型装饰器，添加 `@IsString()` 等    |
-| `Unknown authentication strategy`      | AuthModule 未导入或 Strategy 未注册              |
-| 循环依赖                               | 使用 `forwardRef(() => XxxModule)`               |
+| 错误                                   | 解决方案                                                                            |
+| -------------------------------------- | ----------------------------------------------------------------------------------- |
+| `Nest can't resolve dependencies`      | 检查 Module imports 和 providers，确保依赖已导出                                    |
+| `Cannot determine a type for property` | DTO 属性缺少类型装饰器，添加 `@IsString()` 等                                       |
+| `Unknown authentication strategy`      | AuthModule 未导入或 Strategy 未注册                                                 |
+| 循环依赖                               | 先确认两个模块确实互相 import；仅在真实双向依赖时使用 `forwardRef(() => XxxModule)` |
 
 ### 运行时相关
 

@@ -116,19 +116,21 @@ export class FeatureController {
   constructor(private readonly featureService: FeatureService) {}
 
   @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiCreatedResponse({ type: Feature })
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: Feature })
   create(@Body() dto: CreateFeatureDto): Promise<Feature> {
     return this.featureService.create(dto);
   }
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  async findAll(@Query() query: QueryFeatureDto): Promise<InfinityPaginationResponseDto<Feature>> {
-    return infinityPagination(await this.featureService.findManyWithPagination(query), {
-      page: query.page,
-      limit: query.limit,
+  async findAll(@Query() query: QueryFeatureDto): Promise<PaginationResponseDto<Feature>> {
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 10, 50);
+    const { data, total } = await this.featureService.findManyWithPaginationAndCount({
+      paginationOptions: { page, limit },
     });
+    return pagination(data, total, { page, limit });
   }
 }
 ```

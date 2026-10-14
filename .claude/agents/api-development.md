@@ -15,40 +15,49 @@ export class FeatureController {
   constructor(private readonly featureService: FeatureService) {}
 
   @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiCreatedResponse({ type: Feature })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ operationId: 'createFeature', summary: '创建功能' })
+  @ApiOkResponse({ type: Feature })
   create(@Body() dto: CreateFeatureDto): Promise<Feature> {
     return this.featureService.create(dto);
   }
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ type: InfinityPaginationResponse(Feature) })
-  async findAll(@Query() query: QueryFeatureDto): Promise<InfinityPaginationResponseDto<Feature>> {
-    return infinityPagination(await this.featureService.findManyWithPagination(query), {
-      page: query.page,
-      limit: query.limit,
+  @ApiOperation({ operationId: 'getFeatures', summary: '功能列表' })
+  @ApiOkResponse({ type: PaginationResponse(Feature) })
+  async findAll(@Query() query: QueryFeatureDto): Promise<PaginationResponseDto<Feature>> {
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 10, 50);
+    const { data, total } = await this.featureService.findManyWithPaginationAndCount({
+      paginationOptions: { page, limit },
     });
+    return pagination(data, total, { page, limit });
   }
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ operationId: 'getFeature', summary: '功能详情' })
+  @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ type: Feature })
-  findOne(@Param('id') id: number): Promise<NullableType<Feature>> {
-    return this.featureService.findById(id);
+  findOne(@Param('id', ParseIdPipe) id: number): Promise<Feature> {
+    return this.featureService.findOne(id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ operationId: 'updateFeature', summary: '更新功能' })
+  @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ type: Feature })
-  update(@Param('id') id: number, @Body() dto: UpdateFeatureDto): Promise<Feature | null> {
+  update(@Param('id', ParseIdPipe) id: number, @Body() dto: UpdateFeatureDto): Promise<Feature> {
     return this.featureService.update(id, dto);
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiNoContentResponse()
-  remove(@Param('id') id: number): Promise<void> {
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ operationId: 'deleteFeature', summary: '删除功能' })
+  @ApiParam({ name: 'id', type: Number })
+  remove(@Param('id', ParseIdPipe) id: number): Promise<void> {
     return this.featureService.remove(id);
   }
 }
@@ -58,9 +67,11 @@ export class FeatureController {
 
 1. **薄层原则**：Controller 仅做路由转发 + 参数提取
 2. **版本控制**：`@Controller({ path: 'xxx', version: '1' })`
-3. **HTTP 状态码**：使用 `@HttpCode()` 显式指定
-4. **Swagger 装饰器**：每个端点都需要 `@ApiResponse` 类装饰器
-5. **认证保护**：默认添加 `@ApiBearerAuth()` + `@UseGuards(AuthGuard('jwt'))`
+3. **HTTP 状态码**：使用 `@HttpCode()` 显式指定；成功响应统一 200，由 ResponseInterceptor 包装
+4. **路径参数**：自增主键用 `@Param('id', ParseIdPipe)`，非法值返回 400
+5. **更新方法**：使用 `@Put`，`@ApiOperation` 必须带 `operationId`
+6. **Swagger 装饰器**：每个端点都需要 `@ApiResponse` 类装饰器
+7. **认证保护**：默认添加 `@ApiBearerAuth()` + `@UseGuards(AuthGuard('jwt'))`；管理端点使用 `PermissionsGuard` + `@RequirePermissions()`
 
 ## DTO 规范
 
@@ -191,16 +202,19 @@ getRawData() {
 
 ```typescript
 // src/modules/feature/feature.controller.ts
-import { infinityPagination } from '../../common/infinity-pagination';
-import { InfinityPaginationResponseDto } from '../../common/dto/infinity-pagination-response.dto';
+import { pagination } from '../../common/pagination';
+import { PaginationResponse, PaginationResponseDto } from '../../common/dto/pagination-response.dto';
 
 // 返回格式
 {
   "code": 200,
   "message": "success",
   "data": {
-    "data": [...],
-    "hasNextPage": true
+    "list": [...],
+    "total": 42,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 5
   }
 }
 ```
