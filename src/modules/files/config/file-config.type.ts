@@ -11,5 +11,7 @@ export type FileConfig = {
   awsDefaultS3Bucket?: string;
   awsS3Region?: string;
   awsS3Endpoint?: string; // Custom endpoint for S3-compatible services (e.g., Aliyun OSS)
+  /** 仅在配置了 awsS3Endpoint 时生效；MinIO 需要 true，阿里云 OSS 需要 false */
+  awsS3ForcePathStyle: boolean;
   maxFileSize: number;
 };

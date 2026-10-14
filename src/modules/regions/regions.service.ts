@@ -11,6 +11,8 @@ export interface RegionTree extends Region {
 
 const CACHE_KEY_PREFIX = 'region:';
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+/** 不存在的编码的缓存时长，避免反复查库，数据导入后最多延迟这么久可见 */
+const MISS_CACHE_TTL = 60 * 1000;
 
 @Injectable()
 export class RegionsService {
@@ -27,14 +29,16 @@ export class RegionsService {
   async getProvinces(): Promise<Region[]> {
     const cacheKey = `${CACHE_KEY_PREFIX}provinces`;
     const cached = await this.cacheManager.get<Region[]>(cacheKey);
-    if (cached) {
+    if (cached?.length) {
       this.logger.debug('Returning cached provinces');
       return cached;
     }
 
     this.logger.log('Fetching all provinces from database');
     const provinces = await this.regionRepository.findByLevel(1);
-    await this.cacheManager.set(cacheKey, provinces, CACHE_TTL);
+    if (provinces.length > 0) {
+      await this.cacheManager.set(cacheKey, provinces, CACHE_TTL);
+    }
     return provinces;
   }
 
@@ -44,14 +48,16 @@ export class RegionsService {
   async getCitiesByProvinceCode(provinceCode: string): Promise<Region[]> {
     const cacheKey = `${CACHE_KEY_PREFIX}cities:${provinceCode}`;
     const cached = await this.cacheManager.get<Region[]>(cacheKey);
-    if (cached) {
+    if (cached?.length) {
       this.logger.debug(`Returning cached cities for province: ${provinceCode}`);
       return cached;
     }
 
     this.logger.log(`Fetching cities for province: ${provinceCode} from database`);
     const cities = await this.regionRepository.findByParentCode(provinceCode);
-    await this.cacheManager.set(cacheKey, cities, CACHE_TTL);
+    if (cities.length > 0) {
+      await this.cacheManager.set(cacheKey, cities, CACHE_TTL);
+    }
     return cities;
   }
 
@@ -61,14 +67,16 @@ export class RegionsService {
   async getDistrictsByCityCode(cityCode: string): Promise<Region[]> {
     const cacheKey = `${CACHE_KEY_PREFIX}districts:${cityCode}`;
     const cached = await this.cacheManager.get<Region[]>(cacheKey);
-    if (cached) {
+    if (cached?.length) {
       this.logger.debug(`Returning cached districts for city: ${cityCode}`);
       return cached;
     }
 
     this.logger.log(`Fetching districts for city: ${cityCode} from database`);
     const districts = await this.regionRepository.findByParentCode(cityCode);
-    await this.cacheManager.set(cacheKey, districts, CACHE_TTL);
+    if (districts.length > 0) {
+      await this.cacheManager.set(cacheKey, districts, CACHE_TTL);
+    }
     return districts;
   }
 
@@ -101,7 +109,7 @@ export class RegionsService {
   async getTree(): Promise<RegionTree[]> {
     const cacheKey = `${CACHE_KEY_PREFIX}tree`;
     const cached = await this.cacheManager.get<RegionTree[]>(cacheKey);
-    if (cached) {
+    if (cached?.length) {
       this.logger.debug('Returning cached region tree');
       return cached;
     }
@@ -127,7 +135,9 @@ export class RegionsService {
       }
     });
 
-    await this.cacheManager.set(cacheKey, tree, CACHE_TTL);
+    if (tree.length > 0) {
+      await this.cacheManager.set(cacheKey, tree, CACHE_TTL);
+    }
     return tree;
   }
 
@@ -136,15 +146,23 @@ export class RegionsService {
    */
   async getByCode(code: string): Promise<Region | null> {
     const cacheKey = `${CACHE_KEY_PREFIX}code:${code}`;
-    const cached = await this.cacheManager.get<Region | null>(cacheKey);
-    if (cached !== undefined) {
+    const missKey = `${CACHE_KEY_PREFIX}code-miss:${code}`;
+    const cached = await this.cacheManager.get<Region>(cacheKey);
+    if (cached) {
       this.logger.debug(`Returning cached region for code: ${code}`);
       return cached;
+    }
+    if (await this.cacheManager.get<boolean>(missKey)) {
+      return null;
     }
 
     this.logger.log(`Fetching region by code: ${code} from database`);
     const region = await this.regionRepository.findByCode(code);
-    await this.cacheManager.set(cacheKey, region, CACHE_TTL);
+    if (region) {
+      await this.cacheManager.set(cacheKey, region, CACHE_TTL);
+    } else {
+      await this.cacheManager.set(missKey, true, MISS_CACHE_TTL);
+    }
     return region;
   }
 

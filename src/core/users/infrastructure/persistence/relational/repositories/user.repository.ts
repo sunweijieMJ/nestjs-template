@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { FindOptionsWhere, Repository, In } from 'typeorm';
+import { FindOptionsWhere, Repository, In, IsNull } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { UserEntity } from '../entities/user.entity';
 import { NullableType } from '../../../../../../common/types/nullable.type';
 import { FilterUserDto, SortUserDto } from '../../../../dto/query-user.dto';
@@ -10,6 +11,38 @@ import { UserRepository } from '../../user.repository';
 import { UserMapper } from '../mappers/user.mapper';
 import { IPaginationOptions } from '../../../../../../common/types/pagination-options';
 import { handleUniqueConstraintError } from '../../../../../../common/utils/exceptions.util';
+
+function toPartialEntity(payload: Partial<User>): QueryDeepPartialEntity<UserEntity> {
+  const { photo, role, status, ...columns } = payload;
+  const changes: QueryDeepPartialEntity<UserEntity> = Object.fromEntries(
+    UPDATABLE_COLUMNS.filter((key) => columns[key] !== undefined).map((key) => [key, columns[key]]),
+  );
+  if (photo !== undefined) {
+    changes.photo = photo ? { id: photo.id } : null;
+  }
+  if (role) {
+    changes.role = { id: Number(role.id) };
+  }
+  if (status) {
+    changes.status = { id: Number(status.id) };
+  }
+
+  return changes;
+}
+
+const UPDATABLE_COLUMNS = [
+  'email',
+  'password',
+  'provider',
+  'firstName',
+  'lastName',
+  'phone',
+  'nickname',
+  'gender',
+  'birthday',
+  'wechatOpenId',
+  'wechatUnionId',
+] as const;
 
 @Injectable()
 export class UsersRelationalRepository implements UserRepository {
@@ -114,7 +147,23 @@ export class UsersRelationalRepository implements UserRepository {
     return entity ? UserMapper.toDomain(entity) : null;
   }
 
+  /** 只更新 payload 中有值的字段，已软删除的用户视为不存在 */
   async update(id: User['id'], payload: Partial<User>): Promise<User> {
+    const changes = toPartialEntity(payload);
+
+    if (Object.keys(changes).length > 0) {
+      try {
+        const result = await this.usersRepository.update({ id: Number(id), deletedAt: IsNull() }, changes);
+        if (!result.affected) {
+          throw new NotFoundException('User not found');
+        }
+      } catch (error) {
+        // 处理数据库唯一约束异常
+        handleUniqueConstraintError(error);
+        throw error;
+      }
+    }
+
     const entity = await this.usersRepository.findOne({
       where: { id: Number(id) },
       relations: ['photo', 'role', 'status'],
@@ -124,22 +173,7 @@ export class UsersRelationalRepository implements UserRepository {
       throw new NotFoundException('User not found');
     }
 
-    try {
-      const updatedEntity = await this.usersRepository.save(
-        this.usersRepository.create(
-          UserMapper.toPersistence({
-            ...UserMapper.toDomain(entity),
-            ...payload,
-          }),
-        ),
-      );
-
-      return UserMapper.toDomain(updatedEntity);
-    } catch (error) {
-      // 处理数据库唯一约束异常
-      handleUniqueConstraintError(error);
-      throw error;
-    }
+    return UserMapper.toDomain(entity);
   }
 
   /**

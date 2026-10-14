@@ -29,13 +29,15 @@ export interface WechatEncryptedResource {
   associated_data?: string;
 }
 
-/** 支付成功回调解密后的交易信息 */
+/** 支付或退款回调解密后的信息，支付通知带 trade_state，退款通知带 refund_status */
 export interface WechatTransactionResource {
   mchid: string;
   out_trade_no: string;
   transaction_id: string;
-  trade_state: string;
-  amount: { total: number; payer_total: number };
+  trade_state?: string;
+  refund_status?: string;
+  out_refund_no?: string;
+  amount: { total: number; payer_total: number; refund?: number };
 }
 
 /** 微信支付公钥 ID 的前缀，回调序列号以此开头时使用公钥验签 */
@@ -242,6 +244,7 @@ export class WechatPayService implements OnModuleInit {
       out_trade_no: params.outTradeNo,
       out_refund_no: params.outRefundNo,
       reason: params.reason,
+      notify_url: this.config.pay.notifyUrl,
       amount: {
         refund: params.refundAmount,
         total: params.totalAmount,

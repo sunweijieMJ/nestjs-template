@@ -34,6 +34,8 @@ AWS_S3_REGION=
 AWS_DEFAULT_S3_BUCKET=
 # For Aliyun OSS: https://oss-cn-hangzhou.aliyuncs.com
 AWS_S3_ENDPOINT=
+# Only used with AWS_S3_ENDPOINT: true for MinIO, false for Aliyun OSS
+AWS_S3_FORCE_PATH_STYLE=true
 
 MAIL_HOST=maildev
 MAIL_PORT=1025

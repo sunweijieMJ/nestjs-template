@@ -47,6 +47,30 @@ export class PaymentsService {
   }
 
   /**
+   * 处理渠道退款成功通知；只有退回订单当前那笔交易且金额等于实付金额时标记订单为已退款
+   */
+  async confirmRefunded(params: {
+    channel: PaymentChannel;
+    orderNo: string;
+    transactionId: string;
+    /** 本次退款金额（分） */
+    refundAmount: number;
+  }): Promise<void> {
+    const order = await this.ordersService.findByOrderNo(params.orderNo);
+    if (
+      order?.status !== OrderStatus.PAID ||
+      order.paymentChannel !== params.channel ||
+      order.transactionId !== params.transactionId
+    ) {
+      return;
+    }
+
+    if (params.refundAmount === (order.paidAmount ?? order.totalAmount)) {
+      await this.ordersService.markRefunded(order);
+    }
+  }
+
+  /**
    * 对已支付订单发起退款，退款金额等于实付金额且渠道已完成退款时标记订单为已退款
    */
   async refund(

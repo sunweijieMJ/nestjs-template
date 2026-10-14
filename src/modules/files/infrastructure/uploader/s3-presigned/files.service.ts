@@ -4,6 +4,7 @@ import { FileRepository } from '../../persistence/file.repository';
 import { FileUploadDto } from './dto/file.dto';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { createS3Client } from '../../../config/s3-client.factory';
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 import { ConfigService } from '@nestjs/config';
 import { FileType } from '../../../domain/file';
@@ -17,19 +18,7 @@ export class FilesS3PresignedService {
     private readonly fileRepository: FileRepository,
     private readonly configService: ConfigService<AllConfigType>,
   ) {
-    const endpoint = configService.get('file.awsS3Endpoint', { infer: true });
-    this.s3 = new S3Client({
-      region: configService.get('file.awsS3Region', { infer: true }),
-      ...(endpoint && { endpoint, forcePathStyle: true }),
-      credentials: {
-        accessKeyId: configService.getOrThrow('file.accessKeyId', {
-          infer: true,
-        }),
-        secretAccessKey: configService.getOrThrow('file.secretAccessKey', {
-          infer: true,
-        }),
-      },
-    });
+    this.s3 = createS3Client(configService.getOrThrow('file', { infer: true }));
   }
 
   async create(file: FileUploadDto): Promise<{ file: FileType; uploadSignedUrl: string }> {

@@ -189,19 +189,26 @@ export class WechatPayController {
       throw new BadRequestException({ code: 'FAIL', message: '解密失败' });
     }
 
-    const { out_trade_no, trade_state, transaction_id, amount } = transaction;
-    if (trade_state === 'SUCCESS' && out_trade_no) {
-      try {
+    const { out_trade_no, trade_state, refund_status, transaction_id, amount } = transaction;
+    try {
+      if (trade_state === 'SUCCESS' && out_trade_no) {
         await this.paymentsService.confirmPaid({
           channel: PaymentChannel.WECHAT,
           orderNo: out_trade_no,
           transactionId: transaction_id ?? '',
           paidAmount: amount?.total ?? 0,
         });
-      } catch (error) {
-        this.logger.error(`Failed to update order ${out_trade_no}: ${error}`);
-        throw new InternalServerErrorException({ code: 'FAIL', message: '订单更新失败' });
+      } else if (refund_status === 'SUCCESS' && out_trade_no) {
+        await this.paymentsService.confirmRefunded({
+          channel: PaymentChannel.WECHAT,
+          orderNo: out_trade_no,
+          transactionId: transaction_id ?? '',
+          refundAmount: amount?.refund ?? 0,
+        });
       }
+    } catch (error) {
+      this.logger.error(`Failed to update order ${out_trade_no}: ${error}`);
+      throw new InternalServerErrorException({ code: 'FAIL', message: '订单更新失败' });
     }
 
     return { code: 'SUCCESS', message: '成功' };

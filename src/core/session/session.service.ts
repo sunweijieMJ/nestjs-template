@@ -51,20 +51,6 @@ export class SessionService {
     return session;
   }
 
-  /**
-   * 更新会话信息
-   * @param id - 会话ID
-   * @param payload - 更新的会话数据
-   * @returns 更新后的会话对象或 null
-   */
-  update(
-    id: Session['id'],
-    payload: Partial<Omit<Session, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>>,
-  ): Promise<Session | null> {
-    this.logger.debug(`Session updated: ${id}`);
-    return this.sessionRepository.update(id, payload);
-  }
-
   /** 仅当当前 hash 等于 currentHash 时轮换，成功后在宽限期内记住旧 hash */
   async rotateHash(id: Session['id'], currentHash: string, nextHash: string): Promise<boolean> {
     const rotated = await this.sessionRepository.rotateHash(id, currentHash, nextHash);

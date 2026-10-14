@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
 import { SessionEntity } from '../entities/session.entity';
@@ -39,31 +39,6 @@ export class SessionRelationalRepository implements SessionRepository {
       { hash: nextHash },
     );
     return (result.affected ?? 0) > 0;
-  }
-
-  async update(
-    id: Session['id'],
-    payload: Partial<Omit<Session, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>>,
-  ): Promise<Session | null> {
-    const entity = await this.sessionRepository.findOne({
-      where: { id: Number(id) },
-      relations: ['user'],
-    });
-
-    if (!entity) {
-      throw new NotFoundException('Session not found');
-    }
-
-    const updatedEntity = await this.sessionRepository.save(
-      this.sessionRepository.create(
-        SessionMapper.toPersistence({
-          ...SessionMapper.toDomain(entity),
-          ...payload,
-        }),
-      ),
-    );
-
-    return SessionMapper.toDomain(updatedEntity);
   }
 
   async deleteById(id: Session['id']): Promise<void> {

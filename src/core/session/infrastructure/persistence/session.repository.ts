@@ -7,11 +7,6 @@ export abstract class SessionRepository {
 
   abstract create(data: Omit<Session, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>): Promise<Session>;
 
-  abstract update(
-    id: Session['id'],
-    payload: Partial<Omit<Session, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>>,
-  ): Promise<Session | null>;
-
   /** 仅当会话当前 hash 等于 currentHash 时替换为 nextHash，返回是否替换成功 */
   abstract rotateHash(id: Session['id'], currentHash: string, nextHash: string): Promise<boolean>;
 

@@ -11,9 +11,9 @@ import {
   IsString,
   IsNumber,
   IsDateString,
+  IsEnum,
   Matches,
   MaxLength,
-  MinLength,
   Max,
   Min,
 } from 'class-validator';
@@ -22,6 +22,9 @@ import { RoleDto } from '../../../common/enums/roles/role.dto';
 import { StatusDto } from '../../../common/enums/statuses/status.dto';
 import { lowerCaseTransformer } from '../../../common/transformers/lower-case.transformer';
 import { sanitizeTransformer } from '../../../common/transformers/sanitize.transformer';
+import { IsMd5Password } from '../../../common/validators/md5-password.validator';
+import { md5PasswordTransformer } from '../../../common/transformers/md5-password.transformer';
+import { AuthProvidersEnum } from '../../auth/auth-providers.enum';
 
 export class CreateUserDto {
   @ApiPropertyOptional({ example: 'test1@example.com', type: String })
@@ -30,12 +33,15 @@ export class CreateUserDto {
   @IsEmail()
   email?: string | null;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: '前端 MD5 后的密码（32 位十六进制）' })
+  @Transform(md5PasswordTransformer)
   @IsOptional()
-  @MinLength(8)
-  @MaxLength(128)
+  @IsMd5Password()
   password?: string;
 
+  @ApiPropertyOptional({ enum: AuthProvidersEnum, default: AuthProvidersEnum.email })
+  @IsOptional()
+  @IsEnum(AuthProvidersEnum)
   provider?: string;
 
   @ApiPropertyOptional({ example: 'John', type: String })

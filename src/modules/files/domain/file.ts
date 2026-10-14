@@ -5,9 +5,17 @@ import fileConfig from '../config/file.config';
 import { FileConfig, FileDriver } from '../config/file-config.type';
 
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { createS3Client } from '../config/s3-client.factory';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { AppConfig } from '../../../config/app-config.type';
 import appConfig from '../../../config/app.config';
+
+let signingClient: S3Client | undefined;
+
+function getSigningClient(config: FileConfig): S3Client {
+  signingClient ??= createS3Client(config);
+  return signingClient;
+}
 
 export class FileType {
   @ApiProperty({
@@ -26,13 +34,7 @@ export class FileType {
       if ((fileConfig() as FileConfig).driver === FileDriver.LOCAL) {
         return (appConfig() as AppConfig).backendDomain + value;
       } else if ([FileDriver.S3_PRESIGNED, FileDriver.S3].includes((fileConfig() as FileConfig).driver)) {
-        const s3 = new S3Client({
-          region: (fileConfig() as FileConfig).awsS3Region ?? '',
-          credentials: {
-            accessKeyId: (fileConfig() as FileConfig).accessKeyId ?? '',
-            secretAccessKey: (fileConfig() as FileConfig).secretAccessKey ?? '',
-          },
-        });
+        const s3 = getSigningClient(fileConfig() as FileConfig);
 
         const command = new GetObjectCommand({
           Bucket: (fileConfig() as FileConfig).awsDefaultS3Bucket ?? '',

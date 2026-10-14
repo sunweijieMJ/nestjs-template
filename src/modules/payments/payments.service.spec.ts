@@ -22,7 +22,9 @@ function buildOrder(overrides: Partial<Order> = {}): Order {
 }
 
 describe('PaymentsService', () => {
-  let ordersService: jest.Mocked<Pick<OrdersService, 'updatePaymentStatus' | 'findRefundableOrder' | 'markRefunded'>>;
+  let ordersService: jest.Mocked<
+    Pick<OrdersService, 'updatePaymentStatus' | 'findRefundableOrder' | 'markRefunded' | 'findByOrderNo'>
+  >;
   let gateway: jest.Mocked<PaymentGateway>;
   let service: PaymentsService;
 
@@ -31,6 +33,7 @@ describe('PaymentsService', () => {
       updatePaymentStatus: jest.fn(),
       findRefundableOrder: jest.fn(),
       markRefunded: jest.fn(),
+      findByOrderNo: jest.fn(),
     };
     gateway = {
       channel: PaymentChannel.ALIPAY,
@@ -76,6 +79,35 @@ describe('PaymentsService', () => {
       gateway.refund.mockRejectedValue(new Error('network'));
 
       await expect(service.confirmPaid(notification)).rejects.toThrow('network');
+    });
+  });
+
+  describe('confirmRefunded', () => {
+    const notification = { channel: PaymentChannel.ALIPAY, orderNo: 'ORD1', transactionId: 'T1', refundAmount: 9900 };
+
+    it('should mark the order refunded when its transaction is fully refunded', async () => {
+      const order = buildOrder();
+      ordersService.findByOrderNo.mockResolvedValue(order);
+
+      await service.confirmRefunded(notification);
+
+      expect(ordersService.markRefunded).toHaveBeenCalledWith(order);
+    });
+
+    it('should keep the order paid when another transaction of the order is refunded', async () => {
+      ordersService.findByOrderNo.mockResolvedValue(buildOrder());
+
+      await service.confirmRefunded({ ...notification, transactionId: 'T2' });
+
+      expect(ordersService.markRefunded).not.toHaveBeenCalled();
+    });
+
+    it('should keep the order paid after a partial refund', async () => {
+      ordersService.findByOrderNo.mockResolvedValue(buildOrder());
+
+      await service.confirmRefunded({ ...notification, refundAmount: 100 });
+
+      expect(ordersService.markRefunded).not.toHaveBeenCalled();
     });
   });
 

@@ -14,19 +14,16 @@ export interface CreateAuditLogParams {
   request?: Request;
 }
 
-/**
- * Sensitive fields that should be redacted from audit logs
- */
-const SENSITIVE_FIELDS = [
-  'password',
-  'oldPassword',
-  'newPassword',
-  'token',
-  'refreshToken',
-  'secret',
-  'apiKey',
-  'accessToken',
-];
+/** 字段名（忽略大小写）包含其一即脱敏 */
+const SENSITIVE_KEY_PARTS = ['password', 'secret', 'token', 'apikey', 'privatekey', 'sessionkey', 'accesskey'];
+
+/** 字段名（忽略大小写）等于其一即脱敏 */
+const SENSITIVE_KEYS = ['hash'];
+
+function isSensitiveKey(key: string): boolean {
+  const lower = key.toLowerCase();
+  return SENSITIVE_KEYS.includes(lower) || SENSITIVE_KEY_PARTS.some((part) => lower.includes(part));
+}
 
 @Injectable()
 export class AuditService {
@@ -112,7 +109,7 @@ export class AuditService {
     const sanitized: Record<string, unknown> = {};
 
     for (const [key, val] of Object.entries(value)) {
-      if (SENSITIVE_FIELDS.includes(key.toLowerCase())) {
+      if (isSensitiveKey(key)) {
         sanitized[key] = '[REDACTED]';
       } else if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
         sanitized[key] = this.sanitize(val as Record<string, unknown>, visited, depth + 1);
