@@ -4,6 +4,8 @@ import { CreateUserDto } from './create-user.dto';
 import { UpdateUserDto } from './update-user.dto';
 import { QueryUserDto } from './query-user.dto';
 import { AuthUpdateDto } from '../../auth/dto/auth-update.dto';
+import { AuthEmailLoginDto } from '../../auth/dto/auth-email-login.dto';
+import { AuthChangePasswordDto } from '../../auth/dto/auth-change-password.dto';
 
 const MD5 = 'e10adc3949ba59abbe56e057f20f883e';
 const FILE_ID = '3f0c8a52-7d0e-4b59-9f8e-2a1d6c4b7e10';
@@ -63,5 +65,17 @@ describe('QueryUserDto', () => {
 
   it('should convert page and limit to numbers', () => {
     expect(plainToInstance(QueryUserDto, { page: '2', limit: '20' })).toMatchObject({ page: 2, limit: 20 });
+  });
+});
+
+describe('auth MD5 password fields', () => {
+  it('should lower-case the login password', () => {
+    expect(plainToInstance(AuthEmailLoginDto, { email: 'a@b.c', password: MD5.toUpperCase() }).password).toBe(MD5);
+  });
+
+  it('should lower-case both passwords when changing the password', () => {
+    expect(
+      plainToInstance(AuthChangePasswordDto, { oldPassword: MD5.toUpperCase(), newPassword: MD5.toUpperCase() }),
+    ).toMatchObject({ oldPassword: MD5, newPassword: MD5 });
   });
 });

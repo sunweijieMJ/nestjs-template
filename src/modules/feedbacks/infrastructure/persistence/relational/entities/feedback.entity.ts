@@ -32,8 +32,8 @@ export class FeedbackEntity extends EntityRelationalHelper {
   @Column({ type: 'text' })
   content: string;
 
-  @Column({ type: 'simple-array', nullable: true })
-  images?: string[];
+  @Column({ type: 'jsonb', nullable: true })
+  images?: string[] | null;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   contact?: string;

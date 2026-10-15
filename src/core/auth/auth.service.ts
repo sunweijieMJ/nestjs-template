@@ -9,7 +9,7 @@ import {
 import ms from 'ms';
 import { createHash } from 'crypto';
 import { JwtService, TokenExpiredError, JsonWebTokenError } from '@nestjs/jwt';
-import { hashPassword, comparePassword } from '../../common/utils/crypto.utils';
+import { hashPassword, compareMd5Password } from '../../common/utils/crypto.utils';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthUpdateDto } from './dto/auth-update.dto';
 import { AuthDeleteAccountDto } from './dto/auth-delete-account.dto';
@@ -90,17 +90,6 @@ export class AuthService {
       });
     }
 
-    if (user.provider !== AuthProvidersEnum.email) {
-      this.logger.warn(`Login failed - wrong provider for user ${user.id}: ${user.provider}`);
-      // 返回通用错误信息，避免泄露用户注册渠道
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          password: 'incorrectPassword',
-        },
-      });
-    }
-
     if (!user.password) {
       this.logger.warn(`Login failed - no password set for user: ${user.id}`);
       throw new UnprocessableEntityException({
@@ -111,7 +100,7 @@ export class AuthService {
       });
     }
 
-    const isValidPassword = await comparePassword(loginDto.password, user.password);
+    const isValidPassword = await compareMd5Password(loginDto.password, user.password);
 
     if (!isValidPassword) {
       this.logger.warn(`Login failed - incorrect password for user: ${user.id}`);
@@ -551,7 +540,7 @@ export class AuthService {
         });
       }
 
-      const isValidOldPassword = await comparePassword(userDto.oldPassword, currentUser.password);
+      const isValidOldPassword = await compareMd5Password(userDto.oldPassword, currentUser.password);
 
       if (!isValidOldPassword) {
         throw new UnprocessableEntityException({
@@ -714,7 +703,7 @@ export class AuthService {
           },
         });
       }
-      if (!(await comparePassword(credentials.oldPassword, user.password))) {
+      if (!(await compareMd5Password(credentials.oldPassword, user.password))) {
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
@@ -835,17 +824,6 @@ export class AuthService {
       });
     }
 
-    if (user.provider !== AuthProvidersEnum.phone) {
-      this.logger.warn(`Phone login failed - wrong provider for user ${user.id}: ${user.provider}`);
-      // 返回通用错误信息，避免泄露用户注册渠道
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          credentials: 'incorrectPhoneOrPassword',
-        },
-      });
-    }
-
     if (!user.password) {
       this.logger.warn(`Phone login failed - no password set for user: ${user.id}`);
       throw new UnprocessableEntityException({
@@ -856,7 +834,7 @@ export class AuthService {
       });
     }
 
-    const isValidPassword = await comparePassword(loginDto.password, user.password);
+    const isValidPassword = await compareMd5Password(loginDto.password, user.password);
 
     if (!isValidPassword) {
       this.logger.warn(`Phone login failed - incorrect password for user: ${user.id}`);
@@ -987,7 +965,7 @@ export class AuthService {
       });
     }
 
-    const isValidOldPassword = await comparePassword(oldPassword, user.password);
+    const isValidOldPassword = await compareMd5Password(oldPassword, user.password);
 
     if (!isValidOldPassword) {
       this.logger.warn(`Password change failed - incorrect old password for user: ${userJwtPayload.id}`);

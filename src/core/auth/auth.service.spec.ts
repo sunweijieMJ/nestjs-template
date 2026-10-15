@@ -476,4 +476,66 @@ describe('AuthService', () => {
       expect(sessionService.deleteByUserId).toHaveBeenCalledWith({ userId: 1 });
     });
   });
+
+  describe('password login', () => {
+    const MD5 = 'e10adc3949ba59abbe56e057f20f883e';
+
+    let usersService: Mocked<Pick<UsersService, 'findByEmail' | 'findByPhone'>>;
+    let service: AuthService;
+
+    async function wechatUserWithPassword(): Promise<User> {
+      return {
+        id: 1,
+        email: 'a@example.com',
+        phone: '13800000000',
+        provider: AuthProvidersEnum.wechat,
+        password: await hashPassword(MD5),
+        role: { id: 2 },
+        status: { id: StatusEnum.active },
+      } as User;
+    }
+
+    beforeEach(async () => {
+      usersService = { findByEmail: vi.fn(), findByPhone: vi.fn() };
+      const sessionService = { create: vi.fn().mockResolvedValue({ id: 10 }) };
+      const tokenService = {
+        generateSessionHash: vi.fn().mockReturnValue('H'),
+        getTokensData: vi.fn().mockResolvedValue({ token: 't', refreshToken: 'r', tokenExpires: 1 }),
+      };
+
+      const moduleRef = await Test.createTestingModule({ providers: [AuthService] })
+        .useMocker((token) => {
+          if (token === UsersService) return usersService;
+          if (token === SessionService) return sessionService;
+          if (token === TokenService) return tokenService;
+          return {};
+        })
+        .compile();
+      service = moduleRef.get(AuthService);
+    });
+
+    it('should log in with email and password regardless of the sign-up provider', async () => {
+      usersService.findByEmail.mockResolvedValue(await wechatUserWithPassword());
+
+      await expect(service.validateLogin({ email: 'a@example.com', password: MD5 })).resolves.toMatchObject({
+        token: 't',
+      });
+    });
+
+    it('should log in with phone and password regardless of the sign-up provider', async () => {
+      usersService.findByPhone.mockResolvedValue(await wechatUserWithPassword());
+
+      await expect(service.validatePhoneLogin({ phone: '13800000000', password: MD5 })).resolves.toMatchObject({
+        token: 't',
+      });
+    });
+
+    it('should reject a user without a password', async () => {
+      usersService.findByPhone.mockResolvedValue({ ...(await wechatUserWithPassword()), password: undefined });
+
+      await expect(service.validatePhoneLogin({ phone: '13800000000', password: MD5 })).rejects.toBeInstanceOf(
+        UnprocessableEntityException,
+      );
+    });
+  });
 });

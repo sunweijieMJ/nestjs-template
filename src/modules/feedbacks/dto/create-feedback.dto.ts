@@ -30,6 +30,7 @@ export class CreateFeedbackDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  @MaxLength(1000, { each: true })
   @ArrayMaxSize(5)
   images?: string[];
 

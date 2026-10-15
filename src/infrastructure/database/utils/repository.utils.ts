@@ -19,7 +19,7 @@ export function buildPaginationParams(options: IPaginationOptions): { skip: numb
 }
 
 /**
- * Build order object for TypeORM find operations from sort options
+ * Build order object for TypeORM find operations; sort options come first, default order breaks ties
  */
 export function buildOrderParams<T extends SortOption>(
   sortOptions?: T[] | null,
@@ -29,13 +29,14 @@ export function buildOrderParams<T extends SortOption>(
     return defaultOrder ?? {};
   }
 
-  return sortOptions.reduce(
-    (accumulator, sort) => ({
-      ...accumulator,
-      [sort.orderBy]: sort.order,
-    }),
-    defaultOrder ?? {},
-  );
+  const order: Record<string, 'ASC' | 'DESC'> = {};
+  for (const sort of sortOptions) {
+    order[sort.orderBy] = sort.order;
+  }
+  for (const [key, direction] of Object.entries(defaultOrder ?? {})) {
+    order[key] ??= direction;
+  }
+  return order;
 }
 
 /**

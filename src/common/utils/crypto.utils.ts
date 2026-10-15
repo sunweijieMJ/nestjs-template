@@ -22,6 +22,19 @@ export async function comparePassword(plainPassword: string, hashedPassword: str
 }
 
 /**
+ * 验证小写 MD5 密码，同时兼容以大写 MD5 哈希保存的密码
+ * @param md5Password - 小写 MD5 密码
+ * @param hashedPassword - 加密后的密码哈希
+ * @returns 密码是否匹配
+ */
+export async function compareMd5Password(md5Password: string, hashedPassword: string): Promise<boolean> {
+  return (
+    (await bcrypt.compare(md5Password, hashedPassword)) ||
+    (await bcrypt.compare(md5Password.toUpperCase(), hashedPassword))
+  );
+}
+
+/**
  * 格式化私钥（添加 PEM 格式头尾）
  */
 export function formatPrivateKey(privateKey: string): string {

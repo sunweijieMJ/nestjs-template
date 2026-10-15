@@ -1,6 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { IsMd5Password } from '../../../common/validators/md5-password.validator';
+import { md5PasswordTransformer } from '../../../common/transformers/md5-password.transformer';
 
 export class AuthDeleteAccountDto {
   @ApiPropertyOptional({
@@ -10,6 +12,7 @@ export class AuthDeleteAccountDto {
   @IsOptional()
   @IsNotEmpty({ message: 'mustBeNotEmpty' })
   @IsMd5Password()
+  @Transform(md5PasswordTransformer)
   oldPassword?: string;
 
   @ApiPropertyOptional({

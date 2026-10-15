@@ -19,6 +19,7 @@ import { StatusDto } from '../../common/enums/statuses/status.dto';
 import { throwValidationError } from '../../common/utils/exceptions.util';
 import { maskEmail, maskPhone } from '../../common/utils/sanitize.utils';
 import { validateEmailUniqueness, validatePhoneUniqueness } from '../../common/utils/validation.utils';
+import { SessionService } from '../session/session.service';
 
 @Injectable()
 export class UsersService {
@@ -27,6 +28,7 @@ export class UsersService {
   constructor(
     private readonly usersRepository: UserRepository,
     private readonly filesService: FilesService,
+    private readonly sessionService: SessionService,
   ) {}
 
   /**
@@ -287,6 +289,20 @@ export class UsersService {
     });
 
     this.logger.log(`User updated successfully: ${id}`);
+    return user;
+  }
+
+  /**
+   * 管理员更新用户，修改密码时吊销该用户的全部会话
+   * @param id - 用户ID
+   * @param updateUserDto - 更新用户数据传输对象
+   * @returns 更新后的用户对象或 null
+   */
+  async updateByAdmin(id: User['id'], updateUserDto: UpdateUserDto): Promise<User | null> {
+    const user = await this.update(id, updateUserDto);
+    if (user && updateUserDto.password) {
+      await this.sessionService.deleteByUserId({ userId: id });
+    }
     return user;
   }
 

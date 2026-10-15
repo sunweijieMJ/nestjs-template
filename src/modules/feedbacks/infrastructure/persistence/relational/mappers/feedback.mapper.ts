@@ -8,7 +8,7 @@ export class FeedbackMapper {
     domain.userId = entity.userId;
     domain.type = entity.type;
     domain.content = entity.content;
-    domain.images = entity.images;
+    domain.images = entity.images ?? undefined;
     domain.contact = entity.contact;
     domain.status = entity.status;
     domain.reply = entity.reply;

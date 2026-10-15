@@ -16,6 +16,7 @@ import { FileDto } from '../../../modules/files/dto/file.dto';
 import { Transform, Type } from 'class-transformer';
 import { lowerCaseTransformer } from '../../../common/transformers/lower-case.transformer';
 import { IsMd5Password } from '../../../common/validators/md5-password.validator';
+import { md5PasswordTransformer } from '../../../common/transformers/md5-password.transformer';
 import { sanitizeTransformer } from '../../../common/transformers/sanitize.transformer';
 
 export class AuthUpdateDto {
@@ -71,6 +72,7 @@ export class AuthUpdateDto {
   @IsOptional()
   @IsNotEmpty()
   @IsMd5Password()
+  @Transform(md5PasswordTransformer)
   password?: string;
 
   @ApiPropertyOptional({
@@ -81,6 +83,7 @@ export class AuthUpdateDto {
   @IsOptional()
   @IsNotEmpty({ message: 'mustBeNotEmpty' })
   @IsMd5Password()
+  @Transform(md5PasswordTransformer)
   oldPassword?: string;
 
   @ApiPropertyOptional({

@@ -4,6 +4,7 @@ import { IsNotEmpty, IsOptional, IsString, Matches, Length, MaxLength } from 'cl
 import { Transform } from 'class-transformer';
 import { sanitizeTransformer } from '../../../common/transformers/sanitize.transformer';
 import { IsMd5Password } from '../../../common/validators/md5-password.validator';
+import { md5PasswordTransformer } from '../../../common/transformers/md5-password.transformer';
 
 export class AuthPhoneRegisterDto {
   @ApiProperty({ example: '13800138000', type: String })
@@ -25,6 +26,7 @@ export class AuthPhoneRegisterDto {
   @ApiProperty({ example: '5f4dcc3b5aa765d61d8327deb882cf99', description: 'MD5 encrypted password' })
   @IsNotEmpty()
   @IsMd5Password()
+  @Transform(md5PasswordTransformer)
   password: string;
 
   @ApiPropertyOptional({ example: 'Johnny', type: String })

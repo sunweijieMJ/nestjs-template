@@ -120,7 +120,7 @@ export class UsersController {
     required: true,
   })
   update(@Param('id', ParseIdPipe) id: number, @Body() updateProfileDto: UpdateUserDto): Promise<User | null> {
-    return this.usersService.update(id, updateProfileDto);
+    return this.usersService.updateByAdmin(id, updateProfileDto);
   }
 
   @ApiOperation({ operationId: 'deleteUser', summary: '删除用户（管理员）' })

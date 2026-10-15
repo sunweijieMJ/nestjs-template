@@ -60,6 +60,22 @@ describe('NotificationQueueProcessor', () => {
     expect(mailerService.sendMail).not.toHaveBeenCalled();
   });
 
+  it('should complete the job without resending when recording a sent email fails', async () => {
+    usersService.findById.mockResolvedValue({ id: 1, email: 'a@b.c' } as never);
+    notificationsService.recordChannelResult.mockRejectedValue(new Error('db down'));
+
+    await expect(processor.process(emailJob as Job)).resolves.toBeUndefined();
+    expect(mailerService.sendMail).toHaveBeenCalledTimes(1);
+  });
+
+  it('should still fail the job when recording an email failure fails', async () => {
+    usersService.findById.mockResolvedValue({ id: 1, email: 'a@b.c' } as never);
+    mailerService.sendMail.mockRejectedValue(new Error('smtp down'));
+    notificationsService.recordChannelResult.mockRejectedValue(new Error('db down'));
+
+    await expect(processor.process(emailJob as Job)).rejects.toThrow('smtp down');
+  });
+
   describe('send-wechat-subscribe', () => {
     const subscribeJob = {
       id: '2',

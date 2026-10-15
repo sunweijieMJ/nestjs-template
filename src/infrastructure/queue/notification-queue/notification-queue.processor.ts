@@ -102,14 +102,14 @@ export class NotificationQueueProcessor extends WorkerHost {
         text: content,
         html: `<p>${content}</p>`,
       });
-
-      await this.updateSentChannel(notificationId, NotificationChannel.EMAIL, true);
-      this.logger.log(`Email sent for notification ${notificationId}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      await this.updateSentChannel(notificationId, NotificationChannel.EMAIL, false, errorMessage);
+      await this.recordChannelResult(notificationId, NotificationChannel.EMAIL, false, errorMessage);
       throw error;
     }
+
+    await this.recordChannelResult(notificationId, NotificationChannel.EMAIL, true);
+    this.logger.log(`Email sent for notification ${notificationId}`);
   }
 
   private async processSmsJob(job: Job<SmsJobData>): Promise<void> {
@@ -129,14 +129,14 @@ export class NotificationQueueProcessor extends WorkerHost {
       if (!result.success) {
         throw new Error(result.message ?? 'SMS send failed');
       }
-
-      await this.updateSentChannel(notificationId, NotificationChannel.SMS, true);
-      this.logger.log(`SMS sent for notification ${notificationId} to ${user.phone}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      await this.updateSentChannel(notificationId, NotificationChannel.SMS, false, errorMessage);
+      await this.recordChannelResult(notificationId, NotificationChannel.SMS, false, errorMessage);
       throw error;
     }
+
+    await this.recordChannelResult(notificationId, NotificationChannel.SMS, true);
+    this.logger.log(`SMS sent for notification ${notificationId}`);
   }
 
   private async processWechatSubscribeJob(job: Job<WechatSubscribeJobData>): Promise<void> {
@@ -151,7 +151,7 @@ export class NotificationQueueProcessor extends WorkerHost {
 
     const user = await this.usersService.findById(userId);
     if (!user?.wechatOpenId) {
-      await this.updateSentChannel(notificationId, NotificationChannel.PUSH, false, 'User has no WeChat openId');
+      await this.recordChannelResult(notificationId, NotificationChannel.PUSH, false, 'User has no WeChat openId');
       return;
     }
 
@@ -160,28 +160,29 @@ export class NotificationQueueProcessor extends WorkerHost {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const failure = isUnrecoverableSubscribeError(error) ? new UnrecoverableError(errorMessage) : error;
-      try {
-        await this.updateSentChannel(notificationId, NotificationChannel.PUSH, false, errorMessage);
-      } catch (recordError) {
-        this.logger.warn(`Failed to record PUSH result for notification ${notificationId}: ${recordError}`);
-      }
+      await this.recordChannelResult(notificationId, NotificationChannel.PUSH, false, errorMessage);
       throw failure;
     }
 
-    await this.updateSentChannel(notificationId, NotificationChannel.PUSH, true);
+    await this.recordChannelResult(notificationId, NotificationChannel.PUSH, true);
     this.logger.log(`WeChat subscribe message sent for notification ${notificationId}`);
   }
 
-  private async updateSentChannel(
+  /** 记录渠道发送结果，记录失败只写日志不抛出 */
+  private async recordChannelResult(
     notificationId: number,
     channel: NotificationChannel,
     success: boolean,
     error?: string,
   ): Promise<void> {
-    await this.notificationsService.recordChannelResult(notificationId, channel, {
-      sent: success,
-      ...(error && { error }),
-    });
+    try {
+      await this.notificationsService.recordChannelResult(notificationId, channel, {
+        sent: success,
+        ...(error && { error }),
+      });
+    } catch (recordError) {
+      this.logger.warn(`Failed to record ${channel} result for notification ${notificationId}: ${recordError}`);
+    }
   }
 
   @OnWorkerEvent('completed')
