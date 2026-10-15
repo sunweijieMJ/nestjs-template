@@ -7,7 +7,7 @@ import {
   makeGaugeProvider,
 } from '@willsoto/nestjs-prometheus';
 import { AllConfigType } from '../../config/config.type';
-import { MetricsInterceptor } from './metrics.interceptor';
+import { MetricsMiddleware } from './metrics.middleware';
 import { MetricsController } from './metrics.controller';
 
 // Custom metrics providers
@@ -87,7 +87,7 @@ export class MetricsModule {
         cacheHitsTotal,
         cacheMissesTotal,
         queueJobsTotal,
-        MetricsInterceptor,
+        MetricsMiddleware,
       ],
       exports: [
         httpRequestsTotal,
@@ -97,7 +97,7 @@ export class MetricsModule {
         cacheHitsTotal,
         cacheMissesTotal,
         queueJobsTotal,
-        MetricsInterceptor,
+        MetricsMiddleware,
       ],
     };
   }

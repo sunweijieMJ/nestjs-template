@@ -2,7 +2,7 @@ import { PartialType, ApiPropertyOptional } from '@nestjs/swagger';
 import { CreateUserDto } from './create-user.dto';
 
 import { Transform, Type } from 'class-transformer';
-import { IsEmail, IsEnum, IsOptional } from 'class-validator';
+import { IsEmail, IsEnum, IsOptional, ValidateNested } from 'class-validator';
 import { FileDto } from '../../../modules/files/dto/file.dto';
 import { RoleDto } from '../../../common/enums/roles/role.dto';
 import { StatusDto } from '../../../common/enums/statuses/status.dto';
@@ -42,6 +42,8 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 
   @ApiPropertyOptional({ type: () => FileDto })
   @IsOptional()
+  @ValidateNested()
+  @Type(() => FileDto)
   override photo?: FileDto | null;
 
   @ApiPropertyOptional({ type: () => RoleDto })

@@ -6,6 +6,7 @@ import { randomInt } from 'crypto';
 import { AllConfigType } from '../../config/config.type';
 import { maskPhone } from '../../common/utils/sanitize.utils';
 import { AliyunSmsProvider } from './providers/aliyun-sms.provider';
+import { LockService } from '../../infrastructure/redis/lock.service';
 
 interface StoredCode {
   code: string;
@@ -45,6 +46,7 @@ export class SmsService {
     private readonly configService: ConfigService<AllConfigType>,
     private readonly aliyunSmsProvider: AliyunSmsProvider,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly lockService: LockService,
   ) {}
 
   /**
@@ -95,29 +97,46 @@ export class SmsService {
       }
     }
 
+    // 并发请求只放行一个，占位在重发间隔内有效
+    const sendLockKey = `sms:send:${type}:${phone}`;
+    const lockToken = await this.lockService.tryAcquire(sendLockKey, resendInterval * 1000);
+    if (!lockToken) {
+      return {
+        success: false,
+        message: 'Please wait before requesting a new code',
+        retryAfter: resendInterval,
+      };
+    }
+
     // Generate new code
     const code = this.generateCode();
     const codeExpires = this.configService.get('sms.codeExpires', { infer: true }) ?? 300;
 
-    // Send SMS
-    const result = await this.aliyunSmsProvider.sendSms(phone, { code });
+    try {
+      // Send SMS
+      const result = await this.aliyunSmsProvider.sendSms(phone, { code });
 
-    if (!result.success) {
-      this.logger.error(`Failed to send SMS to ${maskPhone(phone)}: ${result.message}`);
-      return {
-        success: false,
-        message: result.message ?? 'Failed to send verification code',
+      if (!result.success) {
+        await this.lockService.release(sendLockKey, lockToken);
+        this.logger.error(`Failed to send SMS to ${maskPhone(phone)}: ${result.message}`);
+        return {
+          success: false,
+          message: result.message ?? 'Failed to send verification code',
+        };
+      }
+
+      // Store code in cache
+      const storedCode: StoredCode = {
+        code,
+        attempts: 0,
+        createdAt: Date.now(),
       };
+
+      await this.cacheManager.set(cacheKey, storedCode, codeExpires * 1000);
+    } catch (error) {
+      await this.lockService.release(sendLockKey, lockToken);
+      throw error;
     }
-
-    // Store code in cache
-    const storedCode: StoredCode = {
-      code,
-      attempts: 0,
-      createdAt: Date.now(),
-    };
-
-    await this.cacheManager.set(cacheKey, storedCode, codeExpires * 1000);
 
     this.logger.log(`Verification code sent to ${maskPhone(phone)} for ${type}`);
 

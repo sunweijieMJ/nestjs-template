@@ -13,9 +13,11 @@ export class CreateShareDto {
   @ApiProperty({
     example: '123',
     description: 'ID of the target content',
+    maxLength: 100,
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   targetId: string;
 
   @ApiProperty({
@@ -43,16 +45,20 @@ export class CreateShareDto {
 
   @ApiPropertyOptional({
     example: 'https://example.com/images/product.jpg',
+    maxLength: 500,
   })
   @IsOptional()
   @IsUrl()
+  @MaxLength(500)
   image?: string;
 
   @ApiProperty({
     example: 'https://example.com/products/123',
+    maxLength: 1000,
   })
   @IsUrl()
   @IsNotEmpty()
+  @MaxLength(1000)
   url: string;
 
   @ApiPropertyOptional({

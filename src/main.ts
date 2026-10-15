@@ -12,7 +12,7 @@ import validationOptions from './common/validation-options';
 import { AllConfigType } from './config/config.type';
 import { ResolvePromisesInterceptor } from './common/serializer.interceptor';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
-import { MetricsInterceptor } from './infrastructure/metrics/metrics.interceptor';
+import { MetricsMiddleware } from './infrastructure/metrics/metrics.middleware';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
 async function bootstrap(): Promise<void> {
@@ -86,25 +86,17 @@ async function bootstrap(): Promise<void> {
   });
   app.useGlobalPipes(new ValidationPipe(validationOptions));
 
-  // Metrics interceptor (if enabled)
-  const metricsEnabled = configService.get('metrics.enabled', { infer: true });
+  if (configService.get('metrics.enabled', { infer: true })) {
+    const metricsMiddleware = app.get(MetricsMiddleware);
+    app.use(metricsMiddleware.use.bind(metricsMiddleware));
+  }
+
   const reflector = app.get(Reflector);
-  const interceptors = [
+  app.useGlobalInterceptors(
     new ResolvePromisesInterceptor(),
     new ClassSerializerInterceptor(reflector),
     new ResponseInterceptor(reflector), // Wrap responses in unified format
-  ];
-
-  if (metricsEnabled) {
-    try {
-      const metricsInterceptor = app.get(MetricsInterceptor);
-      interceptors.push(metricsInterceptor);
-    } catch {
-      // MetricsInterceptor not available, skip
-    }
-  }
-
-  app.useGlobalInterceptors(...interceptors);
+  );
 
   if (configService.get('app.swaggerEnabled', { infer: true })) {
     const options = new DocumentBuilder()

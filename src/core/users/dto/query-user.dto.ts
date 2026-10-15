@@ -1,9 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsIn, IsNumber, IsOptional, ValidateNested } from 'class-validator';
+import { IsArray, IsIn, IsInt, IsOptional, Min, ValidateNested } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { User } from '../domain/user';
 import { RoleDto } from '../../../common/enums/roles/role.dto';
 import { jsonQueryTransformer, sortOrderTransformer } from '../../../common/transformers/json-query.transformer';
+
+/** 空字符串视为未传 */
+const optionalNumberTransformer = ({ value }: { value: unknown }): unknown =>
+  value === '' || value === undefined || value === null ? undefined : Number(value);
 
 const SORTABLE_FIELDS: (keyof User)[] = ['id', 'email', 'firstName', 'lastName', 'createdAt', 'updatedAt'];
 
@@ -27,16 +31,18 @@ export class SortUserDto {
 }
 
 export class QueryUserDto {
-  @ApiPropertyOptional()
-  @Transform(({ value }) => (value ? Number(value) : 1))
-  @IsNumber()
+  @ApiPropertyOptional({ minimum: 1, default: 1 })
   @IsOptional()
+  @Transform(optionalNumberTransformer)
+  @IsInt()
+  @Min(1)
   page?: number;
 
-  @ApiPropertyOptional()
-  @Transform(({ value }) => (value ? Number(value) : 10))
-  @IsNumber()
+  @ApiPropertyOptional({ minimum: 1, default: 10 })
   @IsOptional()
+  @Transform(optionalNumberTransformer)
+  @IsInt()
+  @Min(1)
   limit?: number;
 
   @ApiPropertyOptional({ type: String })

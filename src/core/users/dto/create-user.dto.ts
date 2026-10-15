@@ -16,6 +16,7 @@ import {
   MaxLength,
   Max,
   Min,
+  ValidateNested,
 } from 'class-validator';
 import { FileDto } from '../../../modules/files/dto/file.dto';
 import { RoleDto } from '../../../common/enums/roles/role.dto';
@@ -83,6 +84,8 @@ export class CreateUserDto {
 
   @ApiPropertyOptional({ type: () => FileDto })
   @IsOptional()
+  @ValidateNested()
+  @Type(() => FileDto)
   photo?: FileDto | null;
 
   @ApiPropertyOptional({ type: RoleDto })

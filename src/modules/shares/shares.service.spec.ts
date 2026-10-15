@@ -5,9 +5,10 @@ import { validate } from 'class-validator';
 import { SharesService } from './shares.service';
 import { ShareRepository } from './infrastructure/persistence/share.repository';
 import { ShareLogRepository } from './infrastructure/persistence/share-log.repository';
-import { Share } from './domain/share';
+import { Share, ShareTargetType, SharePlatform } from './domain/share';
 import { ShareLogAction } from './domain/share-log';
 import { TrackShareDto } from './dto/track-share.dto';
+import { CreateShareDto } from './dto/create-share.dto';
 
 function buildShare(overrides: Partial<Share> = {}): Share {
   return { id: 7, userId: 1, shareCode: 'CODE', platform: 'WECHAT', ...overrides } as Share;
@@ -72,6 +73,38 @@ describe('TrackShareDto', () => {
   it('should accept small metadata', async () => {
     const dto = plainToInstance(TrackShareDto, { action: ShareLogAction.CLICK, metadata: { from: 'feed' } });
     await expect(validate(dto)).resolves.toHaveLength(0);
+  });
+
+  it('should reject a conversion reported by the client', async () => {
+    const dto = plainToInstance(TrackShareDto, { action: ShareLogAction.CONVERSION });
+    const [error] = await validate(dto);
+    expect(error.property).toBe('action');
+  });
+});
+
+describe('CreateShareDto', () => {
+  const valid = {
+    targetType: ShareTargetType.PRODUCT,
+    targetId: '123',
+    platform: SharePlatform.WECHAT,
+    title: 'title',
+    url: 'https://example.com/products/123',
+  };
+
+  it('should accept fields within the column lengths', async () => {
+    await expect(validate(plainToInstance(CreateShareDto, valid))).resolves.toHaveLength(0);
+  });
+
+  it('should reject fields longer than the column lengths', async () => {
+    const errors = await validate(
+      plainToInstance(CreateShareDto, {
+        ...valid,
+        targetId: 'x'.repeat(101),
+        image: `https://example.com/${'x'.repeat(500)}.jpg`,
+        url: `https://example.com/${'x'.repeat(1000)}`,
+      }),
+    );
+    expect(errors.map((error) => error.property).sort()).toEqual(['image', 'targetId', 'url']);
   });
 });
 

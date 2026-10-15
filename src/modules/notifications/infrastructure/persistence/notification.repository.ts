@@ -4,6 +4,7 @@ import { DeepPartial } from '../../../../common/types/deep-partial.type';
 import { IPaginationOptions } from '../../../../common/types/pagination-options';
 import { QueryNotificationDto } from '../../dto/query-notification.dto';
 
+/** 带 userId 的查询只返回投递渠道包含站内信的通知 */
 export abstract class NotificationRepository {
   abstract create(data: Omit<Notification, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>): Promise<Notification>;
 

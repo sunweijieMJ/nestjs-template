@@ -27,6 +27,7 @@ import { SessionModule } from './core/session/session.module';
 import { LoggerModule } from 'nestjs-pino';
 import { randomUUID } from 'crypto';
 import { CacheModule } from './infrastructure/cache/cache.module';
+import { RedisModule } from './infrastructure/redis/redis.module';
 import { HealthModule } from './infrastructure/health/health.module';
 import { QueueModule } from './infrastructure/queue/queue.module';
 import { ThrottlerModule } from './infrastructure/throttler/throttler.module';
@@ -164,6 +165,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     MailModule,
     HomeModule,
     CacheModule,
+    RedisModule,
     HealthModule,
     QueueModule,
     ThrottlerModule,

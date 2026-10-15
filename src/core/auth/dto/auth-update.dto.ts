@@ -10,6 +10,7 @@ import {
   IsDateString,
   IsString,
   Length,
+  ValidateNested,
 } from 'class-validator';
 import { FileDto } from '../../../modules/files/dto/file.dto';
 import { Transform, Type } from 'class-transformer';
@@ -20,6 +21,8 @@ import { sanitizeTransformer } from '../../../common/transformers/sanitize.trans
 export class AuthUpdateDto {
   @ApiPropertyOptional({ type: () => FileDto })
   @IsOptional()
+  @ValidateNested()
+  @Type(() => FileDto)
   photo?: FileDto | null;
 
   @ApiPropertyOptional({ example: 'John' })

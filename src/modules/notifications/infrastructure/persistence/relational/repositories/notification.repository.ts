@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere, Raw, Repository } from 'typeorm';
 import { NotificationEntity } from '../entities/notification.entity';
 import { NotificationRepository } from '../../notification.repository';
 import { NotificationMapper } from '../mappers/notification.mapper';
@@ -9,6 +9,10 @@ import { NullableType } from '../../../../../../common/types/nullable.type';
 import { QueryNotificationDto } from '../../../../dto/query-notification.dto';
 import { IPaginationOptions } from '../../../../../../common/types/pagination-options';
 import { DeepPartial } from '../../../../../../common/types/deep-partial.type';
+
+/** 用户可见的通知：投递渠道包含站内信 */
+const inAppChannel = (): FindOptionsWhere<NotificationEntity>['channels'] =>
+  Raw((alias) => `${alias} @> :inAppChannel`, { inAppChannel: JSON.stringify([NotificationChannel.IN_APP]) });
 
 @Injectable()
 export class NotificationRelationalRepository implements NotificationRepository {
@@ -49,6 +53,7 @@ export class NotificationRelationalRepository implements NotificationRepository 
   }): Promise<Notification[]> {
     const where: FindOptionsWhere<NotificationEntity> = {
       userId: Number(userId),
+      channels: inAppChannel(),
     };
 
     if (filterOptions?.category) {
@@ -82,7 +87,7 @@ export class NotificationRelationalRepository implements NotificationRepository 
 
   async findByIdAndUserId(id: Notification['id'], userId: Notification['userId']): Promise<NullableType<Notification>> {
     const entity = await this.notificationRepository.findOne({
-      where: { id: Number(id), userId: Number(userId) },
+      where: { id: Number(id), userId: Number(userId), channels: inAppChannel() },
     });
     return entity ? NotificationMapper.toDomain(entity) : null;
   }
@@ -109,7 +114,7 @@ export class NotificationRelationalRepository implements NotificationRepository 
 
   async markAsRead(id: Notification['id'], userId: Notification['userId']): Promise<Notification | null> {
     const entity = await this.notificationRepository.findOne({
-      where: { id: Number(id), userId: Number(userId) },
+      where: { id: Number(id), userId: Number(userId), channels: inAppChannel() },
     });
 
     if (!entity) {
@@ -126,14 +131,14 @@ export class NotificationRelationalRepository implements NotificationRepository 
 
   async markAllAsRead(userId: Notification['userId']): Promise<void> {
     await this.notificationRepository.update(
-      { userId: Number(userId), isRead: false },
+      { userId: Number(userId), isRead: false, channels: inAppChannel() },
       { isRead: true, readAt: new Date() },
     );
   }
 
   async countUnreadByUserId(userId: Notification['userId']): Promise<number> {
     return this.notificationRepository.count({
-      where: { userId: Number(userId), isRead: false },
+      where: { userId: Number(userId), isRead: false, channels: inAppChannel() },
     });
   }
 
@@ -145,6 +150,9 @@ export class NotificationRelationalRepository implements NotificationRepository 
       .where('notification.userId = :userId', { userId: Number(userId) })
       .andWhere('notification.isRead = :isRead', { isRead: false })
       .andWhere('notification.deletedAt IS NULL')
+      .andWhere('notification.channels @> :inAppChannel', {
+        inAppChannel: JSON.stringify([NotificationChannel.IN_APP]),
+      })
       .groupBy('notification.category')
       .getRawMany();
 
@@ -159,6 +167,7 @@ export class NotificationRelationalRepository implements NotificationRepository 
   async countByUserId(userId: Notification['userId'], filterOptions?: QueryNotificationDto | null): Promise<number> {
     const where: FindOptionsWhere<NotificationEntity> = {
       userId: Number(userId),
+      channels: inAppChannel(),
     };
 
     if (filterOptions?.category) {

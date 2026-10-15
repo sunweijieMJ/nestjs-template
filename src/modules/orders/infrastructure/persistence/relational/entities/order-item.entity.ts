@@ -8,6 +8,7 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
+import type { Relation } from 'typeorm';
 import { EntityRelationalHelper } from '../../../../../../common/relational-entity-helper';
 import { OrderEntity } from './order.entity';
 
@@ -22,7 +23,7 @@ export class OrderItemEntity extends EntityRelationalHelper {
 
   @ManyToOne(() => OrderEntity, (order) => order.items, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'orderId', foreignKeyConstraintName: 'FK_order_item_order' })
-  order: OrderEntity;
+  order: Relation<OrderEntity>;
 
   @Index('IDX_order_item_productId')
   @Column({ type: 'varchar', length: 100 })
