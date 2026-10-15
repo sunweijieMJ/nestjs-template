@@ -5,6 +5,26 @@ import validateConfig from '../../../common/validate-config';
 import { AuthConfig } from './auth-config.type';
 import ms from 'ms';
 
+const PRODUCTION_SECRET_MIN_LENGTH = 32;
+
+const SECRET_NAMES = [
+  'AUTH_JWT_SECRET',
+  'AUTH_REFRESH_SECRET',
+  'AUTH_FORGOT_SECRET',
+  'AUTH_CONFIRM_EMAIL_SECRET',
+] as const;
+
+/** 生产环境要求密钥足够长且互不相同 */
+function validateProductionSecrets(): void {
+  const short = SECRET_NAMES.filter((name) => (process.env[name] ?? '').length < PRODUCTION_SECRET_MIN_LENGTH);
+  if (short.length > 0) {
+    throw new Error(`${short.join(', ')} must be at least ${PRODUCTION_SECRET_MIN_LENGTH} characters in production`);
+  }
+  if (new Set(SECRET_NAMES.map((name) => process.env[name])).size !== SECRET_NAMES.length) {
+    throw new Error(`${SECRET_NAMES.join(', ')} must be different from each other in production`);
+  }
+}
+
 class EnvironmentVariablesValidator {
   @IsString()
   AUTH_JWT_SECRET: string;
@@ -33,6 +53,9 @@ class EnvironmentVariablesValidator {
 
 export default registerAs<AuthConfig>('auth', () => {
   validateConfig(process.env, EnvironmentVariablesValidator);
+  if (process.env.NODE_ENV === 'production') {
+    validateProductionSecrets();
+  }
 
   return {
     secret: process.env.AUTH_JWT_SECRET,

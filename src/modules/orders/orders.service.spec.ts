@@ -13,6 +13,7 @@ function buildOrder(overrides: Partial<Order> = {}): Order {
     orderNo: 'ORD1',
     status: OrderStatus.UNPAID,
     totalAmount: 9900,
+    refundedAmount: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -30,6 +31,7 @@ describe('OrdersService', () => {
       | 'closeIfUnpaid'
       | 'closeExpiredUnpaid'
       | 'createWithItems'
+      | 'recordRefund'
     >
   >;
   let productCatalog: Mocked<ProductCatalog>;
@@ -45,6 +47,7 @@ describe('OrdersService', () => {
       closeIfUnpaid: vi.fn(),
       closeExpiredUnpaid: vi.fn(),
       createWithItems: vi.fn(),
+      recordRefund: vi.fn(),
     };
     productCatalog = { findByIds: vi.fn() };
     paymentTradeCloser = { closeTrades: vi.fn() };
@@ -207,6 +210,30 @@ describe('OrdersService', () => {
     it('should throw 422 when the order is unpaid', async () => {
       orderRepository.findByOrderNo.mockResolvedValue(buildOrder());
       await expect(service.findRefundableOrder('ORD1', 100)).rejects.toBeInstanceOf(UnprocessableEntityException);
+    });
+
+    it('should throw 422 when the refund exceeds the amount not yet refunded', async () => {
+      orderRepository.findByOrderNo.mockResolvedValue(
+        buildOrder({ status: OrderStatus.PAID, paidAmount: 9900, refundedAmount: 5000 }),
+      );
+      await expect(service.findRefundableOrder('ORD1', 4901)).rejects.toBeInstanceOf(UnprocessableEntityException);
+    });
+
+    it('should return the order when the refund equals the amount not yet refunded', async () => {
+      orderRepository.findByOrderNo.mockResolvedValue(
+        buildOrder({ status: OrderStatus.PAID, paidAmount: 9900, refundedAmount: 5000 }),
+      );
+      await expect(service.findRefundableOrder('ORD1', 4900)).resolves.toMatchObject({ orderNo: 'ORD1' });
+    });
+  });
+
+  describe('recordRefund', () => {
+    it('should record the refund by order number and refund number', async () => {
+      orderRepository.recordRefund.mockResolvedValue(true);
+
+      await service.recordRefund(buildOrder({ status: OrderStatus.PAID }), 'R1', 100);
+
+      expect(orderRepository.recordRefund).toHaveBeenCalledWith('ORD1', 'R1', 100);
     });
   });
 

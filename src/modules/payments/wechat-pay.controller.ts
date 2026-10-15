@@ -179,7 +179,7 @@ export class WechatPayController {
       throw new BadRequestException({ code: 'FAIL', message: '解密失败' });
     }
 
-    const { out_trade_no, trade_state, refund_status, transaction_id, amount } = transaction;
+    const { out_trade_no, trade_state, refund_status, out_refund_no, transaction_id, amount } = transaction;
     try {
       if (trade_state === 'SUCCESS' && out_trade_no) {
         await this.paymentsService.confirmPaid({
@@ -188,11 +188,12 @@ export class WechatPayController {
           transactionId: transaction_id ?? '',
           paidAmount: amount?.total ?? 0,
         });
-      } else if (refund_status === 'SUCCESS' && out_trade_no) {
+      } else if (refund_status === 'SUCCESS' && out_trade_no && out_refund_no) {
         await this.paymentsService.confirmRefunded({
           channel: PaymentChannel.WECHAT,
           orderNo: out_trade_no,
           transactionId: transaction_id ?? '',
+          refundNo: out_refund_no,
           refundAmount: amount?.refund ?? 0,
         });
       }

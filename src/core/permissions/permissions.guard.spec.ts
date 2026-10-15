@@ -58,6 +58,12 @@ describe('admin endpoints', () => {
     ['UsersController.remove', UsersController.prototype, 'remove', Permission.USER_DELETE],
     ['WechatPayController.refund', WechatPayController.prototype, 'refund', Permission.PAYMENT_REFUND],
     ['AlipayController.refund', AlipayController.prototype, 'refund', Permission.PAYMENT_REFUND],
+    [
+      'AppConfigController.findByKeyAsAdmin',
+      AppConfigController.prototype,
+      'findByKeyAsAdmin',
+      Permission.SYSTEM_CONFIG,
+    ],
     ['AppConfigController.upsert', AppConfigController.prototype, 'upsert', Permission.SYSTEM_CONFIG],
   ])('should require a permission on %s', (_label, target, method, permission) => {
     expect(required(target, method)).toEqual([permission]);

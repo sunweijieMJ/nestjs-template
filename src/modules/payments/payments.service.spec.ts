@@ -17,6 +17,7 @@ function buildOrder(overrides: Partial<Order> = {}): Order {
     transactionId: 'T1',
     totalAmount: 9900,
     paidAmount: 9900,
+    refundedAmount: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -25,7 +26,7 @@ function buildOrder(overrides: Partial<Order> = {}): Order {
 
 describe('PaymentsService', () => {
   let ordersService: Mocked<
-    Pick<OrdersService, 'updatePaymentStatus' | 'findRefundableOrder' | 'markRefunded' | 'findByOrderNo'>
+    Pick<OrdersService, 'updatePaymentStatus' | 'findRefundableOrder' | 'recordRefund' | 'findByOrderNo'>
   >;
   let gateway: Mocked<PaymentGateway>;
   let notificationsService: Mocked<Pick<NotificationsService, 'notifyPaymentSucceeded'>>;
@@ -35,7 +36,7 @@ describe('PaymentsService', () => {
     ordersService = {
       updatePaymentStatus: vi.fn(),
       findRefundableOrder: vi.fn(),
-      markRefunded: vi.fn(),
+      recordRefund: vi.fn(),
       findByOrderNo: vi.fn(),
     };
     gateway = {
@@ -114,64 +115,61 @@ describe('PaymentsService', () => {
   });
 
   describe('confirmRefunded', () => {
-    const notification = { channel: PaymentChannel.ALIPAY, orderNo: 'ORD1', transactionId: 'T1', refundAmount: 9900 };
+    const notification = {
+      channel: PaymentChannel.ALIPAY,
+      orderNo: 'ORD1',
+      transactionId: 'T1',
+      refundNo: 'R1',
+      refundAmount: 100,
+    };
 
-    it('should mark the order refunded when its transaction is fully refunded', async () => {
+    it('should record the refund of the order transaction', async () => {
       const order = buildOrder();
       ordersService.findByOrderNo.mockResolvedValue(order);
 
       await service.confirmRefunded(notification);
 
-      expect(ordersService.markRefunded).toHaveBeenCalledWith(order);
+      expect(ordersService.recordRefund).toHaveBeenCalledWith(order, 'R1', 100);
     });
 
-    it('should keep the order paid when another transaction of the order is refunded', async () => {
+    it('should not record a refund of another transaction of the order', async () => {
       ordersService.findByOrderNo.mockResolvedValue(buildOrder());
 
       await service.confirmRefunded({ ...notification, transactionId: 'T2' });
 
-      expect(ordersService.markRefunded).not.toHaveBeenCalled();
+      expect(ordersService.recordRefund).not.toHaveBeenCalled();
     });
 
-    it('should keep the order paid after a partial refund', async () => {
-      ordersService.findByOrderNo.mockResolvedValue(buildOrder());
+    it('should not record a refund when the order is not paid', async () => {
+      ordersService.findByOrderNo.mockResolvedValue(buildOrder({ status: OrderStatus.REFUNDED }));
 
-      await service.confirmRefunded({ ...notification, refundAmount: 100 });
+      await service.confirmRefunded(notification);
 
-      expect(ordersService.markRefunded).not.toHaveBeenCalled();
+      expect(ordersService.recordRefund).not.toHaveBeenCalled();
     });
   });
 
   describe('refund', () => {
     const params = { orderNo: 'ORD1', refundNo: 'R1', refundAmount: 9900 };
 
-    it('should mark the order refunded after a completed full refund', async () => {
+    it('should record a completed refund on the order', async () => {
       const order = buildOrder();
       ordersService.findRefundableOrder.mockResolvedValue(order);
       gateway.refund.mockResolvedValue({ succeeded: true, raw: {} });
 
-      await service.refund(PaymentChannel.ALIPAY, params);
-
-      expect(gateway.refund).toHaveBeenCalledWith(expect.objectContaining({ refundNo: 'R1', totalAmount: 9900 }));
-      expect(ordersService.markRefunded).toHaveBeenCalledWith(order);
-    });
-
-    it('should keep the order paid after a partial refund', async () => {
-      ordersService.findRefundableOrder.mockResolvedValue(buildOrder());
-      gateway.refund.mockResolvedValue({ succeeded: true, raw: {} });
-
       await service.refund(PaymentChannel.ALIPAY, { ...params, refundAmount: 100 });
 
-      expect(ordersService.markRefunded).not.toHaveBeenCalled();
+      expect(gateway.refund).toHaveBeenCalledWith(expect.objectContaining({ refundNo: 'R1', totalAmount: 9900 }));
+      expect(ordersService.recordRefund).toHaveBeenCalledWith(order, 'R1', 100);
     });
 
-    it('should keep the order paid while the refund is still processing', async () => {
+    it('should not record the refund while it is still processing', async () => {
       ordersService.findRefundableOrder.mockResolvedValue(buildOrder());
       gateway.refund.mockResolvedValue({ succeeded: false, raw: {} });
 
       await service.refund(PaymentChannel.ALIPAY, params);
 
-      expect(ordersService.markRefunded).not.toHaveBeenCalled();
+      expect(ordersService.recordRefund).not.toHaveBeenCalled();
     });
 
     it.each([0, 99.5])('should throw 422 without refunding when the amount is %p fen', async (refundAmount) => {

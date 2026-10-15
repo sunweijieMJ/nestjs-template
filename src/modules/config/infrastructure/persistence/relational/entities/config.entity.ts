@@ -9,6 +9,9 @@ export class ConfigEntity extends EntityRelationalHelper {
   @Column({ type: 'jsonb' })
   value: Record<string, unknown>;
 
+  @Column({ type: 'boolean', default: false })
+  isPublic: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

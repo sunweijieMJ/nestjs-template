@@ -47,6 +47,9 @@ export abstract class OrderRepository {
     },
   ): Promise<{ updated: boolean; order: NullableType<Order> }>;
 
+  /** 已支付订单累加一笔退款，累计金额达到实付金额时置为已退款；同一退款单号只累加一次，返回是否累加 */
+  abstract recordRefund(orderNo: string, refundNo: string, refundAmount: number): Promise<boolean>;
+
   abstract closeIfUnpaid(id: Order['id'], userId: Order['userId']): Promise<boolean>;
 
   /** 关闭支付截止时间早于 now 的待支付订单，返回关闭数量 */

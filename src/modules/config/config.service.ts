@@ -8,6 +8,15 @@ export class AppConfigService {
 
   constructor(private readonly configRepository: AppConfigRepository) {}
 
+  /** 查询公开配置，非公开配置视为不存在 */
+  async findPublicByKey(key: string): Promise<Config> {
+    const config = await this.findByKey(key);
+    if (!config.isPublic) {
+      throw new NotFoundException({ error: 'configNotFound' });
+    }
+    return config;
+  }
+
   async findByKey(key: string): Promise<Config> {
     const config = await this.configRepository.findByKey(key);
     if (!config) {
@@ -16,8 +25,8 @@ export class AppConfigService {
     return config;
   }
 
-  async upsert(key: string, value: Record<string, unknown>): Promise<Config> {
+  async upsert(key: string, value: Record<string, unknown>, isPublic?: boolean): Promise<Config> {
     this.logger.log(`Upsert config: ${key}`);
-    return this.configRepository.upsert(key, value);
+    return this.configRepository.upsert(key, value, isPublic);
   }
 }

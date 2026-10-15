@@ -1,4 +1,5 @@
 import type { Mock } from 'vitest';
+import { generateKeyPairSync, createSign } from 'crypto';
 import { UnprocessableEntityException } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import { AlipayService } from './alipay.service';
@@ -48,6 +49,36 @@ function createService(refundResponse: Record<string, string>): AlipayService {
 }
 
 describe('AlipayService', () => {
+  describe('verifyNotify', () => {
+    const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+    const service = new AlipayService({
+      appId: 'app',
+      alipayPublicKey: publicKey.export({ type: 'spki', format: 'pem' }).toString(),
+    } as unknown as ConfigType<typeof alipayConfig>);
+
+    function signedNotify(params: Record<string, string>): Record<string, string> {
+      const content = Object.keys(params)
+        .sort()
+        .map((key) => `${key}=${params[key]}`)
+        .join('&');
+      const sign = createSign('RSA-SHA256').update(content, 'utf8').sign(privateKey, 'base64');
+      return { ...params, sign, sign_type: 'RSA2' };
+    }
+
+    it('should accept a correctly signed notification of this app', () => {
+      expect(service.verifyNotify(signedNotify({ app_id: 'app', out_trade_no: 'ORD1' }))).toBe(true);
+    });
+
+    it('should reject a correctly signed notification of another app', () => {
+      expect(service.verifyNotify(signedNotify({ app_id: 'other', out_trade_no: 'ORD1' }))).toBe(false);
+    });
+
+    it('should reject a notification whose content does not match the signature', () => {
+      const notify = signedNotify({ app_id: 'app', out_trade_no: 'ORD1' });
+      expect(service.verifyNotify({ ...notify, out_trade_no: 'ORD2' })).toBe(false);
+    });
+  });
+
   describe('refund', () => {
     const params = { outTradeNo: 'ORD1', refundAmount: '99.00', outRequestNo: 'ORD1_R1' };
 

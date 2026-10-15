@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Not, Repository } from 'typeorm';
+import { FindOptionsWhere, In, IsNull, Not, Repository } from 'typeorm';
 import { SessionEntity } from '../entities/session.entity';
 import { NullableType } from '../../../../../../common/types/nullable.type';
 
@@ -47,20 +47,32 @@ export class SessionRelationalRepository implements SessionRepository {
     });
   }
 
-  async deleteByUserId(conditions: { userId: User['id'] }): Promise<void> {
-    await this.sessionRepository.softDelete({
+  async deleteByUserId(conditions: { userId: User['id'] }): Promise<Session['id'][]> {
+    return this.softDeleteWhere({
       user: {
         id: Number(conditions.userId),
       },
     });
   }
 
-  async deleteByUserIdWithExclude(conditions: { userId: User['id']; excludeSessionId: Session['id'] }): Promise<void> {
-    await this.sessionRepository.softDelete({
+  async deleteByUserIdWithExclude(conditions: {
+    userId: User['id'];
+    excludeSessionId: Session['id'];
+  }): Promise<Session['id'][]> {
+    return this.softDeleteWhere({
       user: {
         id: Number(conditions.userId),
       },
       id: Not(Number(conditions.excludeSessionId)),
     });
+  }
+
+  private async softDeleteWhere(where: FindOptionsWhere<SessionEntity>): Promise<Session['id'][]> {
+    const sessions = await this.sessionRepository.find({ select: { id: true }, where });
+    const ids = sessions.map((session) => session.id);
+    if (ids.length > 0) {
+      await this.sessionRepository.softDelete({ id: In(ids) });
+    }
+    return ids;
   }
 }

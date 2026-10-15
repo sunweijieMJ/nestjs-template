@@ -83,6 +83,7 @@ export class OrdersService {
             orderNo,
             status: OrderStatus.UNPAID,
             totalAmount,
+            refundedAmount: 0,
             expiresAt: new Date(Date.now() + ORDER_PAYMENT_TIMEOUT_MS),
             metadata: createOrderDto.metadata,
           },
@@ -164,7 +165,7 @@ export class OrdersService {
   }
 
   /**
-   * 查询可退款的订单：已支付且退款金额（分）不超过实付金额
+   * 查询可退款的订单：已支付且退款金额（分）不超过剩余可退金额
    */
   async findRefundableOrder(orderNo: string, refundAmount: number): Promise<Order> {
     const order = await this.orderRepository.findByOrderNo(orderNo);
@@ -185,7 +186,7 @@ export class OrdersService {
       });
     }
 
-    if (refundAmount > (order.paidAmount ?? order.totalAmount)) {
+    if (refundAmount > (order.paidAmount ?? order.totalAmount) - order.refundedAmount) {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
@@ -198,14 +199,13 @@ export class OrdersService {
   }
 
   /**
-   * 标记订单已全额退款
+   * 记录一笔已完成的退款，累计退款金额达到实付金额时订单变为已退款
    */
-  async markRefunded(order: Order): Promise<void> {
-    await this.orderRepository.update(order.id, {
-      status: OrderStatus.REFUNDED,
-      refundedAt: new Date(),
-    });
-    this.logger.log(`Order ${order.orderNo} marked as REFUNDED`);
+  async recordRefund(order: Order, refundNo: string, refundAmount: number): Promise<void> {
+    const recorded = await this.orderRepository.recordRefund(order.orderNo, refundNo, refundAmount);
+    if (recorded) {
+      this.logger.log(`Order ${order.orderNo} refund ${refundNo} recorded: ${refundAmount}`);
+    }
   }
 
   async updatePaymentStatus(

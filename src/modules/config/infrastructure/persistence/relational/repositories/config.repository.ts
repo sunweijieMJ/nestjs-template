@@ -19,12 +19,13 @@ export class ConfigRelationalRepository implements AppConfigRepository {
     return entity ? ConfigMapper.toDomain(entity) : null;
   }
 
-  async upsert(key: string, value: Record<string, unknown>): Promise<Config> {
+  async upsert(key: string, value: Record<string, unknown>, isPublic?: boolean): Promise<Config> {
     let entity = await this.repo.findOne({ where: { key } });
     if (entity) {
       entity.value = value;
+      entity.isPublic = isPublic ?? entity.isPublic;
     } else {
-      entity = this.repo.create({ key, value });
+      entity = this.repo.create(ConfigMapper.toPersistence({ key, value, isPublic: isPublic ?? false }));
     }
     const saved = await this.repo.save(entity);
     return ConfigMapper.toDomain(saved);

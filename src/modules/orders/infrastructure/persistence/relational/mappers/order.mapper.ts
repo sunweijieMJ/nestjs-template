@@ -12,6 +12,7 @@ export class OrderMapper {
     domainEntity.transactionId = raw.transactionId ?? undefined;
     domainEntity.totalAmount = raw.totalAmount;
     domainEntity.paidAmount = raw.paidAmount ?? undefined;
+    domainEntity.refundedAmount = raw.refundedAmount;
     domainEntity.paidAt = raw.paidAt ?? undefined;
     domainEntity.refundedAt = raw.refundedAt ?? undefined;
     domainEntity.closedAt = raw.closedAt ?? undefined;
@@ -32,6 +33,7 @@ export class OrderMapper {
     persistenceEntity.transactionId = domainEntity.transactionId ?? null;
     persistenceEntity.totalAmount = domainEntity.totalAmount;
     persistenceEntity.paidAmount = domainEntity.paidAmount ?? null;
+    persistenceEntity.refundedAmount = domainEntity.refundedAmount;
     persistenceEntity.paidAt = domainEntity.paidAt ?? null;
     persistenceEntity.refundedAt = domainEntity.refundedAt ?? null;
     persistenceEntity.closedAt = domainEntity.closedAt ?? null;

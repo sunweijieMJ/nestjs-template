@@ -24,7 +24,7 @@
 - [ ] **软删除**：使用 `softDelete` 而非 `delete`
 - [ ] **索引**：频繁查询字段添加了 `@Index()`
 - [ ] **关联**：eager loading 适当使用，避免 N+1 查询
-- [ ] **事务**：多表操作使用 TransactionService
+- [ ] **事务**：多表写入在仓储实现内用 `manager.transaction` 包住
 
 ## 代码质量
 

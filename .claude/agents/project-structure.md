@@ -102,8 +102,7 @@ infrastructure/
 │   ├── typeorm-config.service.ts   # TypeORM 配置服务
 │   ├── config/                     # 数据库配置
 │   ├── migrations/                 # 迁移文件
-│   ├── seeds/                      # 种子数据
-│   └── transaction/                # 事务管理
+│   └── seeds/                      # 种子数据
 ├── cache/                          # 缓存模块
 ├── queue/                          # BullMQ 队列
 │   ├── mail-queue/                 # 邮件队列

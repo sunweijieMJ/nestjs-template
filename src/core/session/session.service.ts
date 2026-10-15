@@ -71,35 +71,37 @@ export class SessionService {
 
   /** 删除会话并清除令牌校验缓存，使该会话的访问令牌立即失效 */
   async revoke(id: Session['id']): Promise<void> {
-    await this.sessionRepository.deleteById(id);
-    await this.cacheManager.del(sessionAuthCacheKey(id));
+    await this.deleteById(id);
     this.logger.debug(`Session revoked: ${id}`);
   }
 
   /**
-   * 根据ID删除会话
+   * 根据ID删除会话并清除令牌校验缓存
    * @param id - 会话ID
    */
   async deleteById(id: Session['id']): Promise<void> {
     await this.sessionRepository.deleteById(id);
+    await this.forgetSessions([id]);
     this.logger.debug(`Session deleted: ${id}`);
   }
 
   /**
-   * 删除用户的所有会话
+   * 删除用户的所有会话并清除令牌校验缓存
    * @param conditions - 包含用户ID的条件对象
    */
   async deleteByUserId(conditions: { userId: User['id'] }): Promise<void> {
-    await this.sessionRepository.deleteByUserId(conditions);
+    const ids = await this.sessionRepository.deleteByUserId(conditions);
+    await this.forgetSessions(ids);
     this.logger.debug(`All sessions deleted for user: ${conditions.userId}`);
   }
 
   /**
-   * 删除用户的所有会话（排除指定会话）
+   * 删除用户的所有会话（排除指定会话）并清除令牌校验缓存
    * @param conditions - 包含用户ID和排除会话ID的条件对象
    */
   async deleteByUserIdWithExclude(conditions: { userId: User['id']; excludeSessionId: Session['id'] }): Promise<void> {
-    await this.sessionRepository.deleteByUserIdWithExclude(conditions);
+    const ids = await this.sessionRepository.deleteByUserIdWithExclude(conditions);
+    await this.forgetSessions(ids);
     this.logger.debug(`Sessions deleted for user: ${conditions.userId}, excluding: ${conditions.excludeSessionId}`);
   }
 }

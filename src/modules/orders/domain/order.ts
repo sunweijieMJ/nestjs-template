@@ -40,6 +40,9 @@ export class Order {
   @ApiPropertyOptional({ example: 9900, description: 'Paid amount in cents' })
   paidAmount?: number;
 
+  @ApiProperty({ example: 0, description: 'Refunded amount in cents' })
+  refundedAmount: number;
+
   @ApiPropertyOptional()
   paidAt?: Date;
 

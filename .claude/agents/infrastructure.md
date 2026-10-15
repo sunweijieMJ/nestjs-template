@@ -4,19 +4,18 @@
 
 ## 基础设施模块一览
 
-| 模块        | 位置                                       | 用途                 |
-| ----------- | ------------------------------------------ | -------------------- |
-| Database    | `src/infrastructure/database/`             | TypeORM + PostgreSQL |
-| Cache       | `src/infrastructure/cache/`                | Redis 缓存           |
-| Queue       | `src/infrastructure/queue/`                | BullMQ 任务队列      |
-| Redis       | `src/infrastructure/redis/`                | Redis 连接配置       |
-| Logger      | `src/infrastructure/logger/`               | Pino 结构化日志      |
-| Health      | `src/infrastructure/health/`               | 健康检查端点         |
-| Metrics     | `src/infrastructure/metrics/`              | Prometheus 指标      |
-| Audit       | `src/infrastructure/audit/`                | 审计日志             |
-| Throttler   | `src/infrastructure/throttler/`            | 请求限流             |
-| Scheduler   | `src/infrastructure/scheduler/`            | 定时任务             |
-| Transaction | `src/infrastructure/database/transaction/` | 事务管理             |
+| 模块      | 位置                            | 用途                 |
+| --------- | ------------------------------- | -------------------- |
+| Database  | `src/infrastructure/database/`  | TypeORM + PostgreSQL |
+| Cache     | `src/infrastructure/cache/`     | Redis 缓存           |
+| Queue     | `src/infrastructure/queue/`     | BullMQ 任务队列      |
+| Redis     | `src/infrastructure/redis/`     | Redis 连接配置       |
+| Logger    | `src/infrastructure/logger/`    | Pino 结构化日志      |
+| Health    | `src/infrastructure/health/`    | 健康检查端点         |
+| Metrics   | `src/infrastructure/metrics/`   | Prometheus 指标      |
+| Audit     | `src/infrastructure/audit/`     | 审计日志             |
+| Throttler | `src/infrastructure/throttler/` | 请求限流             |
+| Scheduler | `src/infrastructure/scheduler/` | 定时任务             |
 
 ## 缓存模块
 

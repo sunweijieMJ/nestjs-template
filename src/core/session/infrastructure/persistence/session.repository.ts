@@ -12,10 +12,12 @@ export abstract class SessionRepository {
 
   abstract deleteById(id: Session['id']): Promise<void>;
 
-  abstract deleteByUserId(conditions: { userId: User['id'] }): Promise<void>;
+  /** 返回被删除的会话 ID */
+  abstract deleteByUserId(conditions: { userId: User['id'] }): Promise<Session['id'][]>;
 
+  /** 返回被删除的会话 ID */
   abstract deleteByUserIdWithExclude(conditions: {
     userId: User['id'];
     excludeSessionId: Session['id'];
-  }): Promise<void>;
+  }): Promise<Session['id'][]>;
 }

@@ -11,6 +11,11 @@ import { AlipayService } from '../../integrations/alipay/alipay.service';
 import { AuthProvidersEnum } from './auth-providers.enum';
 import { NotificationsService } from '../../modules/notifications/notifications.service';
 import { User } from '../users/domain/user';
+import { MailService } from '../../integrations/mail/mail.service';
+import { SmsCodeType, SmsService } from '../../integrations/sms/sms.service';
+import { hashPassword } from '../../common/utils/crypto.utils';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 describe('AuthService', () => {
   describe('refreshToken', () => {
@@ -318,6 +323,157 @@ describe('AuthService', () => {
       usersService.findByAlipayOpenId.mockResolvedValue(buildUser({ status: { id: 99 } }));
 
       await expect(service.alipayLogin(dto)).rejects.toBeInstanceOf(UnprocessableEntityException);
+    });
+  });
+
+  describe('identity verification', () => {
+    const OLD_PASSWORD = '5f4dcc3b5aa765d61d8327deb882cf99';
+    const PHONE = '13800000000';
+    const payload = { id: 1, role: { id: 2 }, sessionId: 10, iat: 0, exp: 0 };
+
+    let usersService: Mocked<Pick<UsersService, 'findById' | 'findByEmail' | 'update' | 'remove'>>;
+    let smsService: Mocked<Pick<SmsService, 'verifyCode'>>;
+    let mailService: Mocked<Pick<MailService, 'confirmNewEmail'>>;
+    let sessionService: Mocked<Pick<SessionService, 'deleteByUserId'>>;
+    let service: AuthService;
+
+    function rejectionErrors(error: unknown): unknown {
+      expect(error).toBeInstanceOf(UnprocessableEntityException);
+      return ((error as UnprocessableEntityException).getResponse() as { errors: unknown }).errors;
+    }
+
+    async function useUser(overrides: Partial<User>): Promise<void> {
+      usersService.findById.mockResolvedValue({ id: 1, email: 'old@example.com', ...overrides } as User);
+    }
+
+    beforeEach(async () => {
+      usersService = {
+        findById: vi.fn(),
+        findByEmail: vi.fn().mockResolvedValue(null),
+        update: vi.fn(),
+        remove: vi.fn(),
+      };
+      smsService = { verifyCode: vi.fn().mockResolvedValue({ success: true }) };
+      mailService = { confirmNewEmail: vi.fn() };
+      sessionService = { deleteByUserId: vi.fn() };
+      const jwtService = { signAsync: vi.fn().mockResolvedValue('hash') };
+      const configService = { getOrThrow: vi.fn().mockReturnValue('value') };
+
+      const moduleRef = await Test.createTestingModule({ providers: [AuthService] })
+        .useMocker((token) => {
+          if (token === UsersService) return usersService;
+          if (token === SmsService) return smsService;
+          if (token === MailService) return mailService;
+          if (token === SessionService) return sessionService;
+          if (token === JwtService) return jwtService;
+          if (token === ConfigService) return configService;
+          return {};
+        })
+        .compile();
+      service = moduleRef.get(AuthService);
+    });
+
+    it('should require the current password to change the email of a user with a password', async () => {
+      await useUser({ password: await hashPassword(OLD_PASSWORD) });
+
+      const error = await service.update(payload, { email: 'new@example.com' }).catch((e: unknown) => e);
+
+      expect(rejectionErrors(error)).toEqual({ oldPassword: 'missingOldPassword' });
+      expect(mailService.confirmNewEmail).not.toHaveBeenCalled();
+    });
+
+    it('should reject an incorrect current password when changing the email', async () => {
+      await useUser({ password: await hashPassword(OLD_PASSWORD) });
+
+      const error = await service
+        .update(payload, { email: 'new@example.com', oldPassword: 'e10adc3949ba59abbe56e057f20f883e' })
+        .catch((e: unknown) => e);
+
+      expect(rejectionErrors(error)).toEqual({ oldPassword: 'incorrectOldPassword' });
+      expect(mailService.confirmNewEmail).not.toHaveBeenCalled();
+    });
+
+    it('should send the confirmation mail after the current password is verified', async () => {
+      await useUser({ password: await hashPassword(OLD_PASSWORD) });
+
+      await service.update(payload, { email: 'new@example.com', oldPassword: OLD_PASSWORD });
+
+      expect(mailService.confirmNewEmail).toHaveBeenCalledWith(expect.objectContaining({ to: 'new@example.com' }));
+    });
+
+    it('should require an SMS code to change the email of a user without a password', async () => {
+      await useUser({ password: undefined, phone: PHONE });
+
+      const error = await service.update(payload, { email: 'new@example.com' }).catch((e: unknown) => e);
+
+      expect(rejectionErrors(error)).toEqual({ smsCode: 'missingSmsCode' });
+    });
+
+    it('should verify the SMS code against the bound phone when changing the email', async () => {
+      await useUser({ password: undefined, phone: PHONE });
+
+      await service.update(payload, { email: 'new@example.com', smsCode: '123456' });
+
+      expect(smsService.verifyCode).toHaveBeenCalledWith(PHONE, '123456', SmsCodeType.VERIFY_IDENTITY);
+      expect(mailService.confirmNewEmail).toHaveBeenCalled();
+    });
+
+    it('should check the email is available before consuming the SMS code', async () => {
+      await useUser({ password: undefined, phone: PHONE });
+      usersService.findByEmail.mockResolvedValue({ id: 2 } as User);
+
+      const error = await service
+        .update(payload, { email: 'new@example.com', smsCode: '123456' })
+        .catch((e: unknown) => e);
+
+      expect(rejectionErrors(error)).toEqual({ email: 'emailExists' });
+      expect(smsService.verifyCode).not.toHaveBeenCalled();
+    });
+
+    it('should reject changing the email of a user without a password or phone', async () => {
+      await useUser({ password: undefined, phone: null });
+
+      const error = await service.update(payload, { email: 'new@example.com' }).catch((e: unknown) => e);
+
+      expect(rejectionErrors(error)).toEqual({ phone: 'phoneRequiredForVerification' });
+      expect(mailService.confirmNewEmail).not.toHaveBeenCalled();
+    });
+
+    it('should reject deleting the account of a user without a password or phone', async () => {
+      await useUser({ password: undefined, phone: null });
+
+      const error = await service.softDelete({ id: 1 }, {}).catch((e: unknown) => e);
+
+      expect(rejectionErrors(error)).toEqual({ phone: 'phoneRequiredForVerification' });
+      expect(usersService.remove).not.toHaveBeenCalled();
+    });
+
+    it('should reject an invalid SMS code when deleting the account', async () => {
+      await useUser({ password: undefined, phone: PHONE });
+      smsService.verifyCode.mockResolvedValue({ success: false, message: 'invalid' });
+
+      const error = await service.softDelete({ id: 1 }, { smsCode: '000000' }).catch((e: unknown) => e);
+
+      expect(rejectionErrors(error)).toEqual({ code: 'invalidCode' });
+      expect(usersService.remove).not.toHaveBeenCalled();
+    });
+
+    it('should require the current password to delete the account of a user with a password', async () => {
+      await useUser({ password: await hashPassword(OLD_PASSWORD) });
+
+      const error = await service.softDelete({ id: 1 }, {}).catch((e: unknown) => e);
+
+      expect(rejectionErrors(error)).toEqual({ oldPassword: 'missingOldPassword' });
+      expect(usersService.remove).not.toHaveBeenCalled();
+    });
+
+    it('should delete the account and its sessions after the current password is verified', async () => {
+      await useUser({ password: await hashPassword(OLD_PASSWORD) });
+
+      await service.softDelete({ id: 1 }, { oldPassword: OLD_PASSWORD });
+
+      expect(usersService.remove).toHaveBeenCalledWith(1);
+      expect(sessionService.deleteByUserId).toHaveBeenCalledWith({ userId: 1 });
     });
   });
 });

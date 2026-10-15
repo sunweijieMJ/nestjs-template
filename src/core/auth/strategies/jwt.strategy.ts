@@ -41,7 +41,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException();
     }
 
-    // 先查缓存，避免每次请求都查库；会话被删除后最多 30 秒内失效
+    // 先查缓存，避免每次请求都查库；用户状态和角色变更最多 30 秒后生效
     const cacheKey = sessionAuthCacheKey(payload.sessionId);
     const cached = await this.cacheManager.get<{ statusId?: number; roleId?: number | null }>(cacheKey);
 

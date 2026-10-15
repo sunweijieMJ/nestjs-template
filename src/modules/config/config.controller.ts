@@ -18,12 +18,23 @@ import { Permission } from '../../core/permissions/permission.enum';
 export class AppConfigController {
   constructor(private readonly appConfigService: AppConfigService) {}
 
-  @ApiOperation({ operationId: 'getConfig', summary: '获取配置' })
+  @ApiOperation({ operationId: 'getConfig', summary: '获取公开配置' })
   @ApiOkResponse({ type: Config })
   @ApiParam({ name: 'key', type: String, example: 'app.theme' })
   @Get(':key')
   @HttpCode(HttpStatus.OK)
   findByKey(@Param('key') key: string): Promise<Config> {
+    return this.appConfigService.findPublicByKey(key);
+  }
+
+  @ApiOperation({ operationId: 'getConfigAsAdmin', summary: '获取配置（管理员）' })
+  @RequirePermissions(Permission.SYSTEM_CONFIG)
+  @UseGuards(PermissionsGuard)
+  @ApiOkResponse({ type: Config })
+  @ApiParam({ name: 'key', type: String, example: 'app.theme' })
+  @Get('admin/:key')
+  @HttpCode(HttpStatus.OK)
+  findByKeyAsAdmin(@Param('key') key: string): Promise<Config> {
     return this.appConfigService.findByKey(key);
   }
 
@@ -35,6 +46,6 @@ export class AppConfigController {
   @Put(':key')
   @HttpCode(HttpStatus.OK)
   upsert(@Param('key') key: string, @Body() dto: UpsertConfigDto): Promise<Config> {
-    return this.appConfigService.upsert(key, dto.value);
+    return this.appConfigService.upsert(key, dto.value, dto.isPublic);
   }
 }

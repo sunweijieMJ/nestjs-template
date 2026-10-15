@@ -12,6 +12,7 @@ import { JwtService, TokenExpiredError, JsonWebTokenError } from '@nestjs/jwt';
 import { hashPassword, comparePassword } from '../../common/utils/crypto.utils';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthUpdateDto } from './dto/auth-update.dto';
+import { AuthDeleteAccountDto } from './dto/auth-delete-account.dto';
 import { AuthProvidersEnum } from './auth-providers.enum';
 import { AuthRegisterLoginDto } from './dto/auth-register-login.dto';
 import { NullableType } from '../../common/types/nullable.type';
@@ -579,6 +580,8 @@ export class AuthService {
         });
       }
 
+      await this.verifyIdentity(currentUser, userDto);
+
       const hash = await this.jwtService.signAsync(
         {
           confirmEmailUserId: currentUser.id,
@@ -606,6 +609,7 @@ export class AuthService {
     }
 
     delete userDto.oldPassword;
+    delete userDto.smsCode;
 
     await this.usersService.update(userJwtPayload.id, userDto);
 
@@ -676,12 +680,69 @@ export class AuthService {
   /**
    * 软删除用户账户
    * @param user - 包含用户ID的对象
+   * @param dto - 身份验证凭据
    */
-  async softDelete(user: Pick<User, 'id'>): Promise<void> {
+  async softDelete(user: Pick<User, 'id'>, dto: AuthDeleteAccountDto): Promise<void> {
     this.logger.log(`User account deletion requested: ${user.id}`);
+    const currentUser = await this.usersService.findById(user.id);
+    if (!currentUser) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          user: 'userNotFound',
+        },
+      });
+    }
+    await this.verifyIdentity(currentUser, dto);
+
     await this.usersService.remove(user.id);
     await this.sessionService.deleteByUserId({ userId: user.id });
     this.logger.log(`User account deleted: ${user.id}`);
+  }
+
+  /**
+   * 敏感操作前验证身份：有密码的用户校验当前密码，没有密码但绑定了手机号的用户校验 verify_identity 短信验证码
+   * @throws UnprocessableEntityException 当凭据缺失或错误，或用户既没有密码也没有手机号时
+   */
+  private async verifyIdentity(user: User, credentials: { oldPassword?: string; smsCode?: string }): Promise<void> {
+    if (user.password) {
+      if (!credentials.oldPassword) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            oldPassword: 'missingOldPassword',
+          },
+        });
+      }
+      if (!(await comparePassword(credentials.oldPassword, user.password))) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            oldPassword: 'incorrectOldPassword',
+          },
+        });
+      }
+      return;
+    }
+
+    if (!user.phone) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          phone: 'phoneRequiredForVerification',
+        },
+      });
+    }
+
+    if (!credentials.smsCode) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          smsCode: 'missingSmsCode',
+        },
+      });
+    }
+    await verifySmsCode(this.smsService, user.phone, credentials.smsCode, SmsCodeType.VERIFY_IDENTITY, this.logger);
   }
 
   /**
@@ -726,8 +787,8 @@ export class AuthService {
       }
     }
 
-    // For login/reset_password type, check if phone exists
-    if (type === SmsCodeType.LOGIN || type === SmsCodeType.RESET_PASSWORD) {
+    // For login/reset_password/verify_identity type, check if phone exists
+    if (type === SmsCodeType.LOGIN || type === SmsCodeType.RESET_PASSWORD || type === SmsCodeType.VERIFY_IDENTITY) {
       const user = await this.usersService.findByPhone(phone);
       if (!user) {
         this.logger.warn(`Phone not found: ${maskPhone(phone)}`);

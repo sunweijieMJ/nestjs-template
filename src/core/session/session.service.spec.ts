@@ -4,12 +4,19 @@ import { SessionService, sessionAuthCacheKey } from './session.service';
 import { SessionRepository } from './infrastructure/persistence/session.repository';
 
 describe('SessionService', () => {
-  let repository: Mocked<Pick<SessionRepository, 'rotateHash' | 'deleteById'>>;
+  let repository: Mocked<
+    Pick<SessionRepository, 'rotateHash' | 'deleteById' | 'deleteByUserId' | 'deleteByUserIdWithExclude'>
+  >;
   let cache: Map<string, unknown>;
   let service: SessionService;
 
   beforeEach(() => {
-    repository = { rotateHash: vi.fn(), deleteById: vi.fn() };
+    repository = {
+      rotateHash: vi.fn(),
+      deleteById: vi.fn(),
+      deleteByUserId: vi.fn(),
+      deleteByUserIdWithExclude: vi.fn(),
+    };
     cache = new Map();
     const cacheManager = {
       get: async (key: string) => cache.get(key),
@@ -52,5 +59,38 @@ describe('SessionService', () => {
 
     expect(repository.deleteById).toHaveBeenCalledWith(10);
     expect(cache.has(sessionAuthCacheKey(10))).toBe(false);
+  });
+
+  it('should clear the token validation cache when deleting a session', async () => {
+    cache.set(sessionAuthCacheKey(10), { statusId: 1 });
+
+    await service.deleteById(10);
+
+    expect(repository.deleteById).toHaveBeenCalledWith(10);
+    expect(cache.has(sessionAuthCacheKey(10))).toBe(false);
+  });
+
+  it('should clear the token validation cache of the other deleted sessions', async () => {
+    cache.set(sessionAuthCacheKey(10), { statusId: 1 });
+    cache.set(sessionAuthCacheKey(11), { statusId: 1 });
+    cache.set(sessionAuthCacheKey(12), { statusId: 1 });
+    repository.deleteByUserIdWithExclude.mockResolvedValue([11, 12]);
+
+    await service.deleteByUserIdWithExclude({ userId: 1, excludeSessionId: 10 });
+
+    expect(cache.has(sessionAuthCacheKey(10))).toBe(true);
+    expect(cache.has(sessionAuthCacheKey(11))).toBe(false);
+    expect(cache.has(sessionAuthCacheKey(12))).toBe(false);
+  });
+
+  it('should clear the token validation cache of every deleted session of the user', async () => {
+    cache.set(sessionAuthCacheKey(10), { statusId: 1 });
+    cache.set(sessionAuthCacheKey(11), { statusId: 1 });
+    repository.deleteByUserId.mockResolvedValue([10, 11]);
+
+    await service.deleteByUserId({ userId: 1 });
+
+    expect(repository.deleteByUserId).toHaveBeenCalledWith({ userId: 1 });
+    expect(cache.size).toBe(0);
   });
 });

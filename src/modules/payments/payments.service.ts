@@ -60,12 +60,13 @@ export class PaymentsService {
   }
 
   /**
-   * 处理渠道退款成功通知；只有退回订单当前那笔交易且金额等于实付金额时标记订单为已退款
+   * 处理渠道退款成功通知；只记录退回订单当前那笔交易的退款
    */
   async confirmRefunded(params: {
     channel: PaymentChannel;
     orderNo: string;
     transactionId: string;
+    refundNo: string;
     /** 本次退款金额（分） */
     refundAmount: number;
   }): Promise<void> {
@@ -78,13 +79,11 @@ export class PaymentsService {
       return;
     }
 
-    if (params.refundAmount === (order.paidAmount ?? order.totalAmount)) {
-      await this.ordersService.markRefunded(order);
-    }
+    await this.ordersService.recordRefund(order, params.refundNo, params.refundAmount);
   }
 
   /**
-   * 对已支付订单发起退款，退款金额等于实付金额且渠道已完成退款时标记订单为已退款
+   * 对已支付订单发起退款，渠道已完成退款时记录到订单
    */
   async refund(
     channel: PaymentChannel,
@@ -118,8 +117,8 @@ export class PaymentsService {
       reason: params.reason,
     });
 
-    if (result.succeeded && params.refundAmount === paidAmount) {
-      await this.ordersService.markRefunded(order);
+    if (result.succeeded) {
+      await this.ordersService.recordRefund(order, params.refundNo, params.refundAmount);
     }
     return result;
   }

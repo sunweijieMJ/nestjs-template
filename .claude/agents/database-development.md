@@ -188,21 +188,17 @@ pnpm seed:run:prod         # 生产环境种子数据
 
 ## 事务管理
 
+多表写入放在仓储实现内部，用 `manager.transaction` 包住，对 Service 暴露为一个仓储方法：
+
 ```typescript
-// src/modules/orders/orders.service.ts
-import { TransactionService } from '../../infrastructure/database/transaction/transaction.service';
-
-@Injectable()
-export class OrderService {
-  constructor(private readonly transactionService: TransactionService) {}
-
-  async createOrder(dto: CreateOrderDto): Promise<Order> {
-    return this.transactionService.run(async (manager) => {
-      // 在同一事务中执行多个操作
-      const order = await manager.save(OrderEntity, orderData);
-      await manager.save(OrderItemEntity, items);
-      return OrderMapper.toDomain(order);
-    });
-  }
+// src/modules/orders/infrastructure/persistence/relational/repositories/order.repository.ts
+async createWithItems(data, items): Promise<Order & { items: OrderItem[] }> {
+  return this.orderRepository.manager.transaction(async (manager) => {
+    const orderEntity = await manager.save(manager.create(OrderEntity, OrderMapper.toPersistence(data)));
+    const itemEntities = await manager.save(
+      items.map((item) => manager.create(OrderItemEntity, OrderItemMapper.toPersistence({ ...item, orderId: orderEntity.id }))),
+    );
+    return { ...OrderMapper.toDomain(orderEntity), items: itemEntities.map(OrderItemMapper.toDomain) };
+  });
 }
 ```

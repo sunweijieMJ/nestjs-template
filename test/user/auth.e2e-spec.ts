@@ -215,9 +215,21 @@ describe('Auth Module', () => {
         .send({ email: newUserEmail, password: newUserPassword })
         .then(({ body }) => body.data.token);
 
-      await request(app).delete('/api/v1/auth/me').auth(newUserApiToken, {
-        type: 'bearer',
-      });
+      await request(app)
+        .delete('/api/v1/auth/me')
+        .auth(newUserApiToken, {
+          type: 'bearer',
+        })
+        .send()
+        .expect(422);
+
+      await request(app)
+        .delete('/api/v1/auth/me')
+        .auth(newUserApiToken, {
+          type: 'bearer',
+        })
+        .send({ oldPassword: newUserPassword })
+        .expect(200);
 
       return request(app)
         .post('/api/v1/auth/email/login')

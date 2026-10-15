@@ -19,6 +19,7 @@ import { AuthForgotPasswordDto } from './dto/auth-forgot-password.dto';
 import { AuthConfirmEmailDto } from './dto/auth-confirm-email.dto';
 import { AuthResetPasswordDto } from './dto/auth-reset-password.dto';
 import { AuthUpdateDto } from './dto/auth-update.dto';
+import { AuthDeleteAccountDto } from './dto/auth-delete-account.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthRegisterLoginDto } from './dto/auth-register-login.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
@@ -162,8 +163,8 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ operationId: 'deleteCurrentUser', summary: '删除当前用户账号' })
   @HttpCode(HttpStatus.OK)
-  public async delete(@Request() request: RequestWithUser): Promise<void> {
-    return this.service.softDelete(request.user);
+  public async delete(@Request() request: RequestWithUser, @Body() dto: AuthDeleteAccountDto): Promise<void> {
+    return this.service.softDelete(request.user, dto);
   }
 
   @Post('phone/send-code')

@@ -48,6 +48,12 @@ export class OrderEntity extends EntityRelationalHelper {
   @Column({ type: 'int', nullable: true })
   paidAmount: number | null;
 
+  @Column({ type: 'int', default: 0 })
+  refundedAmount: number;
+
+  @Column({ type: 'varchar', length: 64, array: true, default: () => "'{}'" })
+  refundNos: string[];
+
   @Column({ type: 'timestamp', nullable: true })
   paidAt: Date | null;
 

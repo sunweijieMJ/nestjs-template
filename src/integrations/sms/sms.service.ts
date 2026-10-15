@@ -18,6 +18,7 @@ export enum SmsCodeType {
   REGISTER = 'register',
   RESET_PASSWORD = 'reset_password',
   CHANGE_PHONE = 'change_phone',
+  VERIFY_IDENTITY = 'verify_identity',
 }
 
 export interface SendCodeResult {

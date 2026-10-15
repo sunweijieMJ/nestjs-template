@@ -357,13 +357,13 @@ export class AlipayService {
   }
 
   /**
-   * 验证支付宝回调签名
+   * 验证支付宝回调签名，并要求回调属于本应用
    */
   verifyNotify(params: Record<string, string>): boolean {
     const sign = params.sign;
     const signType = params.sign_type;
 
-    if (!sign || !signType) {
+    if (!sign || !signType || params.app_id !== this.config.appId) {
       return false;
     }
 

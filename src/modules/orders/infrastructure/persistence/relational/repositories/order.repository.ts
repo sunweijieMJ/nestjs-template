@@ -180,6 +180,34 @@ export class OrderRelationalRepository implements OrderRepository {
     };
   }
 
+  async recordRefund(orderNo: string, refundNo: string, refundAmount: number): Promise<boolean> {
+    const fullyRefunded = '"refundedAmount" + :refundAmount >= COALESCE("paidAmount", "totalAmount")';
+    const result = await this.orderRepository
+      .createQueryBuilder()
+      .update(OrderEntity)
+      .set({
+        refundedAmount: () => '"refundedAmount" + :refundAmount',
+        refundNos: () => 'array_append("refundNos", CAST(:refundNo AS varchar))',
+        status: () => `CASE WHEN ${fullyRefunded} THEN :refunded ELSE "status" END`,
+        refundedAt: () => `CASE WHEN ${fullyRefunded} THEN :now ELSE "refundedAt" END`,
+      })
+      .where('"orderNo" = :orderNo')
+      .andWhere('"status" = :paid')
+      .andWhere('"deletedAt" IS NULL')
+      .andWhere('NOT (CAST(:refundNo AS varchar) = ANY("refundNos"))')
+      .setParameters({
+        orderNo,
+        refundNo,
+        refundAmount,
+        paid: OrderStatus.PAID,
+        refunded: OrderStatus.REFUNDED,
+        now: new Date(),
+      })
+      .execute();
+
+    return (result.affected ?? 0) > 0;
+  }
+
   async closeExpiredUnpaid(now: Date): Promise<number> {
     const result = await this.orderRepository.update(
       { status: OrderStatus.UNPAID, expiresAt: LessThan(now), deletedAt: IsNull() },

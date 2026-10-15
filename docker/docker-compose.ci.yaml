@@ -13,6 +13,10 @@ services:
     environment:
       ENV_MODE: ci
       NODE_ENV: production
+      AUTH_JWT_SECRET: ci_jwt_secret_0123456789abcdefghijklmnop
+      AUTH_REFRESH_SECRET: ci_refresh_secret_0123456789abcdefghijklmnop
+      AUTH_FORGOT_SECRET: ci_forgot_secret_0123456789abcdefghijklmnop
+      AUTH_CONFIRM_EMAIL_SECRET: ci_confirm_email_secret_0123456789abcdefghijklmnop
     depends_on:
       maildev:
         condition: service_started

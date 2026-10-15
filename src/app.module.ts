@@ -37,7 +37,6 @@ import { RegionsModule } from './modules/regions/regions.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
 import { FeedbacksModule } from './modules/feedbacks/feedbacks.module';
 import { PermissionsModule } from './core/permissions/permissions.module';
-import { TransactionModule } from './infrastructure/database/transaction/transaction.module';
 import { AuditModule } from './infrastructure/audit/audit.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { NotificationQueueModule } from './infrastructure/queue/notification-queue/notification-queue.module';
@@ -177,7 +176,6 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     PermissionsModule,
     WechatModule,
     AlipayModule,
-    TransactionModule,
     AuditModule,
     OrdersModule,
     PaymentsModule,
