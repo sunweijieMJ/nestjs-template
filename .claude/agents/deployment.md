@@ -113,7 +113,7 @@ pnpm seed:run:prod
 ### 健康检查
 
 ```
-GET /health       # 总体状态
+GET /health       # 总体状态（需监控令牌，同 METRICS_TOKEN）
 GET /health/live  # 存活探针
 GET /health/ready # 就绪探针
 ```

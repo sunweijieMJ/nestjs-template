@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { CreateNotificationDto } from './dto/create-notification.dto';
@@ -20,7 +20,7 @@ export class NotificationsService {
   constructor(
     private readonly notificationRepository: NotificationRepository,
     private readonly settingRepository: NotificationSettingRepository,
-    @InjectQueue(NOTIFICATION_QUEUE) private readonly notificationQueue: Queue,
+    @Optional() @InjectQueue(NOTIFICATION_QUEUE) private readonly notificationQueue?: Queue,
   ) {}
 
   async recordChannelResult(
@@ -118,22 +118,30 @@ export class NotificationsService {
   }
 
   private async queueExternalNotifications(notification: Notification): Promise<void> {
+    const queue = this.notificationQueue;
+    if (!queue) {
+      if (notification.channels.some((channel) => channel !== NotificationChannel.IN_APP)) {
+        this.logger.warn(`Redis disabled, external channels skipped for notification ${notification.id}`);
+      }
+      return;
+    }
+
     for (const channel of notification.channels) {
       if (channel === NotificationChannel.EMAIL) {
-        await this.notificationQueue.add('send-email', {
+        await queue.add('send-email', {
           notificationId: notification.id,
           userId: notification.userId,
           title: notification.title,
           content: notification.content,
         });
       } else if (channel === NotificationChannel.SMS) {
-        await this.notificationQueue.add('send-sms', {
+        await queue.add('send-sms', {
           notificationId: notification.id,
           userId: notification.userId,
           content: notification.content,
         });
       } else if (channel === NotificationChannel.PUSH && notification.metadata?.wechatSubscribe) {
-        await this.notificationQueue.add('send-wechat-subscribe', {
+        await queue.add('send-wechat-subscribe', {
           notificationId: notification.id,
           userId: notification.userId,
           payload: notification.metadata.wechatSubscribe,

@@ -33,11 +33,14 @@ class EnvironmentVariablesValidator {
   REDIS_DB: number;
 }
 
+/** 是否启用 Redis，供配置加载前就需要判断的模块注册使用 */
+export const isRedisEnabled = (env: NodeJS.ProcessEnv): boolean => env.REDIS_ENABLED === 'true';
+
 export default registerAs<RedisConfig>('redis', () => {
   validateConfig(process.env, EnvironmentVariablesValidator);
 
   return {
-    enabled: process.env.REDIS_ENABLED === 'true',
+    enabled: isRedisEnabled(process.env),
     host: process.env.REDIS_HOST ?? 'localhost',
     port: process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT, 10) : 6379,
     password: process.env.REDIS_PASSWORD ?? undefined,

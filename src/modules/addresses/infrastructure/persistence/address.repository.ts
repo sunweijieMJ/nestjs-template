@@ -7,6 +7,12 @@ import { FilterAddressDto, SortAddressDto } from '../../dto/query-address.dto';
 export abstract class AddressRepository {
   abstract create(data: Omit<Address, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>): Promise<Address>;
 
+  /** 用户现有地址数小于 limit 时创建，返回新地址与创建前的数量；达到上限时返回 null */
+  abstract createWithinLimit(
+    data: Omit<Address, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>,
+    limit: number,
+  ): Promise<{ address: Address; previousCount: number } | null>;
+
   abstract findManyWithPagination({
     userId,
     filterOptions,

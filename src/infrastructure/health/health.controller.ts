@@ -1,5 +1,5 @@
-import { Controller, Get } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   HealthCheck,
   HealthCheckService,
@@ -14,6 +14,7 @@ import { RedisHealthIndicator } from './indicators/redis.health';
 import { WechatApiHealthIndicator } from './indicators/wechat-api.health';
 import { AlipayApiHealthIndicator } from './indicators/alipay-api.health';
 import { DatabasePoolHealthIndicator } from './indicators/database-pool.health';
+import { MonitoringTokenGuard } from '../../common/guards/monitoring-token.guard';
 
 @ApiTags('Health')
 @Controller({
@@ -34,7 +35,9 @@ export class HealthController {
   ) {}
 
   @Get()
-  @ApiOperation({ operationId: 'healthCheck', summary: '健康检查' })
+  @ApiBearerAuth()
+  @UseGuards(MonitoringTokenGuard)
+  @ApiOperation({ operationId: 'healthCheck', summary: '完整健康检查（需监控令牌）' })
   @HealthCheck()
   async check(): Promise<import('@nestjs/terminus').HealthCheckResult> {
     const redisEnabled = this.configService.get('redis.enabled', { infer: true });

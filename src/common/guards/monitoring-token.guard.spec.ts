@@ -1,9 +1,9 @@
 import { ExecutionContext } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { MetricsTokenGuard } from './metrics-token.guard';
+import { MonitoringTokenGuard } from './monitoring-token.guard';
 
-function guard(config: Record<string, string | undefined>): MetricsTokenGuard {
-  return new MetricsTokenGuard({ get: (key: string) => config[key] } as unknown as ConfigService);
+function guard(config: Record<string, string | undefined>): MonitoringTokenGuard {
+  return new MonitoringTokenGuard({ get: (key: string) => config[key] } as unknown as ConfigService);
 }
 
 function context(authorization?: string): ExecutionContext {
@@ -12,7 +12,7 @@ function context(authorization?: string): ExecutionContext {
   } as unknown as ExecutionContext;
 }
 
-describe('MetricsTokenGuard', () => {
+describe('MonitoringTokenGuard', () => {
   const TOKEN = '0123456789abcdef';
 
   it('should require the configured bearer token', () => {

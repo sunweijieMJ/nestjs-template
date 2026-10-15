@@ -74,6 +74,19 @@ describe('NotificationsService', () => {
       expect(queue.add).not.toHaveBeenCalled();
     });
 
+    it('should still save the in-app notification when the queue is unavailable', async () => {
+      const serviceWithoutQueue = new NotificationsService(
+        notificationRepository as unknown as NotificationRepository,
+        settingRepository as unknown as NotificationSettingRepository,
+      );
+
+      await expect(serviceWithoutQueue.notifyPaymentSucceeded(params)).resolves.toBeUndefined();
+
+      expect(notificationRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ channels: [NotificationChannel.IN_APP, NotificationChannel.PUSH] }),
+      );
+    });
+
     it('should not throw when the paid time is invalid', async () => {
       await expect(service.notifyPaymentSucceeded({ ...params, paidAt: new Date('invalid') })).resolves.toBeUndefined();
       expect(notificationRepository.create).not.toHaveBeenCalled();

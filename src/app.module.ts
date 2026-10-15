@@ -8,14 +8,14 @@ import appConfig from './config/app.config';
 import mailConfig from './integrations/mail/config/mail.config';
 import fileConfig from './modules/files/config/file.config';
 import loggerConfig from './infrastructure/logger/config/logger.config';
-import redisConfig from './infrastructure/redis/config/redis.config';
+import redisConfig, { isRedisEnabled } from './infrastructure/redis/config/redis.config';
 import throttlerConfig from './infrastructure/throttler/config/throttler.config';
 import metricsConfig from './infrastructure/metrics/config/metrics.config';
 import smsConfig from './integrations/sms/config/sms.config';
 import wechatConfig from './integrations/wechat/config/wechat.config';
 import alipayConfig from './integrations/alipay/config/alipay.config';
 import path from 'path';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConditionalModule, ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { dataSourceFactory } from './infrastructure/database/data-source.factory';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
@@ -167,7 +167,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     CacheModule,
     RedisModule,
     HealthModule,
-    QueueModule,
+    ConditionalModule.registerWhen(QueueModule, isRedisEnabled),
     ThrottlerModule,
     MetricsModule.forRoot(),
     SmsModule,
@@ -183,7 +183,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     PaymentsModule,
     SchedulerModule,
     NotificationsModule,
-    NotificationQueueModule,
+    ConditionalModule.registerWhen(NotificationQueueModule, isRedisEnabled),
     SharesModule,
     AppConfigModule,
   ],

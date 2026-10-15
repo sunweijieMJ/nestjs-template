@@ -4,9 +4,9 @@ import { timingSafeEqual } from 'crypto';
 import { Request } from 'express';
 import { AllConfigType } from '../../config/config.type';
 
-/** 配置了 METRICS_TOKEN 时要求 Bearer 令牌匹配；未配置时仅非生产环境放行 */
+/** 监控端点的访问控制：配置了 METRICS_TOKEN 时要求 Bearer 令牌匹配；未配置时仅非生产环境放行 */
 @Injectable()
-export class MetricsTokenGuard implements CanActivate {
+export class MonitoringTokenGuard implements CanActivate {
   constructor(private readonly configService: ConfigService<AllConfigType>) {}
 
   canActivate(context: ExecutionContext): boolean {

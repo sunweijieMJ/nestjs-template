@@ -99,16 +99,6 @@ export class AddressesService {
   async create(userId: number, createAddressDto: CreateAddressDto): Promise<Address> {
     this.logger.log(`Creating address for user: ${userId}`);
 
-    // Check address count limit
-    const count = await this.addressRepository.countByUserId(userId);
-    if (count >= MAX_ADDRESSES_PER_USER) {
-      this.logger.warn(`User ${userId} has reached max addresses limit`);
-      throw new ForbiddenException({
-        error: 'maxAddressesReached',
-        message: `Maximum ${MAX_ADDRESSES_PER_USER} addresses allowed per user`,
-      });
-    }
-
     // Validate and auto-fill region data
     const regionData = await this.validateAndFillRegionData({
       provinceCode: createAddressDto.provinceCode,
@@ -119,23 +109,33 @@ export class AddressesService {
       district: createAddressDto.district,
     });
 
-    // 第一个地址或标记为默认时，创建后设为唯一默认地址
-    const isDefault = createAddressDto.isDefault ?? count === 0;
+    const created = await this.addressRepository.createWithinLimit(
+      {
+        userId,
+        name: createAddressDto.name,
+        phone: createAddressDto.phone,
+        provinceCode: regionData.provinceCode,
+        cityCode: regionData.cityCode,
+        districtCode: regionData.districtCode,
+        province: regionData.province,
+        city: regionData.city,
+        district: regionData.district,
+        address: createAddressDto.address,
+        isDefault: false,
+      },
+      MAX_ADDRESSES_PER_USER,
+    );
+    if (!created) {
+      this.logger.warn(`User ${userId} has reached max addresses limit`);
+      throw new ForbiddenException({
+        error: 'maxAddressesReached',
+        message: `Maximum ${MAX_ADDRESSES_PER_USER} addresses allowed per user`,
+      });
+    }
 
-    const address = await this.addressRepository.create({
-      userId,
-      name: createAddressDto.name,
-      phone: createAddressDto.phone,
-      provinceCode: regionData.provinceCode,
-      cityCode: regionData.cityCode,
-      districtCode: regionData.districtCode,
-      province: regionData.province,
-      city: regionData.city,
-      district: regionData.district,
-      address: createAddressDto.address,
-      isDefault: false,
-    });
-    if (isDefault) {
+    // 第一个地址或标记为默认时，创建后设为唯一默认地址
+    const { address, previousCount } = created;
+    if (createAddressDto.isDefault ?? previousCount === 0) {
       await this.addressRepository.markDefault(address.id, userId);
       address.isDefault = true;
     }
@@ -212,7 +212,9 @@ export class AddressesService {
       });
     }
 
-    const updateData: Partial<Address> = { ...updateAddressDto };
+    // 设为默认需要同时清除其他默认地址，单独处理
+    const { isDefault, ...fields } = updateAddressDto;
+    const updateData: Partial<Address> = { ...fields, ...(isDefault === false && { isDefault }) };
 
     // Only validate region codes if code fields are being updated
     const hasRegionCodeUpdate =
@@ -251,8 +253,9 @@ export class AddressesService {
         error: 'addressNotFound',
       });
     }
-    if (updateAddressDto.isDefault) {
+    if (isDefault) {
       await this.addressRepository.markDefault(id, userId);
+      updatedAddress.isDefault = true;
     }
 
     this.logger.log(`Address updated successfully: ${id}`);
@@ -305,7 +308,7 @@ export class AddressesService {
         paginationOptions: { page: 1, limit: 1 },
       });
       if (addresses.length > 0) {
-        await this.addressRepository.update(addresses[0].id, { isDefault: true });
+        await this.addressRepository.markDefault(addresses[0].id, userId);
       }
     }
 

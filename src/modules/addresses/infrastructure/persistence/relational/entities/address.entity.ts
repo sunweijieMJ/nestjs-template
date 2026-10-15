@@ -16,6 +16,7 @@ import { UserEntity } from '../../../../../../core/users/infrastructure/persiste
   name: 'address',
 })
 @Index('IDX_address_userId_isDefault_createdAt', { synchronize: false })
+@Index('UQ_address_userId_default', { synchronize: false })
 @Index('IDX_address_deletedAt', ['deletedAt'], { where: '"deletedAt" IS NULL' })
 export class AddressEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn()

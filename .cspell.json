@@ -87,6 +87,8 @@
     "IDX",
     "datname",
     "numbackends",
+    "xact",
+    "hashtext",
     "iat",
     "cls",
     "ciphertext",

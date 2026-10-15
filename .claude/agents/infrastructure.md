@@ -109,7 +109,7 @@ export class FeatureService {
 ## 健康检查
 
 ```
-GET /health       — 总体健康状态
+GET /health       — 总体健康状态（需监控令牌，同 METRICS_TOKEN）
 GET /health/live  — 存活探针（Kubernetes liveness）
 GET /health/ready — 就绪探针（Kubernetes readiness）
 ```
