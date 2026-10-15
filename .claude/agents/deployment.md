@@ -38,7 +38,7 @@ make -C docker clean    # 清理容器和数据卷
 
 ### Check 工作流（`.github/workflows/check.yml`）
 
-触发条件：PR 到 main、push 到 main/release/\*
+触发条件：PR 到 master/release/\*、push 到 master/release/\*
 
 ```
 1. Lint        → ESLint 代码检查
@@ -51,7 +51,7 @@ make -C docker clean    # 清理容器和数据卷
 
 ### Deploy 工作流（`.github/workflows/deploy.yml`）
 
-触发条件：Check 成功 + main 分支 / tag push / 手动触发
+触发条件：Check 成功 + master/release/\* 分支 / tag push / 手动触发
 
 ```
 1. Build & Push → 构建 Docker 镜像 → 推送到 GHCR/Docker Hub

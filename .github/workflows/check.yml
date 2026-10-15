@@ -2,17 +2,17 @@
 # 职责: lint、type-check、test、build、migrations、e2e
 #
 # 触发条件:
-#   1. PR 提交到 main 分支
-#   2. push 到 main 分支
+#   1. PR 提交到 master 或 release/** 分支
+#   2. push 到 master 或 release/** 分支
 #   3. 手动触发 (workflow_dispatch)
 
 name: Check
 
 on:
   push:
-    branches: [main, master, 'release/**']
+    branches: [master, 'release/**']
   pull_request:
-    branches: [main, master, 'release/**']
+    branches: [master, 'release/**']
   workflow_dispatch:
 
 permissions:

@@ -2,7 +2,7 @@
 # 构建 Docker 镜像并推送到 GHCR，通过 SSH 部署到阿里云 ECS
 #
 # 触发条件:
-#   1. Check 工作流在 main/master 分支成功后自动触发
+#   1. Check 工作流在 master 或 release/** 分支成功后自动触发
 #   2. tag 推送 (v* 格式)
 #   3. 手动触发 (workflow_dispatch，可选择是否部署)
 #
@@ -19,7 +19,7 @@ name: Deploy
 on:
   workflow_run:
     workflows: [Check]
-    branches: [main, master, 'release/**']
+    branches: [master, 'release/**']
     types: [completed]
   push:
     tags:
