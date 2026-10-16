@@ -8,8 +8,6 @@ import { PermissionsGuard } from '../../core/permissions/permissions.guard';
 import { RequirePermissions } from '../../core/permissions/permissions.decorator';
 import { Permission } from '../../core/permissions/permission.enum';
 
-@ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
 @ApiTags('Config')
 @Controller({
   path: 'config',
@@ -28,8 +26,9 @@ export class AppConfigController {
   }
 
   @ApiOperation({ operationId: 'getConfigAsAdmin', summary: '获取配置（管理员）' })
+  @ApiBearerAuth()
   @RequirePermissions(Permission.SYSTEM_CONFIG)
-  @UseGuards(PermissionsGuard)
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
   @ApiOkResponse({ type: Config })
   @ApiParam({ name: 'key', type: String, example: 'app.theme' })
   @Get('admin/:key')
@@ -39,8 +38,9 @@ export class AppConfigController {
   }
 
   @ApiOperation({ operationId: 'upsertConfig', summary: '写入配置（管理员）' })
+  @ApiBearerAuth()
   @RequirePermissions(Permission.SYSTEM_CONFIG)
-  @UseGuards(PermissionsGuard)
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
   @ApiOkResponse({ type: Config })
   @ApiParam({ name: 'key', type: String, example: 'app.theme' })
   @Put(':key')
